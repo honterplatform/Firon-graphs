@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEO Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0A0A0A;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+    padding: 24px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .card {
+    background: #0F0F0F;
+    border-radius: 16px;
+    padding: 28px;
+    overflow: hidden;
+  }
+  .card.full { grid-column: 1 / -1; }
+  .card-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ccc;
+  }
+  .info-icon {
+    width: 18px; height: 18px;
+    background: #444;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #999;
+  }
+
+  /* Donut */
+  .donut-wrap { display: flex; align-items: center; justify-content: center; gap: 40px; }
+  .legend { display: flex; flex-direction: column; gap: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 10px; font-size: 14px; opacity: 0; transform: translateX(10px); transition: opacity 0.4s ease, transform 0.4s ease; }
+  .legend-item.visible { opacity: 1; transform: translateX(0); }
+  .legend-color { width: 13px; height: 13px; border-radius: 3px; flex-shrink: 0; }
+
+  /* Chart legends */
+  .chart-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 14px; }
+  .chart-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #888; }
+  .chart-legend-box { width: 14px; height: 14px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #fff; font-weight: 700; }
+
+  /* Time range */
+  .top-bar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .time-range { display: flex; gap: 10px; font-size: 11px; }
+  .time-range span { color: #555; padding: 2px 4px; }
+  .time-range span.active { color: #FB3B24; border-bottom: 2px solid #FB3B24; }
+
+  /* Robots */
+  .terminal { overflow: hidden; }
+  .line { font-family: 'SF Mono','Menlo','Monaco','Consolas',monospace; font-size: 13px; line-height: 1.7; white-space: pre; opacity: 0; transform: translateX(-12px); transition: opacity 0.3s ease, transform 0.3s ease; }
+  .line.visible { opacity: 1; transform: translateX(0); }
+  .comment { color: #6a737d; }
+  .keyword { color: #FB3B24; }
+  .value { color: #e6edf3; }
+  .cursor { display: inline-block; width: 7px; height: 14px; background: #FB3B24; vertical-align: text-bottom; animation: blink 1s step-end infinite; opacity: 0; transition: opacity 0.3s; }
+  .cursor.visible { opacity: 1; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* Citations table */
+  .cite-table { width: 100%; border-collapse: collapse; }
+  .cite-table thead th { text-align: left; padding: 10px 14px; background: #1A1A1A; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: #777; opacity: 0; transform: translateY(-8px); transition: opacity 0.4s ease, transform 0.4s ease; }
+  .cite-table thead th.visible { opacity: 1; transform: translateY(0); }
+  .cite-table thead th:first-child { border-radius: 6px 0 0 6px; }
+  .cite-table thead th:last-child { border-radius: 0 6px 6px 0; }
+  .cite-table tbody tr { opacity: 0; transform: translateX(-16px); transition: opacity 0.4s ease, transform 0.4s ease; }
+  .cite-table tbody tr.visible { opacity: 1; transform: translateX(0); }
+  .cite-table td { padding: 12px 14px; border-bottom: 1px solid #1A1A1A; font-size: 13px; }
+  .domain-cell { display: flex; align-items: center; gap: 8px; }
+  .domain-icon { width: 26px; height: 26px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .sort-arrow { color: #444; margin-left: 3px; }
+
+  /* Sentiment */
+  .sentiment-section { padding: 16px 0; }
+  .sentiment-section + .sentiment-section { border-top: 1px solid #1A1A1A; }
+  .sentiment-label { font-size: 15px; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .pct { font-size: 48px; font-weight: 700; margin-bottom: 10px; font-variant-numeric: tabular-nums; }
+  .pct.pos { color: #FB3B24; }
+  .pct.neg { color: #666; }
+  .topics-text { font-size: 14px; line-height: 1.6; color: #ccc; opacity: 0; transform: translateY(6px); transition: opacity 0.5s ease, transform 0.5s ease; }
+  .topics-text.visible { opacity: 1; transform: translateY(0); }
+  .source-line { margin-top: 12px; font-size: 12px; color: #555; opacity: 0; transition: opacity 0.4s ease; display: flex; align-items: center; gap: 5px; }
+  .source-line.visible { opacity: 1; }
+  .globe { width: 16px; height: 16px; background: #444; border-radius: 50%; display: inline-block; }
+
+  canvas { display: block; width: 100%; }
+
+  @media (max-width: 768px) {
+    .grid { grid-template-columns: 1fr; }
+    .card.full { grid-column: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="grid">
+
+  <!-- 1. Historical Metrics (full width) -->
+  <div class="card full" id="hist-card">
+    <div class="top-bar">
+      <div class="card-title">Historical Metrics <span class="info-icon">?</span></div>
+      <div class="time-range">
+        <span>1M</span><span>3M</span><span>6M</span><span>1Y</span><span>2Y</span><span>5Y</span><span class="active">All time</span>
+      </div>
+    </div>
+    <div class="chart-legend">
+      <div class="chart-legend-item"><div class="chart-legend-box" style="background:#555"></div>Organic keywords</div>
+      <div class="chart-legend-item" style="color:#aaa"><div class="chart-legend-box" style="background:#FB3B24"></div>Organic Traffic</div>
+      <div class="chart-legend-item"><div class="chart-legend-box" style="background:#FF7A6B"></div>Paid Keywords</div>
+      <div class="chart-legend-item"><div class="chart-legend-box" style="background:#FFB0A5"></div>Paid Traffic</div>
+    </div>
+    <canvas id="histCanvas"></canvas>
+  </div>
+
+  <!-- 2. Keyword Position History (full width) -->
+  <div class="card full" id="kw-card">
+    <div class="card-title">Org. Keyword Position History</div>
+    <div class="chart-legend">
+      <div class="chart-legend-item"><div class="chart-legend-box" style="background:#C42E1B">&check;</div>Top 3</div>
+      <div class="chart-legend-item"><div class="chart-legend-box" style="background:#FB3B24">&check;</div>Position 4 - 10</div>
+      <div class="chart-legend-item"><div class="chart-legend-box" style="background:#FC5844">&check;</div>Position 11 - 20</div>
+      <div class="chart-legend-item"><div class="chart-legend-box" style="background:#FF7A6B">&check;</div>Position 21 - 50</div>
+      <div class="chart-legend-item"><div class="chart-legend-box" style="background:#FFB0A5">&check;</div>Position 51 - 100</div>
+      <div class="chart-legend-item"><div class="chart-legend-box" style="background:#FDD8D3">&check;</div>SERP Features</div>
+    </div>
+    <canvas id="kwCanvas"></canvas>
+  </div>
+
+  <!-- 3. Share of Voice (left) -->
+  <div class="card" id="sov-card">
+    <div class="card-title">Share Of Voice <span class="info-icon">i</span></div>
+    <div class="donut-wrap">
+      <canvas id="donutCanvas" width="220" height="220"></canvas>
+      <div class="legend" id="donutLegend"></div>
+    </div>
+  </div>
+
+  <!-- 4. Sentiment (right) -->
+  <div class="card" id="sent-card">
+    <div class="sentiment-section">
+      <div class="sentiment-label">Positive topics <span class="info-icon">i</span></div>
+      <div class="pct pos" id="posPct">0%</div>
+      <div class="topics-text" id="posTopics">Affordable Kids' Apparel Pricing, Child-Friendly Dressing Solutions, Magnetic Clothing Innovations, Subscription Model for Children's Clothing, Sustainable Materials in Kidswear, Target Market for Accessible Fashion</div>
+      <div class="source-line" id="posSrc">Source: <span class="globe"></span><span class="globe"></span><span class="globe"></span> +6</div>
+    </div>
+    <div class="sentiment-section">
+      <div class="sentiment-label">Negative topics <span class="info-icon">i</span></div>
+      <div class="pct neg" id="negPct">0%</div>
+      <div class="source-line" id="negSrc">Source: +0</div>
+    </div>
+  </div>
+
+  <!-- 5. Citations Sources (left) -->
+  <div class="card" id="cite-card">
+    <div class="card-title"><span style="width:24px;height:24px;background:#FB3B24;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">@</span> Citations Sources <span class="info-icon">i</span></div>
+    <table class="cite-table">
+      <thead><tr>
+        <th>Domain <span class="sort-arrow">&updownarrow;</span></th>
+        <th>Count <span class="sort-arrow">&updownarrow;</span></th>
+        <th>Share <span class="sort-arrow">&updownarrow;</span></th>
+      </tr></thead>
+      <tbody id="citeTbody"></tbody>
+    </table>
+  </div>
+
+  <!-- 6. Robots.txt (right) -->
+  <div class="card" id="robot-card">
+    <div class="card-title">robots.txt</div>
+    <div class="terminal" id="terminal"></div>
+  </div>
+
+</div>
+
+<script>
+/* ── Helpers ── */
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+function easeInOutCubic(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2; }
+function escapeHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ── Intersection Observer for scroll-triggered animations ── */
+function onVisible(el, cb, threshold) {
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { cb(); obs.unobserve(el); } });
+  }, { threshold: threshold || 0.2 });
+  obs.observe(el);
+}
+
+/* ══════════════════════════════════════════
+   1. HISTORICAL METRICS — Line Chart
+   ══════════════════════════════════════════ */
+(function() {
+  const canvas = document.getElementById('histCanvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const labels = ['Jan 12','Oct 12','Jul 13','Apr 14','Jan 15','Oct 15','Jul 16','Apr 17','Jan 18','Oct 18','Jul 19','Apr 20','Jan 21','Oct 21','Jul 22','Apr 23','Jan 24','Oct 24','Jul 25','Feb 26'];
+  const values = [200,300,400,500,600,700,800,1200,2000,4500,8000,12000,18000,28000,38000,55000,58000,62000,64000,66800];
+  const maxVal = 66800;
+  const yTicks = [0,10000,20000,30000,40000,50000,60000,66800];
+  const yLabels = ['0','10K','20K','30K','40K','50K','60K','66.8K'];
+  const pad = { left: 10, right: 50, top: 8, bottom: 36 };
+
+  function sz() {
+    const r = canvas.parentElement.getBoundingClientRect();
+    const w = r.width - 56, h = Math.min(w * 0.32, 280);
+    canvas.style.width = w+'px'; canvas.style.height = h+'px';
+    canvas.width = w*dpr; canvas.height = h*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    return {w,h};
+  }
+
+  let started = false;
+  onVisible(document.getElementById('hist-card'), () => {
+    if (started) return; started = true;
+    let st = null;
+    function draw(ts) {
+      if (!st) st = ts;
+      const p = Math.min((ts-st)/2500, 1), ep = easeInOutCubic(p);
+      const {w,h} = sz();
+      const cW = w-pad.left-pad.right, cH = h-pad.top-pad.bottom;
+      ctx.clearRect(0,0,w,h);
+      ctx.setLineDash([4,4]); ctx.strokeStyle='#1A1A1A'; ctx.lineWidth=0.5;
+      yTicks.forEach((v,i) => {
+        const y = pad.top+cH-(v/maxVal)*cH;
+        ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(w-pad.right,y); ctx.stroke();
+        ctx.fillStyle = i===yTicks.length-1?'#FB3B24':'#555';
+        ctx.font = i===yTicks.length-1?'bold 11px system-ui':'11px system-ui';
+        ctx.textAlign='left'; ctx.fillText(yLabels[i], w-pad.right+8, y+4);
+      });
+      ctx.setLineDash([]);
+      const pts = values.map((v,i) => ({ x: pad.left+(i/(values.length-1))*cW, y: pad.top+cH-(v/maxVal)*cH }));
+      const ri = ep*(pts.length-1), fi = Math.floor(ri);
+      ctx.beginPath(); ctx.strokeStyle='#FB3B24'; ctx.lineWidth=2.5; ctx.lineJoin='round'; ctx.lineCap='round';
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i=1;i<=fi&&i<pts.length;i++) ctx.lineTo(pts[i].x, pts[i].y);
+      if (fi<pts.length-1) { const f=ri-fi; ctx.lineTo(pts[fi].x+(pts[fi+1].x-pts[fi].x)*f, pts[fi].y+(pts[fi+1].y-pts[fi].y)*f); }
+      ctx.stroke();
+      const f2=ri-fi, ti=Math.min(fi+1,pts.length-1);
+      const tx=fi<pts.length-1?pts[fi].x+(pts[ti].x-pts[fi].x)*f2:pts[pts.length-1].x;
+      const ty=fi<pts.length-1?pts[fi].y+(pts[ti].y-pts[fi].y)*f2:pts[pts.length-1].y;
+      ctx.beginPath(); ctx.arc(tx,ty,4,0,Math.PI*2); ctx.fillStyle='#FB3B24'; ctx.fill();
+      ctx.beginPath(); ctx.arc(tx,ty,8,0,Math.PI*2); ctx.fillStyle='rgba(251,59,36,0.2)'; ctx.fill();
+      ctx.fillStyle='#555'; ctx.font='10px system-ui'; ctx.textAlign='center';
+      for (let i=0;i<labels.length;i+=2) ctx.fillText(labels[i], pad.left+(i/(labels.length-1))*cW, h-6);
+      if (p<1) requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
+  });
+})();
+
+/* ══════════════════════════════════════════
+   2. KEYWORD POSITION HISTORY — Stacked Bars
+   ══════════════════════════════════════════ */
+(function() {
+  const canvas = document.getElementById('kwCanvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const labels = ['Jan 12','Sep 12','May 13','Jan 14','Sep 14','May 15','Jan 16','Sep 16','May 17','Jan 18','Sep 18','May 19','Jan 20','Sep 20','May 21','Jan 22','Sep 22','May 23','Jan 24','Sep 24','May 25','Feb 26'];
+  const cats = [{c:'#FDD8D3'},{c:'#FFB0A5'},{c:'#FF7A6B'},{c:'#FC5844'},{c:'#FB3B24'},{c:'#C42E1B'}];
+  const data = [];
+  for (let i=0;i<labels.length;i++) {
+    let t; if(i<8) t=Math.random()*10+2; else if(i<10) t=Math.random()*30+10; else if(i<12) t=Math.random()*200+100; else if(i<14) t=Math.random()*400+400; else if(i<16) t=Math.random()*500+700; else if(i<18) t=Math.random()*600+1200; else if(i<20) t=Math.random()*800+2400; else if(i===20) t=3800+Math.random()*400; else t=4800+Math.random()*400;
+    data.push([t*0.06,t*0.2,t*0.22,t*0.14,t*0.17,t*0.21]);
+  }
+  const maxVal=6000, pad={left:36,right:16,top:8,bottom:36};
+  const yL=['0','2K','4K','6K'], yV=[0,2000,4000,6000];
+
+  function sz() {
+    const r=canvas.parentElement.getBoundingClientRect(), w=r.width-56, h=Math.min(w*0.35,280);
+    canvas.style.width=w+'px'; canvas.style.height=h+'px';
+    canvas.width=w*dpr; canvas.height=h*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    return {w,h};
+  }
+
+  let started=false;
+  onVisible(document.getElementById('kw-card'), () => {
+    if(started) return; started=true;
+    let st=null;
+    function draw(ts) {
+      if(!st) st=ts;
+      const p=Math.min((ts-st)/2000,1), ep=easeOutCubic(p);
+      const {w,h}=sz(), cW=w-pad.left-pad.right, cH=h-pad.top-pad.bottom;
+      ctx.clearRect(0,0,w,h);
+      ctx.strokeStyle='#1A1A1A'; ctx.lineWidth=0.5;
+      yV.forEach((v,i)=>{const y=pad.top+cH-(v/maxVal)*cH; ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(w-pad.right,y); ctx.stroke(); ctx.fillStyle='#555'; ctx.font='11px system-ui'; ctx.textAlign='right'; ctx.fillText(yL[i],pad.left-8,y+4);});
+      const gap=cW/data.length, bW=Math.max(2,gap*0.7), show=Math.ceil(ep*data.length);
+      for(let i=0;i<show;i++){const bp=i<show-1?1:(ep*data.length-i), x=pad.left+i*gap+(gap-bW)/2; let off=0;
+        for(let c=0;c<cats.length;c++){const v=data[i][c]*bp, bH=(v/maxVal)*cH; ctx.fillStyle=cats[c].c; ctx.fillRect(x,pad.top+cH-off-bH,bW,bH); off+=bH;}}
+      ctx.fillStyle='#555'; ctx.font='10px system-ui'; ctx.textAlign='center';
+      for(let i=0;i<labels.length;i+=2) ctx.fillText(labels[i], pad.left+i*gap+gap/2, h-6);
+      if(p<1) requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
+  });
+})();
+
+/* ══════════════════════════════════════════
+   3. SHARE OF VOICE — Donut
+   ══════════════════════════════════════════ */
+(function() {
+  const segs = [
+    {label:'target.com',value:30,color:'#FB3B24'},
+    {label:'magneticme.com',value:25,color:'#FF7A6B'},
+    {label:'primary.com',value:22,color:'#FFB0A5'},
+    {label:'stitchfix.com',value:13,color:'#FDD8D3'},
+    {label:'kohls.com',value:10,color:'#555555'},
+  ];
+  const canvas=document.getElementById('donutCanvas'), ctx=canvas.getContext('2d'), dpr=window.devicePixelRatio||1;
+  canvas.width=220*dpr; canvas.height=220*dpr; canvas.style.width='220px'; canvas.style.height='220px'; ctx.scale(dpr,dpr);
+  const cx=110,cy=110,oR=100,iR=62,total=segs.reduce((s,d)=>s+d.value,0);
+  const leg=document.getElementById('donutLegend');
+  segs.forEach(d=>{const el=document.createElement('div'); el.className='legend-item'; el.innerHTML=`<div class="legend-color" style="background:${d.color}"></div>${d.label}`; leg.appendChild(el);});
+
+  let started=false;
+  onVisible(document.getElementById('sov-card'), () => {
+    if(started) return; started=true;
+    let st=null;
+    function draw(ts) {
+      if(!st) st=ts;
+      const p=Math.min((ts-st)/1500,1), ep=easeOutCubic(p), maxA=ep*Math.PI*2;
+      ctx.clearRect(0,0,220,220);
+      let cur=-Math.PI/2;
+      for(const d of segs){const sa=(d.value/total)*Math.PI*2, da=Math.min(sa,Math.max(0,maxA-(cur+Math.PI/2)));
+        if(da>0){ctx.beginPath();ctx.arc(cx,cy,oR,cur,cur+da);ctx.arc(cx,cy,iR,cur+da,cur,true);ctx.closePath();ctx.fillStyle=d.color;ctx.fill();}cur+=sa;}
+      if(p<1) requestAnimationFrame(draw);
+      else document.querySelectorAll('#donutLegend .legend-item').forEach((el,i)=>setTimeout(()=>el.classList.add('visible'),i*120));
+    }
+    requestAnimationFrame(draw);
+  });
+})();
+
+/* ══════════════════════════════════════════
+   4. SENTIMENT TOPICS
+   ══════════════════════════════════════════ */
+(function() {
+  function animC(el,target,dur,delay) {
+    setTimeout(()=>{const s=performance.now(); function t(n){const p=Math.min((n-s)/dur,1); el.textContent=Math.round(easeOutCubic(p)*target)+'%'; if(p<1) requestAnimationFrame(t);} requestAnimationFrame(t);},delay);
+  }
+  let started=false;
+  onVisible(document.getElementById('sent-card'), () => {
+    if(started) return; started=true;
+    animC(document.getElementById('posPct'),83,1500,200);
+    setTimeout(()=>document.getElementById('posTopics').classList.add('visible'),1800);
+    setTimeout(()=>document.getElementById('posSrc').classList.add('visible'),2200);
+    animC(document.getElementById('negPct'),0,500,700);
+    setTimeout(()=>document.getElementById('negSrc').classList.add('visible'),1400);
+  });
+})();
+
+/* ══════════════════════════════════════════
+   5. CITATIONS SOURCES — Table
+   ══════════════════════════════════════════ */
+(function() {
+  const rows = [
+    {d:'magneticme.com',count:2200,cL:'2.2K',share:33,color:'#FB3B24',l:'m'},
+    {d:'reddit.com',count:936,cL:'936',share:10,color:'#C42E1B',l:'r'},
+    {d:'reviewed.com',count:468,cL:'468',share:14,color:'#FF7A6B',l:'r'},
+    {d:'anbbaby.com',count:305,cL:'305',share:11,color:'#FC5844',l:'a'},
+    {d:'kidpik.com',count:275,cL:'275',share:11,color:'#FFB0A5',l:'K'},
+    {d:'juneadaptive.com',count:257,cL:'257',share:14,color:'#FB3B24',l:'J'},
+    {d:'amazon.com',count:220,cL:'220',share:5,color:'#333',l:'a'},
+    {d:'magnaready.com',count:197,cL:'197',share:13,color:'#FF7A6B',l:'M'},
+    {d:'gorgias.help',count:196,cL:'196',share:13,color:'#555',l:'g'},
+  ];
+  const tb=document.getElementById('citeTbody');
+  rows.forEach(r=>{const tr=document.createElement('tr'); tr.innerHTML=`<td><div class="domain-cell"><div class="domain-icon" style="background:${r.color}">${r.l}</div>${r.d}</div></td><td class="ct" data-t="${r.count}" data-l="${r.cL}">0</td><td class="sh" data-t="${r.share}">0%</td>`; tb.appendChild(tr);});
+
+  let started=false;
+  onVisible(document.getElementById('cite-card'), () => {
+    if(started) return; started=true;
+    setTimeout(()=>document.querySelectorAll('.cite-table thead th').forEach(th=>th.classList.add('visible')),150);
+    document.querySelectorAll('#citeTbody tr').forEach((tr,i)=>{
+      setTimeout(()=>{tr.classList.add('visible');
+        const cc=tr.querySelector('.ct'), sc=tr.querySelector('.sh'), ct=+cc.dataset.t, cl=cc.dataset.l, st2=+sc.dataset.t;
+        const s=performance.now(), dur=900;
+        function tick(n){const p=Math.min((n-s)/dur,1), e=easeOutCubic(p), cv=Math.round(e*ct);
+          cc.textContent=ct>=1000?(cv/1000).toFixed(1)+'K':cv.toLocaleString(); if(p>=1) cc.textContent=cl;
+          sc.textContent=Math.round(e*st2)+'%'; if(p<1) requestAnimationFrame(tick);}
+        requestAnimationFrame(tick);
+      }, 400+i*80);
+    });
+  });
+})();
+
+/* ══════════════════════════════════════════
+   6. ROBOTS.TXT — Terminal
+   ══════════════════════════════════════════ */
+(function() {
+  const lines = [
+    {t:'c',x:'# Google adsbot ignores robots.txt unless specifically named!'},
+    {t:'kv',k:'User-agent:',v:' adsbot-google'},
+    {t:'kv',k:'Disallow:',v:' /checkouts/'},
+    {t:'kv',k:'Disallow:',v:' /checkout'},
+    {t:'kv',k:'Disallow:',v:' /carts'},
+    {t:'kv',k:'Disallow:',v:' /orders'},
+    {t:'kv',k:'Disallow:',v:' /68864999739/checkouts'},
+    {t:'kv',k:'Disallow:',v:' /68864999739/orders'},
+    {t:'kv',k:'Disallow:',v:' /*?*oseid=*'},
+    {t:'kv',k:'Disallow:',v:' /*preview_theme_id*'},
+    {t:'kv',k:'Disallow:',v:' /*preview_script_id*'},
+    {t:'kv',k:'Disallow:',v:' /cdn/wpm/*.js'},
+    {t:'kv',k:'Disallow:',v:' /products/*-[a-f0-9]...-remote'},
+    {t:'kv',k:'Disallow:',v:' /*/products/*-[a-f0-9]...-remote'},
+    {t:'kv',k:'Disallow:',v:' /collections/*/products/*-...-remote'},
+    {t:'kv',k:'Disallow:',v:' /*/collections/*/products/*-...-remote'},
+    {t:'kv',k:'Disallow:',v:' /sf_private_access_tokens'},
+  ];
+  const term=document.getElementById('terminal');
+  lines.forEach((l,i)=>{
+    const el=document.createElement('div'); el.className='line';
+    el.innerHTML = l.t==='c' ? `<span class="comment">${escapeHtml(l.x)}</span>` : `<span class="keyword">${escapeHtml(l.k)}</span><span class="value">${escapeHtml(l.v)}</span>`;
+    if(i===lines.length-1) el.innerHTML+='<span class="cursor" id="termCursor"></span>';
+    term.appendChild(el);
+  });
+
+  let started=false;
+  onVisible(document.getElementById('robot-card'), () => {
+    if(started) return; started=true;
+    document.querySelectorAll('#terminal .line').forEach((el,i)=>{
+      setTimeout(()=>{el.classList.add('visible'); if(i===lines.length-1) setTimeout(()=>document.getElementById('termCursor').classList.add('visible'),200);}, 200+i*90);
+    });
+  });
+})();
+</script>
+</body>
+</html>
