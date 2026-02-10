@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>robots.txt</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d1117;
+    font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+    color: #e6edf3;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .terminal {
+    background: #161b22;
+    border-radius: 12px;
+    padding: 24px 28px;
+    width: 100%;
+    max-width: 900px;
+    overflow: hidden;
+  }
+  .line {
+    font-size: 14px;
+    line-height: 1.7;
+    white-space: pre;
+    opacity: 0;
+    transform: translateX(-12px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .line.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .comment { color: #6a737d; }
+  .keyword { color: #5CC8C8; }
+  .value { color: #e6edf3; }
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 16px;
+    background: #5CC8C8;
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .cursor.visible { opacity: 1; }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="terminal" id="terminal"></div>
+<script>
+const lines = [
+  { type: 'comment', text: '# Google adsbot ignores robots.txt unless specifically named!' },
+  { type: 'kv', key: 'User-agent:', value: ' adsbot-google' },
+  { type: 'kv', key: 'Disallow:', value: ' /checkouts/' },
+  { type: 'kv', key: 'Disallow:', value: ' /checkout' },
+  { type: 'kv', key: 'Disallow:', value: ' /carts' },
+  { type: 'kv', key: 'Disallow:', value: ' /orders' },
+  { type: 'kv', key: 'Disallow:', value: ' /68864999739/checkouts' },
+  { type: 'kv', key: 'Disallow:', value: ' /68864999739/orders' },
+  { type: 'kv', key: 'Disallow:', value: ' /*?*oseid=*' },
+  { type: 'kv', key: 'Disallow:', value: ' /*preview_theme_id*' },
+  { type: 'kv', key: 'Disallow:', value: ' /*preview_script_id*' },
+  { type: 'kv', key: 'Disallow:', value: ' /cdn/wpm/*.js' },
+  { type: 'kv', key: 'Disallow:', value: ' /products/*-[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9]-remote' },
+  { type: 'kv', key: 'Disallow:', value: ' /*/products/*-[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9]-remote' },
+  { type: 'kv', key: 'Disallow:', value: ' /collections/*/products/*-[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9]-remote' },
+  { type: 'kv', key: 'Disallow:', value: ' /*/collections/*/products/*-[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9]-remote' },
+  { type: 'kv', key: 'Disallow:', value: ' /sf_private_access_tokens' },
+];
+
+const terminal = document.getElementById('terminal');
+
+lines.forEach((line, i) => {
+  const el = document.createElement('div');
+  el.className = 'line';
+  if (line.type === 'comment') {
+    el.innerHTML = `<span class="comment">${escapeHtml(line.text)}</span>`;
+  } else {
+    el.innerHTML = `<span class="keyword">${escapeHtml(line.key)}</span><span class="value">${escapeHtml(line.value)}</span>`;
+  }
+  if (i === lines.length - 1) {
+    el.innerHTML += '<span class="cursor" id="cursor"></span>';
+  }
+  terminal.appendChild(el);
+});
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+const lineEls = document.querySelectorAll('.line');
+const stagger = 100;
+
+lineEls.forEach((el, i) => {
+  setTimeout(() => {
+    el.classList.add('visible');
+    if (i === lines.length - 1) {
+      setTimeout(() => document.getElementById('cursor').classList.add('visible'), 200);
+    }
+  }, 300 + i * stagger);
+});
+</script>
+</body>
+</html>

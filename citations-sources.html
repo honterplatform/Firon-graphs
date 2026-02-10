@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Citations Sources</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a2e;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    background: #16162a;
+    border-radius: 16px;
+    padding: 28px 32px;
+    width: 100%;
+    max-width: 700px;
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .at-icon {
+    width: 24px; height: 24px;
+    background: #9B59B6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .info-icon {
+    width: 18px; height: 18px;
+    background: #444;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #999;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left;
+    padding: 12px 16px;
+    background: #222240;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #999;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  thead th.visible { opacity: 1; transform: translateY(0); }
+  thead th:first-child { border-radius: 8px 0 0 8px; }
+  thead th:last-child { border-radius: 0 8px 8px 0; }
+  .sort-arrow { color: #555; margin-left: 4px; }
+  tbody tr {
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  tbody tr.visible { opacity: 1; transform: translateX(0); }
+  tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #1e1e38;
+    font-size: 14px;
+  }
+  .domain-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .domain-icon {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .count-cell, .share-cell { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <span class="at-icon">@</span>
+    Citations Sources
+    <span class="info-icon">i</span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Domain <span class="sort-arrow">&updownarrow;</span></th>
+        <th>Count <span class="sort-arrow">&updownarrow;</span></th>
+        <th>Share <span class="sort-arrow">&updownarrow;</span></th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+<script>
+const rows = [
+  { domain: 'magneticme.com', count: 2200, countLabel: '2.2K', share: 33, color: '#9B59B6', letter: 'm' },
+  { domain: 'reddit.com', count: 936, countLabel: '936', share: 10, color: '#E74C3C', letter: 'r' },
+  { domain: 'reviewed.com', count: 468, countLabel: '468', share: 14, color: '#3498DB', letter: 'r' },
+  { domain: 'anbbaby.com', count: 305, countLabel: '305', share: 11, color: '#27AE60', letter: 'a' },
+  { domain: 'kidpik.com', count: 275, countLabel: '275', share: 11, color: '#2C3E50', letter: 'K' },
+  { domain: 'juneadaptive.com', count: 257, countLabel: '257', share: 14, color: '#8E44AD', letter: 'J' },
+  { domain: 'amazon.com', count: 220, countLabel: '220', share: 5, color: '#2C3E50', letter: 'a' },
+  { domain: 'magnaready.com', count: 197, countLabel: '197', share: 13, color: '#E74C3C', letter: 'M' },
+  { domain: 'gorgias.help', count: 196, countLabel: '196', share: 13, color: '#95A5A6', letter: 'g' },
+];
+
+const tbody = document.getElementById('tbody');
+
+rows.forEach(r => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><div class="domain-cell"><div class="domain-icon" style="background:${r.color}">${r.letter}</div>${r.domain}</div></td>
+    <td class="count-cell" data-target="${r.count}" data-label="${r.countLabel}">0</td>
+    <td class="share-cell" data-target="${r.share}">0%</td>
+  `;
+  tbody.appendChild(tr);
+});
+
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+// Animate header
+setTimeout(() => {
+  document.querySelectorAll('thead th').forEach(th => th.classList.add('visible'));
+}, 200);
+
+// Animate rows
+const trEls = document.querySelectorAll('tbody tr');
+trEls.forEach((tr, i) => {
+  setTimeout(() => {
+    tr.classList.add('visible');
+    animateCounters(tr);
+  }, 500 + i * 80);
+});
+
+function animateCounters(tr) {
+  const countCell = tr.querySelector('.count-cell');
+  const shareCell = tr.querySelector('.share-cell');
+  const countTarget = parseInt(countCell.dataset.target);
+  const countLabel = countCell.dataset.label;
+  const shareTarget = parseInt(shareCell.dataset.target);
+  const duration = 1000;
+  const start = performance.now();
+
+  function tick(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = easeOutCubic(progress);
+
+    const currentCount = Math.round(eased * countTarget);
+    if (countTarget >= 1000) {
+      countCell.textContent = (currentCount / 1000).toFixed(1) + 'K';
+    } else {
+      countCell.textContent = currentCount.toLocaleString();
+    }
+    if (progress >= 1) countCell.textContent = countLabel;
+
+    shareCell.textContent = Math.round(eased * shareTarget) + '%';
+
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+</script>
+</body>
+</html>

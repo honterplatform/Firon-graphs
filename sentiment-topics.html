@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sentiment Topics</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a2e;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    background: #16162a;
+    border-radius: 16px;
+    padding: 36px 40px;
+    width: 100%;
+    max-width: 600px;
+  }
+  .section { padding: 20px 0; }
+  .section + .section { border-top: 1px solid #2a2a44; }
+  .label {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .info-icon {
+    width: 18px; height: 18px;
+    background: #444;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #999;
+  }
+  .percentage {
+    font-size: 52px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .positive { color: #2ECC71; }
+  .negative { color: #E74C3C; }
+  .topics {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #ddd;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .topics.visible { opacity: 1; transform: translateY(0); }
+  .source {
+    margin-top: 16px;
+    font-size: 13px;
+    color: #666;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .source.visible { opacity: 1; }
+  .globe {
+    width: 18px; height: 18px;
+    background: #555;
+    border-radius: 50%;
+    display: inline-block;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="section">
+    <div class="label">Positive topics <span class="info-icon">i</span></div>
+    <div class="percentage positive" id="pos-pct">0%</div>
+    <div class="topics" id="pos-topics">Affordable Kids' Apparel Pricing, Child-Friendly Dressing Solutions, Magnetic Clothing Innovations, Subscription Model for Children's Clothing, Sustainable Materials in Kidswear, Target Market for Accessible Fashion</div>
+    <div class="source" id="pos-source">Source: <span class="globe"></span><span class="globe"></span><span class="globe"></span> +6</div>
+  </div>
+  <div class="section">
+    <div class="label">Negative topics <span class="info-icon">i</span></div>
+    <div class="percentage negative" id="neg-pct">0%</div>
+    <div class="source" id="neg-source">Source: +0</div>
+  </div>
+</div>
+<script>
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+function animateCounter(el, target, duration, delay) {
+  setTimeout(() => {
+    const start = performance.now();
+    function tick(now) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = easeOutCubic(progress);
+      el.textContent = Math.round(eased * target) + '%';
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }, delay);
+}
+
+// Positive section
+animateCounter(document.getElementById('pos-pct'), 83, 1500, 300);
+setTimeout(() => document.getElementById('pos-topics').classList.add('visible'), 1900);
+setTimeout(() => document.getElementById('pos-source').classList.add('visible'), 2300);
+
+// Negative section (staggered by 500ms)
+animateCounter(document.getElementById('neg-pct'), 0, 500, 800);
+setTimeout(() => document.getElementById('neg-source').classList.add('visible'), 1500);
+</script>
+</body>
+</html>
