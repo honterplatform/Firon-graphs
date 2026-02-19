@@ -14,8 +14,6 @@
   }
   .card {
     background: #0F0F0F;
-    border-radius: 16px;
-    padding: 24px 28px;
     width: 100%;
     height: 100%;
   }
@@ -71,7 +69,7 @@ const dpr = window.devicePixelRatio || 1;
 
 function resize() {
   const rect = canvas.parentElement.getBoundingClientRect();
-  const w = rect.width - 56;
+  const w = rect.width;
   const h = Math.min(w * 0.4, 320);
   canvas.style.width = w + 'px';
   canvas.style.height = h + 'px';
