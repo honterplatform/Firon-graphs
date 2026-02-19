@@ -85,9 +85,11 @@ const ctx = canvas.getContext('2d');
 const dpr = window.devicePixelRatio || 1;
 
 function resize() {
-  const rect = canvas.parentElement.getBoundingClientRect();
+  const card = canvas.parentElement;
+  const rect = card.getBoundingClientRect();
   const w = rect.width;
-  const h = Math.min(w * 0.35, 300);
+  const usedHeight = card.querySelector('.top-bar').offsetHeight + card.querySelector('.legend').offsetHeight;
+  const h = rect.height - usedHeight;
   canvas.style.width = w + 'px';
   canvas.style.height = h + 'px';
   canvas.width = w * dpr;
