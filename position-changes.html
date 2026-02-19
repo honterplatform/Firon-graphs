@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Position Changes</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0A0A0A;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+  }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+  }
+  .metrics-bar {
+    display: flex;
+    gap: 0;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #1A1A1A;
+  }
+  .metric {
+    flex: 1;
+    padding: 8px 12px 10px;
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .metric.visible { opacity: 1; transform: translateY(0); }
+  .metric-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #555;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .metric-label .info {
+    width: 12px; height: 12px;
+    background: #333;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    color: #666;
+  }
+  .metric-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #888;
+    font-variant-numeric: tabular-nums;
+  }
+  .metric-value.highlight { color: #fff; }
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .legend {
+    display: flex;
+    gap: 14px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: #666;
+  }
+  .legend-item.active { color: #aaa; }
+  .legend-box {
+    width: 12px; height: 12px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    color: #fff;
+    font-weight: 700;
+  }
+  .time-range {
+    display: flex;
+    gap: 10px;
+    font-size: 12px;
+  }
+  .time-range span {
+    color: #555;
+    cursor: pointer;
+    padding: 2px 4px;
+  }
+  .time-range span.active {
+    color: #FB3B24;
+    border-bottom: 2px solid #FB3B24;
+  }
+  canvas { display: block; width: 100%; }
+  @media (max-width: 480px) {
+    .metrics-bar { flex-wrap: wrap; }
+    .metric { flex: 1 1 50%; padding: 6px 8px 8px; }
+    .metric-label { font-size: 8px; }
+    .metric-value { font-size: 16px; }
+    .legend { gap: 8px; }
+    .legend-item { font-size: 10px; }
+    .legend-box { width: 10px; height: 10px; }
+    .time-range { gap: 6px; font-size: 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="metrics-bar">
+    <div class="metric" id="m0">
+      <div class="metric-label">All Position Changes <span class="info">?</span></div>
+      <div class="metric-value">-</div>
+    </div>
+    <div class="metric" id="m1">
+      <div class="metric-label">Traffic <span class="info">?</span></div>
+      <div class="metric-value highlight" id="trafficVal">0</div>
+    </div>
+    <div class="metric" id="m2">
+      <div class="metric-label">Improved <span class="info">?</span></div>
+      <div class="metric-value">-</div>
+    </div>
+    <div class="metric" id="m3">
+      <div class="metric-label">Declined <span class="info">?</span></div>
+      <div class="metric-value">-</div>
+    </div>
+  </div>
+  <div class="chart-header">
+    <div class="legend">
+      <div class="legend-item"><div class="legend-box" style="background:#555"></div>Traffic</div>
+      <div class="legend-item active"><div class="legend-box" style="background:#FB3B24">&check;</div>Improved</div>
+      <div class="legend-item"><div class="legend-box" style="background:#FF7A6B"></div>Declined</div>
+    </div>
+    <div class="time-range">
+      <span>1M</span><span>6M</span><span>1Y</span><span>2Y</span><span class="active">All time</span>
+    </div>
+  </div>
+  <canvas id="chart"></canvas>
+</div>
+<script>
+const canvas = document.getElementById('chart');
+const ctx = canvas.getContext('2d');
+const dpr = window.devicePixelRatio || 1;
+
+function resize() {
+  const card = canvas.parentElement;
+  const rect = card.getBoundingClientRect();
+  const w = rect.width;
+  const usedHeight = card.querySelector('.metrics-bar').offsetHeight + card.querySelector('.chart-header').offsetHeight;
+  const h = rect.height - usedHeight;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w, h };
+}
+
+const labels = ['Feb 24','Apr 24','Jun 24','Aug 24','Oct 24','Dec 24','Feb 25','Apr 25','Jun 25','Aug 25','Oct 25','Jan 26'];
+const values = [6, 14, 2, 5, 10, 15, 20, 24, 8, 28, 22, 5, 10, 25, 28, 22, 24, 22, 5, 10, 30, 35, 38, 95];
+const maxVal = 100;
+const yTicks = [0, 20, 40, 60, 80, 100];
+const isMobile = window.innerWidth <= 480;
+const padding = { left: isMobile ? 28 : 36, right: 16, top: 12, bottom: isMobile ? 30 : 40 };
+
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+let dims = resize();
+const duration = 2500;
+let startTime = null;
+
+// Animate traffic counter
+function animateTraffic() {
+  const el = document.getElementById('trafficVal');
+  const target = 2700;
+  const dur = 1200;
+  const start = performance.now();
+  function tick(now) {
+    const p = Math.min((now - start) / dur, 1);
+    const val = Math.round(easeOutCubic(p) * target);
+    if (val >= 1000) el.textContent = (val / 1000).toFixed(1) + 'K';
+    else el.textContent = val;
+    if (p >= 1) el.textContent = '2.7K';
+    if (p < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+// Show metrics
+document.querySelectorAll('.metric').forEach((m, i) => {
+  setTimeout(() => m.classList.add('visible'), 100 + i * 100);
+});
+setTimeout(animateTraffic, 400);
+
+function draw(timestamp) {
+  if (!startTime) startTime = timestamp;
+  const elapsed = timestamp - startTime;
+  const progress = Math.min(elapsed / duration, 1);
+  const easedProgress = easeOutCubic(progress);
+
+  dims = resize();
+  const { w, h } = dims;
+  const chartW = w - padding.left - padding.right;
+  const chartH = h - padding.top - padding.bottom;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Grid
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = '#1A1A1A';
+  ctx.lineWidth = 0.5;
+  yTicks.forEach(val => {
+    const y = padding.top + chartH - (val / maxVal) * chartH;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(w - padding.right, y);
+    ctx.stroke();
+    ctx.fillStyle = '#555';
+    ctx.font = (isMobile ? '9px' : '11px') + ' system-ui';
+    ctx.textAlign = 'right';
+    ctx.fillText(val, padding.left - 8, y + 4);
+  });
+  ctx.setLineDash([]);
+
+  // Data points
+  const points = values.map((val, i) => ({
+    x: padding.left + (i / (values.length - 1)) * chartW,
+    y: padding.top + chartH - (val / maxVal) * chartH,
+  }));
+
+  const totalPoints = points.length;
+  const revealIndex = easedProgress * (totalPoints - 1);
+  const lastFullIndex = Math.floor(revealIndex);
+
+  if (lastFullIndex >= 0) {
+    // Area fill
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, padding.top + chartH);
+    ctx.lineTo(points[0].x, points[0].y);
+    for (let i = 1; i <= lastFullIndex && i < totalPoints; i++) {
+      ctx.lineTo(points[i].x, points[i].y);
+    }
+    if (lastFullIndex < totalPoints - 1) {
+      const frac = revealIndex - lastFullIndex;
+      const px = points[lastFullIndex].x + (points[lastFullIndex + 1].x - points[lastFullIndex].x) * frac;
+      const py = points[lastFullIndex].y + (points[lastFullIndex + 1].y - points[lastFullIndex].y) * frac;
+      ctx.lineTo(px, py);
+      ctx.lineTo(px, padding.top + chartH);
+    } else {
+      ctx.lineTo(points[lastFullIndex].x, padding.top + chartH);
+    }
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(0, padding.top, 0, padding.top + chartH);
+    grad.addColorStop(0, 'rgba(251,59,36,0.15)');
+    grad.addColorStop(1, 'rgba(251,59,36,0)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    ctx.strokeStyle = '#FB3B24';
+    ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i <= lastFullIndex && i < totalPoints; i++) {
+      ctx.lineTo(points[i].x, points[i].y);
+    }
+    if (lastFullIndex < totalPoints - 1) {
+      const frac = revealIndex - lastFullIndex;
+      const px = points[lastFullIndex].x + (points[lastFullIndex + 1].x - points[lastFullIndex].x) * frac;
+      const py = points[lastFullIndex].y + (points[lastFullIndex + 1].y - points[lastFullIndex].y) * frac;
+      ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Dots
+    for (let i = 0; i <= lastFullIndex && i < totalPoints; i++) {
+      ctx.beginPath();
+      ctx.arc(points[i].x, points[i].y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(points[i].x, points[i].y, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#FB3B24';
+      ctx.fill();
+    }
+
+    // Tip glow
+    const frac = revealIndex - lastFullIndex;
+    const tipX = lastFullIndex < totalPoints - 1
+      ? points[lastFullIndex].x + (points[Math.min(lastFullIndex + 1, totalPoints - 1)].x - points[lastFullIndex].x) * frac
+      : points[totalPoints - 1].x;
+    const tipY = lastFullIndex < totalPoints - 1
+      ? points[lastFullIndex].y + (points[Math.min(lastFullIndex + 1, totalPoints - 1)].y - points[lastFullIndex].y) * frac
+      : points[totalPoints - 1].y;
+    ctx.beginPath();
+    ctx.arc(tipX, tipY, 8, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(251,59,36,0.2)';
+    ctx.fill();
+  }
+
+  // X labels
+  ctx.fillStyle = '#555';
+  ctx.font = (isMobile ? '8px' : '10px') + ' system-ui';
+  ctx.textAlign = 'center';
+  const labelStep = isMobile ? 3 : 2;
+  for (let i = 0; i < labels.length; i += labelStep) {
+    const x = padding.left + (i / (labels.length - 1)) * chartW;
+    ctx.fillText(labels[i], x, h - 4);
+  }
+
+  if (progress < 1) requestAnimationFrame(draw);
+}
+
+requestAnimationFrame(draw);
+window.addEventListener('resize', () => { startTime = null; requestAnimationFrame(draw); });
+</script>
+</body>
+</html>

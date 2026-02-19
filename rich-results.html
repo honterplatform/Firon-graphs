@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rich Results Test</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0A0A0A;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+  }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+    font-size: 13px;
+    color: #888;
+  }
+  .breadcrumb .separator { color: #444; }
+  .breadcrumb .active { color: #ccc; font-weight: 600; }
+  .url-bar {
+    font-size: 11px;
+    color: #555;
+    margin-bottom: 14px;
+    padding: 6px 10px;
+    background: #141414;
+    border-radius: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .url-globe {
+    width: 14px; height: 14px;
+    background: #333;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .content {
+    display: flex;
+    gap: 16px;
+    height: calc(100% - 56px);
+    overflow: hidden;
+  }
+  .fields-panel {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+  }
+  .fields-panel::-webkit-scrollbar { display: none; }
+  .field-row {
+    display: flex;
+    padding: 8px 0;
+    border-bottom: 1px solid #1A1A1A;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .field-row.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .field-row.indent { padding-left: 20px; }
+  .field-key {
+    width: 110px;
+    flex-shrink: 0;
+    font-size: 12px;
+    color: #666;
+  }
+  .field-value {
+    font-size: 12px;
+    color: #ccc;
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .field-value.multiline {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    line-height: 1.5;
+  }
+  .code-panel {
+    width: 280px;
+    flex-shrink: 0;
+    background: #141414;
+    border-radius: 4px;
+    padding: 12px;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .code-panel.visible { opacity: 1; }
+  .code-tabs {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .code-tab { color: #555; cursor: pointer; padding-bottom: 4px; }
+  .code-tab.active { color: #FB3B24; border-bottom: 2px solid #FB3B24; }
+  .code-line {
+    font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+    font-size: 10px;
+    line-height: 1.7;
+    white-space: pre;
+    color: #888;
+  }
+  .ck { color: #FB3B24; }
+  .cv { color: #ccc; }
+  .cb { color: #555; }
+  @media (max-width: 480px) {
+    .content { flex-direction: column; }
+    .code-panel { width: 100%; max-height: 140px; }
+    .field-key { width: 80px; font-size: 11px; }
+    .field-value { font-size: 11px; }
+    .breadcrumb { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="breadcrumb">
+    <span>Test results</span>
+    <span class="separator">›</span>
+    <span class="active">Product snippets</span>
+  </div>
+  <div class="url-bar">
+    <div class="url-globe"></div>
+    https://www.maisonflaneur.com/collections/tableware/products/826228-mouthblown-champagne-flutes-set-of-four
+  </div>
+  <div class="content">
+    <div class="fields-panel" id="fields"></div>
+    <div class="code-panel" id="codePanel">
+      <div class="code-tabs">
+        <span class="code-tab active">HTML</span>
+        <span class="code-tab">SCREENSHOT</span>
+        <span class="code-tab">MORE INFO</span>
+      </div>
+      <div id="codeContent"></div>
+    </div>
+  </div>
+</div>
+<script>
+const fields = [
+  { key: 'productID', value: '15771907654014' },
+  { key: 'brand', value: '' },
+  { key: 'type', value: 'Brand', indent: true },
+  { key: 'name', value: 'Lucie Claudia Podrabska', indent: true },
+  { key: 'name', value: 'Mouthblown Champagne Flutes - set of four' },
+  { key: 'description', value: 'Crafted by the skilled hands of a father-son glasshouse in the Bohemian forest, Czech Republic. Each flute is mouth-blown with intention using crystal glass in a smokey grey or green tint. These flutes are a timeless tribute to the glassware of the 15th-century.', multiline: true },
+  { key: 'category', value: 'Champagne Coupe' },
+  { key: 'url', value: 'https://www.maisonflaneur.com/collections/tableware/products/826228-mouthblown-champagne-flutes-set-of-four' },
+];
+
+const fieldsEl = document.getElementById('fields');
+fields.forEach(f => {
+  const row = document.createElement('div');
+  row.className = 'field-row' + (f.indent ? ' indent' : '');
+  row.innerHTML = '<div class="field-key">' + f.key + '</div><div class="field-value' + (f.multiline ? ' multiline' : '') + '">' + f.value + '</div>';
+  fieldsEl.appendChild(row);
+});
+
+const codeLines = [
+  '<span class="cb">&lt;script type="application/ld+json"&gt;</span>',
+  '<span class="cb">{</span>',
+  '  <span class="ck">"@context"</span>: <span class="cv">"http://schema.org"</span>,',
+  '  <span class="ck">"@type"</span>: <span class="cv">"Product"</span>,',
+  '  <span class="ck">"offers"</span>: <span class="cb">[{</span>',
+  '    <span class="ck">"@type"</span>: <span class="cv">"Offer"</span>,',
+  '    <span class="ck">"name"</span>: <span class="cv">"Smoky Blue"</span>,',
+  '    <span class="ck">"availability"</span>: <span class="cv">"InStock"</span>,',
+  '    <span class="ck">"price"</span>: <span class="cv">"261.00"</span>,',
+  '    <span class="ck">"priceCurrency"</span>: <span class="cv">"GBP"</span>,',
+  '    <span class="ck">"priceValidUntil"</span>: <span class="cv">"2026-02-21"</span>,',
+  '  <span class="cb">}]</span>,',
+  '  <span class="ck">"productId"</span>: <span class="cv">15771907654014</span>,',
+  '  <span class="ck">"brand"</span>: <span class="cb">{</span>',
+  '    <span class="ck">"name"</span>: <span class="cv">"Lucie Claudia Podrabska"</span>',
+  '  <span class="cb">}</span>,',
+  '  <span class="ck">"name"</span>: <span class="cv">"Mouthblown Champagne..."</span>,',
+  '<span class="cb">}</span>',
+];
+
+const codeContent = document.getElementById('codeContent');
+codeLines.forEach(line => {
+  const el = document.createElement('div');
+  el.className = 'code-line';
+  el.innerHTML = line;
+  codeContent.appendChild(el);
+});
+
+const rows = document.querySelectorAll('.field-row');
+rows.forEach((row, i) => {
+  setTimeout(() => row.classList.add('visible'), 200 + i * 80);
+});
+setTimeout(() => document.getElementById('codePanel').classList.add('visible'), 500);
+</script>
+</body>
+</html>

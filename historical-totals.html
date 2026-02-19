@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Historical Totals</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0A0A0A;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+  }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+  }
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ccc;
+  }
+  .legend {
+    display: flex;
+    gap: 20px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #aaa;
+  }
+  .legend-box {
+    width: 14px; height: 14px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: #fff;
+    font-weight: 700;
+  }
+  canvas { display: block; width: 100%; }
+  @media (max-width: 480px) {
+    .top-bar { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .title { font-size: 13px; }
+    .legend { gap: 12px; }
+    .legend-item { font-size: 10px; }
+    .legend-box { width: 10px; height: 10px; font-size: 7px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="top-bar">
+    <div class="title">Historical totals</div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-box" style="background:#FB3B24">&check;</div>Backlinks</div>
+      <div class="legend-item"><div class="legend-box" style="background:#FF7A6B">&check;</div>Ref. Domains</div>
+    </div>
+  </div>
+  <canvas id="chart"></canvas>
+</div>
+<script>
+const canvas = document.getElementById('chart');
+const ctx = canvas.getContext('2d');
+const dpr = window.devicePixelRatio || 1;
+
+function resize() {
+  const card = canvas.parentElement;
+  const rect = card.getBoundingClientRect();
+  const w = rect.width;
+  const usedHeight = card.querySelector('.top-bar').offsetHeight;
+  const h = rect.height - usedHeight;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w, h };
+}
+
+const labels = ['Jun 13','Oct 14','Feb 16','Jun 17','Oct 18','Feb 20','Jun 21','Oct 22','Feb 24','Jun 25'];
+
+const backlinks = [
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  100000, 500000, 2000000, 3500000, 5000000,
+  4500000, 5000000, 7000000, 6500000, 6000000,
+  7500000, 8500000, 8000000, 8500000, 9000000, 9500000
+];
+
+const refDomains = [
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  5000, 10000, 20000, 30000, 40000,
+  35000, 40000, 50000, 45000, 50000,
+  55000, 60000, 58000, 62000, 65000, 70000
+];
+
+const maxVal = 10000000;
+const yTicks = [0, 2000000, 4000000, 6000000, 8000000, 10000000];
+const yLabels = ['0', '2M', '4M', '6M', '8M', '10M'];
+const isMobile = window.innerWidth <= 480;
+const padding = { left: isMobile ? 32 : 44, right: 16, top: 12, bottom: isMobile ? 30 : 40 };
+
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+let dims = resize();
+const duration = 2500;
+let startTime = null;
+
+function drawLine(points, color, lineWidth, progress) {
+  const totalPoints = points.length;
+  const revealIndex = progress * (totalPoints - 1);
+  const lastFullIndex = Math.floor(revealIndex);
+
+  if (lastFullIndex < 0) return;
+
+  ctx.beginPath();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lineWidth;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.moveTo(points[0].x, points[0].y);
+
+  for (let i = 1; i <= lastFullIndex && i < totalPoints; i++) {
+    ctx.lineTo(points[i].x, points[i].y);
+  }
+
+  if (lastFullIndex < totalPoints - 1) {
+    const frac = revealIndex - lastFullIndex;
+    const px = points[lastFullIndex].x + (points[lastFullIndex + 1].x - points[lastFullIndex].x) * frac;
+    const py = points[lastFullIndex].y + (points[lastFullIndex + 1].y - points[lastFullIndex].y) * frac;
+    ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+}
+
+function draw(timestamp) {
+  if (!startTime) startTime = timestamp;
+  const elapsed = timestamp - startTime;
+  const progress = Math.min(elapsed / duration, 1);
+  const easedProgress = easeOutCubic(progress);
+
+  dims = resize();
+  const { w, h } = dims;
+  const chartW = w - padding.left - padding.right;
+  const chartH = h - padding.top - padding.bottom;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Grid
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = '#1A1A1A';
+  ctx.lineWidth = 0.5;
+  yTicks.forEach((val, i) => {
+    const y = padding.top + chartH - (val / maxVal) * chartH;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(w - padding.right, y);
+    ctx.stroke();
+    ctx.fillStyle = '#555';
+    ctx.font = (isMobile ? '9px' : '11px') + ' system-ui';
+    ctx.textAlign = 'right';
+    ctx.fillText(yLabels[i], padding.left - 8, y + 4);
+  });
+  ctx.setLineDash([]);
+
+  // Backlinks points
+  const blPoints = backlinks.map((val, i) => ({
+    x: padding.left + (i / (backlinks.length - 1)) * chartW,
+    y: padding.top + chartH - (val / maxVal) * chartH,
+  }));
+
+  // Ref domains points
+  const rdPoints = refDomains.map((val, i) => ({
+    x: padding.left + (i / (refDomains.length - 1)) * chartW,
+    y: padding.top + chartH - (val / maxVal) * chartH,
+  }));
+
+  drawLine(rdPoints, '#FF7A6B', 2, easedProgress);
+  drawLine(blPoints, '#FB3B24', 2.5, easedProgress);
+
+  // Tip glow for backlinks
+  const revealIndex = easedProgress * (blPoints.length - 1);
+  const lastFull = Math.floor(revealIndex);
+  if (lastFull >= 0) {
+    const frac = revealIndex - lastFull;
+    const tipIdx = Math.min(lastFull + 1, blPoints.length - 1);
+    const tipX = lastFull < blPoints.length - 1
+      ? blPoints[lastFull].x + (blPoints[tipIdx].x - blPoints[lastFull].x) * frac
+      : blPoints[blPoints.length - 1].x;
+    const tipY = lastFull < blPoints.length - 1
+      ? blPoints[lastFull].y + (blPoints[tipIdx].y - blPoints[lastFull].y) * frac
+      : blPoints[blPoints.length - 1].y;
+    ctx.beginPath();
+    ctx.arc(tipX, tipY, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#FB3B24';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(tipX, tipY, 8, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(251,59,36,0.2)';
+    ctx.fill();
+  }
+
+  // X labels
+  ctx.fillStyle = '#555';
+  ctx.font = (isMobile ? '8px' : '10px') + ' system-ui';
+  ctx.textAlign = 'center';
+  const labelStep = isMobile ? 2 : 1;
+  for (let i = 0; i < labels.length; i += labelStep) {
+    const x = padding.left + (i / (labels.length - 1)) * chartW;
+    ctx.fillText(labels[i], x, h - 4);
+  }
+
+  if (progress < 1) requestAnimationFrame(draw);
+}
+
+requestAnimationFrame(draw);
+window.addEventListener('resize', () => { startTime = null; requestAnimationFrame(draw); });
+</script>
+</body>
+</html>
