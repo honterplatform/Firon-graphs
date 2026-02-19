@@ -6,26 +6,30 @@
 <title>robots.txt</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
   body {
-    background: #0d1117;
-    font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
-    color: #e6edf3;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
+    background: #0A0A0A;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
   }
-  .terminal {
-    background: #161b22;
-    border-radius: 12px;
-    padding: 24px 28px;
+  .card {
+    background: #0F0F0F;
+    border-radius: 16px;
+    padding: 28px;
     width: 100%;
-    max-width: 900px;
+    height: 100%;
     overflow: hidden;
   }
+  .card-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #ccc;
+  }
+  .terminal { overflow: hidden; }
   .line {
-    font-size: 14px;
+    font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+    font-size: 13px;
     line-height: 1.7;
     white-space: pre;
     opacity: 0;
@@ -37,13 +41,13 @@
     transform: translateX(0);
   }
   .comment { color: #6a737d; }
-  .keyword { color: #5CC8C8; }
+  .keyword { color: #FB3B24; }
   .value { color: #e6edf3; }
   .cursor {
     display: inline-block;
-    width: 8px;
-    height: 16px;
-    background: #5CC8C8;
+    width: 7px;
+    height: 14px;
+    background: #FB3B24;
     vertical-align: text-bottom;
     animation: blink 1s step-end infinite;
     opacity: 0;
@@ -57,8 +61,15 @@
 </style>
 </head>
 <body>
-<div class="terminal" id="terminal"></div>
+<div class="card">
+  <div class="card-title">robots.txt</div>
+  <div class="terminal" id="terminal"></div>
+</div>
 <script>
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
 const lines = [
   { type: 'comment', text: '# Google adsbot ignores robots.txt unless specifically named!' },
   { type: 'kv', key: 'User-agent:', value: ' adsbot-google' },
@@ -72,10 +83,10 @@ const lines = [
   { type: 'kv', key: 'Disallow:', value: ' /*preview_theme_id*' },
   { type: 'kv', key: 'Disallow:', value: ' /*preview_script_id*' },
   { type: 'kv', key: 'Disallow:', value: ' /cdn/wpm/*.js' },
-  { type: 'kv', key: 'Disallow:', value: ' /products/*-[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9]-remote' },
-  { type: 'kv', key: 'Disallow:', value: ' /*/products/*-[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9]-remote' },
-  { type: 'kv', key: 'Disallow:', value: ' /collections/*/products/*-[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9]-remote' },
-  { type: 'kv', key: 'Disallow:', value: ' /*/collections/*/products/*-[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9]-remote' },
+  { type: 'kv', key: 'Disallow:', value: ' /products/*-[a-f0-9]...-remote' },
+  { type: 'kv', key: 'Disallow:', value: ' /*/products/*-[a-f0-9]...-remote' },
+  { type: 'kv', key: 'Disallow:', value: ' /collections/*/products/*-...-remote' },
+  { type: 'kv', key: 'Disallow:', value: ' /*/collections/*/products/*-...-remote' },
   { type: 'kv', key: 'Disallow:', value: ' /sf_private_access_tokens' },
 ];
 
@@ -95,12 +106,7 @@ lines.forEach((line, i) => {
   terminal.appendChild(el);
 });
 
-function escapeHtml(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
 const lineEls = document.querySelectorAll('.line');
-const stagger = 100;
 
 lineEls.forEach((el, i) => {
   setTimeout(() => {
@@ -108,7 +114,7 @@ lineEls.forEach((el, i) => {
     if (i === lines.length - 1) {
       setTimeout(() => document.getElementById('cursor').classList.add('visible'), 200);
     }
-  }, 300 + i * stagger);
+  }, 200 + i * 90);
 });
 </script>
 </body>

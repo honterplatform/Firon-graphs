@@ -6,41 +6,36 @@
 <title>Citations Sources</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
   body {
-    background: #1a1a2e;
+    background: #0A0A0A;
     font-family: system-ui, -apple-system, sans-serif;
     color: #fff;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
   }
   .card {
-    background: #16162a;
+    background: #0F0F0F;
     border-radius: 16px;
-    padding: 28px 32px;
+    padding: 28px;
     width: 100%;
-    max-width: 700px;
+    height: 100%;
   }
   .header {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     margin-bottom: 20px;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
+    color: #ccc;
   }
   .at-icon {
     width: 24px; height: 24px;
-    background: #9B59B6;
+    background: #FB3B24;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
   }
   .info-icon {
@@ -56,44 +51,44 @@
   table { width: 100%; border-collapse: collapse; }
   thead th {
     text-align: left;
-    padding: 12px 16px;
-    background: #222240;
-    font-size: 12px;
+    padding: 10px 14px;
+    background: #1A1A1A;
+    font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    color: #999;
+    color: #777;
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-8px);
     transition: opacity 0.4s ease, transform 0.4s ease;
   }
   thead th.visible { opacity: 1; transform: translateY(0); }
-  thead th:first-child { border-radius: 8px 0 0 8px; }
-  thead th:last-child { border-radius: 0 8px 8px 0; }
-  .sort-arrow { color: #555; margin-left: 4px; }
+  thead th:first-child { border-radius: 6px 0 0 6px; }
+  thead th:last-child { border-radius: 0 6px 6px 0; }
+  .sort-arrow { color: #444; margin-left: 3px; }
   tbody tr {
     opacity: 0;
-    transform: translateX(-20px);
+    transform: translateX(-16px);
     transition: opacity 0.4s ease, transform 0.4s ease;
   }
   tbody tr.visible { opacity: 1; transform: translateX(0); }
   tbody td {
-    padding: 14px 16px;
-    border-bottom: 1px solid #1e1e38;
-    font-size: 14px;
+    padding: 12px 14px;
+    border-bottom: 1px solid #1A1A1A;
+    font-size: 13px;
   }
   .domain-cell {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
   }
   .domain-icon {
-    width: 28px; height: 28px;
-    border-radius: 6px;
+    width: 26px; height: 26px;
+    border-radius: 5px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
     color: #fff;
     flex-shrink: 0;
@@ -121,15 +116,15 @@
 </div>
 <script>
 const rows = [
-  { domain: 'magneticme.com', count: 2200, countLabel: '2.2K', share: 33, color: '#9B59B6', letter: 'm' },
-  { domain: 'reddit.com', count: 936, countLabel: '936', share: 10, color: '#E74C3C', letter: 'r' },
-  { domain: 'reviewed.com', count: 468, countLabel: '468', share: 14, color: '#3498DB', letter: 'r' },
-  { domain: 'anbbaby.com', count: 305, countLabel: '305', share: 11, color: '#27AE60', letter: 'a' },
-  { domain: 'kidpik.com', count: 275, countLabel: '275', share: 11, color: '#2C3E50', letter: 'K' },
-  { domain: 'juneadaptive.com', count: 257, countLabel: '257', share: 14, color: '#8E44AD', letter: 'J' },
-  { domain: 'amazon.com', count: 220, countLabel: '220', share: 5, color: '#2C3E50', letter: 'a' },
-  { domain: 'magnaready.com', count: 197, countLabel: '197', share: 13, color: '#E74C3C', letter: 'M' },
-  { domain: 'gorgias.help', count: 196, countLabel: '196', share: 13, color: '#95A5A6', letter: 'g' },
+  { domain: 'magneticme.com', count: 2200, countLabel: '2.2K', share: 33, color: '#FB3B24', letter: 'm' },
+  { domain: 'reddit.com', count: 936, countLabel: '936', share: 10, color: '#C42E1B', letter: 'r' },
+  { domain: 'reviewed.com', count: 468, countLabel: '468', share: 14, color: '#FF7A6B', letter: 'r' },
+  { domain: 'anbbaby.com', count: 305, countLabel: '305', share: 11, color: '#FC5844', letter: 'a' },
+  { domain: 'kidpik.com', count: 275, countLabel: '275', share: 11, color: '#FFB0A5', letter: 'K' },
+  { domain: 'juneadaptive.com', count: 257, countLabel: '257', share: 14, color: '#FB3B24', letter: 'J' },
+  { domain: 'amazon.com', count: 220, countLabel: '220', share: 5, color: '#333', letter: 'a' },
+  { domain: 'magnaready.com', count: 197, countLabel: '197', share: 13, color: '#FF7A6B', letter: 'M' },
+  { domain: 'gorgias.help', count: 196, countLabel: '196', share: 13, color: '#555', letter: 'g' },
 ];
 
 const tbody = document.getElementById('tbody');
@@ -146,18 +141,16 @@ rows.forEach(r => {
 
 function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
 
-// Animate header
 setTimeout(() => {
   document.querySelectorAll('thead th').forEach(th => th.classList.add('visible'));
-}, 200);
+}, 150);
 
-// Animate rows
 const trEls = document.querySelectorAll('tbody tr');
 trEls.forEach((tr, i) => {
   setTimeout(() => {
     tr.classList.add('visible');
     animateCounters(tr);
-  }, 500 + i * 80);
+  }, 400 + i * 80);
 });
 
 function animateCounters(tr) {
@@ -166,7 +159,7 @@ function animateCounters(tr) {
   const countTarget = parseInt(countCell.dataset.target);
   const countLabel = countCell.dataset.label;
   const shareTarget = parseInt(shareCell.dataset.target);
-  const duration = 1000;
+  const duration = 900;
   const start = performance.now();
 
   function tick(now) {

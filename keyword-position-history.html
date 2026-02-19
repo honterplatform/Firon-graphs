@@ -6,22 +6,18 @@
 <title>Org. Keyword Position History</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
   body {
-    background: #1a1a2e;
+    background: #0A0A0A;
     font-family: system-ui, -apple-system, sans-serif;
     color: #fff;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
   }
   .card {
-    background: #16162a;
+    background: #0F0F0F;
     border-radius: 16px;
     padding: 24px 28px;
     width: 100%;
-    max-width: 1000px;
+    height: 100%;
   }
   .title {
     font-size: 15px;
@@ -40,18 +36,16 @@
     align-items: center;
     gap: 6px;
     font-size: 12px;
-    color: #aaa;
+    color: #888;
   }
   .legend-box {
-    width: 16px; height: 16px;
+    width: 14px; height: 14px;
     border-radius: 3px;
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-  .legend-box .check {
+    font-size: 9px;
     color: #fff;
-    font-size: 10px;
     font-weight: 700;
   }
   canvas { display: block; width: 100%; }
@@ -61,12 +55,12 @@
 <div class="card">
   <div class="title">Org. Keyword Position History</div>
   <div class="legend">
-    <div class="legend-item"><div class="legend-box" style="background:#2ECC71"><span class="check">&check;</span></div>Top 3</div>
-    <div class="legend-item"><div class="legend-box" style="background:#E74C3C"><span class="check">&check;</span></div>Position 4 - 10</div>
-    <div class="legend-item"><div class="legend-box" style="background:#FF6B9D"><span class="check">&check;</span></div>Position 11 - 20</div>
-    <div class="legend-item"><div class="legend-box" style="background:#5DADE2"><span class="check">&check;</span></div>Position 21 - 50</div>
-    <div class="legend-item"><div class="legend-box" style="background:#3478C6"><span class="check">&check;</span></div>Position 51 - 100</div>
-    <div class="legend-item"><div class="legend-box" style="background:#F5D76E"><span class="check">&check;</span></div>SERP Features</div>
+    <div class="legend-item"><div class="legend-box" style="background:#C42E1B">&check;</div>Top 3</div>
+    <div class="legend-item"><div class="legend-box" style="background:#FB3B24">&check;</div>Position 4 - 10</div>
+    <div class="legend-item"><div class="legend-box" style="background:#FC5844">&check;</div>Position 11 - 20</div>
+    <div class="legend-item"><div class="legend-box" style="background:#FF7A6B">&check;</div>Position 21 - 50</div>
+    <div class="legend-item"><div class="legend-box" style="background:#FFB0A5">&check;</div>Position 51 - 100</div>
+    <div class="legend-item"><div class="legend-box" style="background:#FDD8D3">&check;</div>SERP Features</div>
   </div>
   <canvas id="chart"></canvas>
 </div>
@@ -90,36 +84,29 @@ function resize() {
 const labels = ['Jan 12','Sep 12','May 13','Jan 14','Sep 14','May 15','Jan 16','Sep 16','May 17','Jan 18','Sep 18','May 19','Jan 20','Sep 20','May 21','Jan 22','Sep 22','May 23','Jan 24','Sep 24','May 25','Feb 26'];
 
 const categories = [
-  { name: 'SERP Features', color: '#F5D76E' },
-  { name: 'Position 51-100', color: '#3478C6' },
-  { name: 'Position 21-50', color: '#5DADE2' },
-  { name: 'Position 11-20', color: '#FF6B9D' },
-  { name: 'Position 4-10', color: '#E74C3C' },
-  { name: 'Top 3', color: '#2ECC71' },
+  { name: 'SERP Features', color: '#FDD8D3' },
+  { name: 'Position 51-100', color: '#FFB0A5' },
+  { name: 'Position 21-50', color: '#FF7A6B' },
+  { name: 'Position 11-20', color: '#FC5844' },
+  { name: 'Position 4-10', color: '#FB3B24' },
+  { name: 'Top 3', color: '#C42E1B' },
 ];
 
-// Generate realistic growth data
 function generateData() {
   const data = [];
   for (let i = 0; i < labels.length; i++) {
     let total;
-    if (i < 8) total = Math.random() * 10 + 2;          // Jan 12 - Sep 16: near zero
-    else if (i < 10) total = Math.random() * 30 + 10;    // May 17 - Jan 18: tiny
-    else if (i < 12) total = Math.random() * 200 + 100;  // Sep 18 - May 19: small growth
-    else if (i < 14) total = Math.random() * 400 + 400;  // Jan 20 - Sep 20: moderate
-    else if (i < 16) total = Math.random() * 500 + 700;  // May 21 - Jan 22: steady
-    else if (i < 18) total = Math.random() * 600 + 1200;  // Sep 22 - May 23: bigger
-    else if (i < 20) total = Math.random() * 800 + 2400;  // Jan 24 - Sep 24: rapid
-    else if (i === 20) total = 3800 + Math.random() * 400; // May 25
-    else total = 4800 + Math.random() * 400;               // Feb 26
+    if (i < 8) total = Math.random() * 10 + 2;
+    else if (i < 10) total = Math.random() * 30 + 10;
+    else if (i < 12) total = Math.random() * 200 + 100;
+    else if (i < 14) total = Math.random() * 400 + 400;
+    else if (i < 16) total = Math.random() * 500 + 700;
+    else if (i < 18) total = Math.random() * 600 + 1200;
+    else if (i < 20) total = Math.random() * 800 + 2400;
+    else if (i === 20) total = 3800 + Math.random() * 400;
+    else total = 4800 + Math.random() * 400;
 
-    const top3 = total * (0.18 + Math.random() * 0.08);
-    const p410 = total * (0.15 + Math.random() * 0.06);
-    const p1120 = total * (0.12 + Math.random() * 0.05);
-    const p2150 = total * (0.2 + Math.random() * 0.06);
-    const p51100 = total * (0.18 + Math.random() * 0.06);
-    const serp = total * (0.05 + Math.random() * 0.04);
-    data.push([serp, p51100, p2150, p1120, p410, top3]);
+    data.push([total*0.06, total*0.2, total*0.22, total*0.14, total*0.17, total*0.21]);
   }
   return data;
 }
@@ -149,8 +136,7 @@ function draw(timestamp) {
 
   ctx.clearRect(0, 0, w, h);
 
-  // Grid lines
-  ctx.strokeStyle = '#2a2a44';
+  ctx.strokeStyle = '#1A1A1A';
   ctx.lineWidth = 0.5;
   yTicks.forEach((val, i) => {
     const y = padding.top + chartH - (val / maxVal) * chartH;
@@ -158,16 +144,14 @@ function draw(timestamp) {
     ctx.moveTo(padding.left, y);
     ctx.lineTo(w - padding.right, y);
     ctx.stroke();
-    ctx.fillStyle = '#666';
+    ctx.fillStyle = '#555';
     ctx.font = '11px system-ui';
     ctx.textAlign = 'right';
     ctx.fillText(yLabels[i], padding.left - 8, y + 4);
   });
 
-  // Bars
   const barW = Math.max(2, (chartW / data.length) * 0.7);
   const gap = chartW / data.length;
-
   const barsToShow = Math.ceil(easedProgress * data.length);
 
   for (let i = 0; i < barsToShow; i++) {
@@ -185,8 +169,7 @@ function draw(timestamp) {
     }
   }
 
-  // X-axis labels (show every 3rd)
-  ctx.fillStyle = '#666';
+  ctx.fillStyle = '#555';
   ctx.font = '10px system-ui';
   ctx.textAlign = 'center';
   for (let i = 0; i < labels.length; i += 2) {

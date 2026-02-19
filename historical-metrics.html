@@ -6,22 +6,18 @@
 <title>Historical Metrics</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
   body {
-    background: #1a1a2e;
+    background: #0A0A0A;
     font-family: system-ui, -apple-system, sans-serif;
     color: #fff;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
   }
   .card {
-    background: #16162a;
+    background: #0F0F0F;
     border-radius: 16px;
     padding: 24px 28px;
     width: 100%;
-    max-width: 1000px;
+    height: 100%;
   }
   .top-bar {
     display: flex;
@@ -40,13 +36,13 @@
     font-size: 12px;
   }
   .time-range span {
-    color: #666;
+    color: #555;
     cursor: pointer;
     padding: 2px 4px;
   }
   .time-range span.active {
-    color: #BB8FCE;
-    border-bottom: 2px solid #BB8FCE;
+    color: #FB3B24;
+    border-bottom: 2px solid #FB3B24;
   }
   .legend {
     display: flex;
@@ -78,10 +74,10 @@
     </div>
   </div>
   <div class="legend">
-    <div class="legend-item"><div class="legend-box" style="background:#5DADE2"></div>Organic keywords</div>
-    <div class="legend-item active"><div class="legend-box" style="background:#BB8FCE"></div>Organic Traffic</div>
-    <div class="legend-item"><div class="legend-box" style="background:#E8845A"></div>Paid Keywords</div>
-    <div class="legend-item"><div class="legend-box" style="background:#F5D76E"></div>Paid Traffic</div>
+    <div class="legend-item"><div class="legend-box" style="background:#555"></div>Organic keywords</div>
+    <div class="legend-item active"><div class="legend-box" style="background:#FB3B24"></div>Organic Traffic</div>
+    <div class="legend-item"><div class="legend-box" style="background:#FF7A6B"></div>Paid Keywords</div>
+    <div class="legend-item"><div class="legend-box" style="background:#FFB0A5"></div>Paid Traffic</div>
   </div>
   <canvas id="chart"></canvas>
 </div>
@@ -104,12 +100,11 @@ function resize() {
 
 const labels = ['Jan 12','Oct 12','Jul 13','Apr 14','Jan 15','Oct 15','Jul 16','Apr 17','Jan 18','Oct 18','Jul 19','Apr 20','Jan 21','Oct 21','Jul 22','Apr 23','Jan 24','Oct 24','Jul 25','Feb 26'];
 
-// Organic traffic data matching the growth curve
 const values = [
-  200, 300, 400, 500, 600, 700, 800, 1200,    // Jan 12 - Apr 17: flat/very low
-  2000, 4500, 8000, 12000,                      // Jan 18 - Apr 20: gradual climb
-  18000, 28000, 38000, 55000,                    // Jan 21 - Apr 23: steeper
-  58000, 62000, 64000, 66800                     // Jan 24 - Feb 26: near peak
+  200, 300, 400, 500, 600, 700, 800, 1200,
+  2000, 4500, 8000, 12000,
+  18000, 28000, 38000, 55000,
+  58000, 62000, 64000, 66800
 ];
 
 const maxVal = 66800;
@@ -137,9 +132,8 @@ function draw(timestamp) {
 
   ctx.clearRect(0, 0, w, h);
 
-  // Grid lines (dashed)
   ctx.setLineDash([4, 4]);
-  ctx.strokeStyle = '#2a2a44';
+  ctx.strokeStyle = '#1A1A1A';
   ctx.lineWidth = 0.5;
   yTicks.forEach((val, i) => {
     const y = padding.top + chartH - (val / maxVal) * chartH;
@@ -147,29 +141,25 @@ function draw(timestamp) {
     ctx.moveTo(padding.left, y);
     ctx.lineTo(w - padding.right, y);
     ctx.stroke();
-    // Y labels on right
-    ctx.fillStyle = i === yTicks.length - 1 ? '#2ECC71' : '#555';
+    ctx.fillStyle = i === yTicks.length - 1 ? '#FB3B24' : '#555';
     ctx.font = i === yTicks.length - 1 ? 'bold 11px system-ui' : '11px system-ui';
     ctx.textAlign = 'left';
     ctx.fillText(yLabels[i], w - padding.right + 8, y + 4);
   });
   ctx.setLineDash([]);
 
-  // Calculate points
   const points = values.map((val, i) => ({
     x: padding.left + (i / (values.length - 1)) * chartW,
     y: padding.top + chartH - (val / maxVal) * chartH,
   }));
 
-  // Draw line up to current progress
   const totalPoints = points.length;
   const revealIndex = easedProgress * (totalPoints - 1);
   const lastFullIndex = Math.floor(revealIndex);
 
   if (lastFullIndex >= 0) {
-    // Line
     ctx.beginPath();
-    ctx.strokeStyle = '#BB8FCE';
+    ctx.strokeStyle = '#FB3B24';
     ctx.lineWidth = 2.5;
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
@@ -179,7 +169,6 @@ function draw(timestamp) {
       ctx.lineTo(points[i].x, points[i].y);
     }
 
-    // Interpolate to partial next point
     if (lastFullIndex < totalPoints - 1) {
       const frac = revealIndex - lastFullIndex;
       const px = points[lastFullIndex].x + (points[lastFullIndex + 1].x - points[lastFullIndex].x) * frac;
@@ -188,7 +177,6 @@ function draw(timestamp) {
     }
     ctx.stroke();
 
-    // Glow dot at the tip
     const tipIdx = Math.min(lastFullIndex + 1, totalPoints - 1);
     const frac = revealIndex - lastFullIndex;
     const tipX = lastFullIndex < totalPoints - 1
@@ -200,15 +188,14 @@ function draw(timestamp) {
 
     ctx.beginPath();
     ctx.arc(tipX, tipY, 4, 0, Math.PI * 2);
-    ctx.fillStyle = '#BB8FCE';
+    ctx.fillStyle = '#FB3B24';
     ctx.fill();
     ctx.beginPath();
     ctx.arc(tipX, tipY, 8, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(187,143,206,0.2)';
+    ctx.fillStyle = 'rgba(251,59,36,0.2)';
     ctx.fill();
   }
 
-  // X-axis labels (show every 2nd)
   ctx.fillStyle = '#555';
   ctx.font = '10px system-ui';
   ctx.textAlign = 'center';
