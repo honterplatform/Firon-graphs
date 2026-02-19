@@ -61,6 +61,13 @@
     border-radius: 3px;
   }
   canvas { display: block; width: 100%; }
+  @media (max-width: 480px) {
+    .title { font-size: 13px; }
+    .time-range { gap: 6px; font-size: 10px; }
+    .legend { gap: 8px; margin-bottom: 10px; }
+    .legend-item { font-size: 10px; }
+    .legend-box { width: 10px; height: 10px; }
+  }
 </style>
 </head>
 <body>
@@ -111,7 +118,8 @@ const maxVal = 66800;
 const yTicks = [0, 10000, 20000, 30000, 40000, 50000, 60000, 66800];
 const yLabels = ['0', '10K', '20K', '30K', '40K', '50K', '60K', '66.8K'];
 
-const padding = { left: 10, right: 50, top: 8, bottom: 40 };
+const isMobile = window.innerWidth <= 480;
+const padding = { left: 10, right: isMobile ? 40 : 50, top: 8, bottom: isMobile ? 30 : 40 };
 
 function easeInOutCubic(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2; }
 
@@ -141,8 +149,9 @@ function draw(timestamp) {
     ctx.moveTo(padding.left, y);
     ctx.lineTo(w - padding.right, y);
     ctx.stroke();
+    const fontSize = isMobile ? '9px' : '11px';
     ctx.fillStyle = i === yTicks.length - 1 ? '#FB3B24' : '#555';
-    ctx.font = i === yTicks.length - 1 ? 'bold 11px system-ui' : '11px system-ui';
+    ctx.font = i === yTicks.length - 1 ? `bold ${fontSize} system-ui` : `${fontSize} system-ui`;
     ctx.textAlign = 'left';
     ctx.fillText(yLabels[i], w - padding.right + 8, y + 4);
   });
@@ -197,11 +206,12 @@ function draw(timestamp) {
   }
 
   ctx.fillStyle = '#555';
-  ctx.font = '10px system-ui';
+  ctx.font = isMobile ? '8px system-ui' : '10px system-ui';
   ctx.textAlign = 'center';
-  for (let i = 0; i < labels.length; i += 2) {
+  const labelStep = isMobile ? 4 : 2;
+  for (let i = 0; i < labels.length; i += labelStep) {
     const x = padding.left + (i / (labels.length - 1)) * chartW;
-    ctx.fillText(labels[i], x, h - 8);
+    ctx.fillText(labels[i], x, h - 4);
   }
 
   if (progress < 1) requestAnimationFrame(draw);

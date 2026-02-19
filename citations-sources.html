@@ -92,6 +92,13 @@
     flex-shrink: 0;
   }
   .count-cell, .share-cell { font-variant-numeric: tabular-nums; }
+  @media (max-width: 480px) {
+    .header { font-size: 13px; margin-bottom: 12px; }
+    thead th { padding: 8px 8px; font-size: 10px; }
+    tbody td { padding: 8px 8px; font-size: 11px; }
+    .domain-icon { width: 20px; height: 20px; font-size: 10px; }
+    .domain-cell { gap: 6px; }
+  }
 </style>
 </head>
 <body>
