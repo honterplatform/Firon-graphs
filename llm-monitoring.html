@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM Monitoring</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0A0A0A;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+  }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ccc;
+  }
+  .count {
+    font-size: 11px;
+    color: #555;
+  }
+  .count span { color: #FB3B24; font-weight: 600; }
+  .monitor-list {
+    overflow-y: auto;
+    height: calc(100% - 34px);
+  }
+  .monitor-list::-webkit-scrollbar { display: none; }
+  .monitor-row {
+    display: flex;
+    align-items: center;
+    padding: 7px 0;
+    border-bottom: 1px solid #1A1A1A;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .monitor-row.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #FB3B24;
+    margin-right: 10px;
+    flex-shrink: 0;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(251,59,36,0.4); }
+    50% { opacity: 0.6; box-shadow: 0 0 0 4px rgba(251,59,36,0); }
+  }
+  .model-info {
+    width: 110px;
+    flex-shrink: 0;
+  }
+  .model-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #ccc;
+    line-height: 1.2;
+  }
+  .model-provider {
+    font-size: 10px;
+    color: #555;
+    line-height: 1.2;
+  }
+  .activity {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 20px;
+    margin: 0 12px;
+    overflow: hidden;
+  }
+  .bar-seg {
+    width: 3px;
+    background: #FB3B24;
+    border-radius: 1px;
+    animation: barPulse var(--dur) ease-in-out infinite;
+    animation-delay: var(--delay);
+  }
+  @keyframes barPulse {
+    0%, 100% { height: var(--min-h); opacity: 0.3; }
+    50% { height: var(--max-h); opacity: 0.85; }
+  }
+  .status-label {
+    font-size: 10px;
+    color: #FB3B24;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    width: 46px;
+    text-align: right;
+  }
+  @media (max-width: 480px) {
+    .header { margin-bottom: 6px; }
+    .title { font-size: 13px; }
+    .count { font-size: 10px; }
+    .model-info { width: 82px; }
+    .model-name { font-size: 11px; }
+    .model-provider { font-size: 9px; }
+    .activity { margin: 0 6px; gap: 1.5px; }
+    .bar-seg { width: 2px; }
+    .status-label { font-size: 8px; width: 36px; }
+    .status-dot { width: 5px; height: 5px; margin-right: 6px; }
+    .monitor-row { padding: 5px 0; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="title">Base Model Monitoring</div>
+    <div class="count"><span>12</span> LLMs via direct API</div>
+  </div>
+  <div class="monitor-list" id="list"></div>
+</div>
+<script>
+const models = [
+  { name: 'ChatGPT', provider: 'OpenAI' },
+  { name: 'GPT-4o', provider: 'OpenAI' },
+  { name: 'Gemini', provider: 'Google' },
+  { name: 'Claude', provider: 'Anthropic' },
+  { name: 'Llama 3', provider: 'Meta' },
+  { name: 'Mistral', provider: 'Mistral AI' },
+  { name: 'Grok', provider: 'xAI' },
+  { name: 'Perplexity', provider: 'Perplexity AI' },
+  { name: 'Command R+', provider: 'Cohere' },
+  { name: 'DeepSeek', provider: 'DeepSeek' },
+  { name: 'Qwen', provider: 'Alibaba' },
+  { name: 'Copilot', provider: 'Microsoft' },
+];
+
+const list = document.getElementById('list');
+const barCount = 24;
+
+models.forEach((model, idx) => {
+  const row = document.createElement('div');
+  row.className = 'monitor-row';
+
+  let bars = '';
+  for (let i = 0; i < barCount; i++) {
+    const dur = (1 + Math.random() * 1.8).toFixed(2);
+    const delay = (Math.random() * 2).toFixed(2);
+    const minH = (2 + Math.random() * 2).toFixed(0);
+    const maxH = (6 + Math.random() * 14).toFixed(0);
+    bars += '<div class="bar-seg" style="--dur:' + dur + 's;--delay:' + delay + 's;--min-h:' + minH + 'px;--max-h:' + maxH + 'px"></div>';
+  }
+
+  row.innerHTML =
+    '<div class="status-dot" style="animation-delay:' + (idx * 0.3).toFixed(1) + 's"></div>' +
+    '<div class="model-info"><div class="model-name">' + model.name + '</div><div class="model-provider">' + model.provider + '</div></div>' +
+    '<div class="activity">' + bars + '</div>' +
+    '<div class="status-label">Active</div>';
+
+  list.appendChild(row);
+});
+
+const rows = document.querySelectorAll('.monitor-row');
+rows.forEach((row, i) => {
+  setTimeout(() => row.classList.add('visible'), 150 + i * 80);
+});
+</script>
+</body>
+</html>
