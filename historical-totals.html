@@ -65,7 +65,6 @@
     <div class="title">Historical totals</div>
     <div class="legend">
       <div class="legend-item"><div class="legend-box" style="background:#FB3B24">&check;</div>Backlinks</div>
-      <div class="legend-item"><div class="legend-box" style="background:#FF7A6B">&check;</div>Ref. Domains</div>
     </div>
   </div>
   <canvas id="chart"></canvas>
@@ -186,7 +185,6 @@ function draw(timestamp) {
     y: padding.top + chartH - (val / maxVal) * chartH,
   }));
 
-  drawLine(rdPoints, '#FF7A6B', 2, easedProgress);
   drawLine(blPoints, '#FB3B24', 2.5, easedProgress);
 
   // Tip glow for backlinks
