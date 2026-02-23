@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creative Funnel</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0A0A0A;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+  }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+  }
+  .title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ccc;
+  }
+  .velocity {
+    font-size: 11px;
+    color: #555;
+  }
+  .velocity span { color: #FB3B24; font-weight: 600; }
+  .funnel-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    min-height: 0;
+  }
+  .stage {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .stage.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .stage-label {
+    width: 90px;
+    flex-shrink: 0;
+    text-align: right;
+  }
+  .stage-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .stage-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ccc;
+    font-variant-numeric: tabular-nums;
+  }
+  .bar-area {
+    flex: 1;
+    position: relative;
+    display: flex;
+    justify-content: center;
+  }
+  .bar-bg {
+    height: 32px;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    transition: width 1s ease;
+    width: 0%;
+  }
+  .bar-bg.visible {
+    width: var(--target-w);
+  }
+  .bar-fill {
+    position: absolute;
+    inset: 0;
+    border-radius: 4px;
+  }
+  .bar-shimmer {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    animation: shimmer 2.5s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0% { left: -60%; }
+    100% { left: 120%; }
+  }
+  .connector {
+    display: flex;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .connector.visible { opacity: 1; }
+  .connector-line {
+    width: 90px;
+    margin-left: 90px;
+  }
+  .dots {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+  }
+  .dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: #FB3B24;
+    animation: flowDot 1.2s ease-in-out infinite;
+  }
+  .dot:nth-child(1) { animation-delay: 0s; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes flowDot {
+    0%, 100% { opacity: 0.15; }
+    50% { opacity: 0.8; }
+  }
+  .rate {
+    width: 50px;
+    flex-shrink: 0;
+    text-align: left;
+    font-size: 11px;
+    color: #555;
+    font-variant-numeric: tabular-nums;
+    padding-left: 6px;
+  }
+  .rate span { color: #FB3B24; }
+  @media (max-width: 480px) {
+    .title { font-size: 13px; }
+    .velocity { font-size: 10px; }
+    .stage-label { width: 66px; }
+    .stage-name { font-size: 9px; }
+    .stage-value { font-size: 14px; }
+    .bar-bg { height: 24px; }
+    .rate { font-size: 9px; width: 40px; }
+    .stage { gap: 6px; }
+    .connector-line { margin-left: 66px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="title">Creative Funnel</div>
+    <div class="velocity"><span>High-Velocity</span> Pipeline</div>
+  </div>
+  <div class="funnel-wrap" id="funnel"></div>
+</div>
+<script>
+var stages = [
+  { name: 'Impressions', target: 2400000, color: '#FB3B24', width: 100 },
+  { name: 'Clicks', target: 168000, color: '#FC5844', width: 72 },
+  { name: 'Conversions', target: 14200, color: '#FF7A6B', width: 44 },
+  { name: 'Revenue', target: 840000, color: '#FFB0A5', width: 24, prefix: '$' },
+];
+
+var rates = ['7.0%', '8.5%', '59.2x'];
+
+function formatNum(n, prefix) {
+  prefix = prefix || '';
+  if (n >= 1000000) return prefix + (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return prefix + (n / 1000).toFixed(1) + 'K';
+  return prefix + n;
+}
+
+var funnel = document.getElementById('funnel');
+
+stages.forEach(function(s, i) {
+  // Stage row
+  var stage = document.createElement('div');
+  stage.className = 'stage';
+  stage.innerHTML =
+    '<div class="stage-label">' +
+      '<div class="stage-name">' + s.name + '</div>' +
+      '<div class="stage-value" id="val' + i + '">0</div>' +
+    '</div>' +
+    '<div class="bar-area">' +
+      '<div class="bar-bg" style="--target-w:' + s.width + '%">' +
+        '<div class="bar-fill" style="background:' + s.color + '"></div>' +
+        '<div class="bar-shimmer" style="animation-delay:' + (i * 0.4) + 's"></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="rate">' + (i > 0 ? '<span>' + rates[i - 1] + '</span>' : '') + '</div>';
+  funnel.appendChild(stage);
+
+  // Connector (except after last stage)
+  if (i < stages.length - 1) {
+    var conn = document.createElement('div');
+    conn.className = 'connector';
+    conn.innerHTML =
+      '<div class="connector-line"><div class="dots">' +
+        '<div class="dot"></div><div class="dot"></div><div class="dot"></div>' +
+      '</div></div>';
+    funnel.appendChild(conn);
+  }
+});
+
+// Animate reveal
+var stageEls = document.querySelectorAll('.stage');
+var connEls = document.querySelectorAll('.connector');
+var barBgs = document.querySelectorAll('.bar-bg');
+
+stageEls.forEach(function(el, i) {
+  setTimeout(function() {
+    el.classList.add('visible');
+    barBgs[i].classList.add('visible');
+    // Animate counter
+    animateCounter(i);
+    // Show connector after stage
+    if (i < connEls.length) {
+      setTimeout(function() { connEls[i].classList.add('visible'); }, 300);
+    }
+  }, 400 + i * 400);
+});
+
+function animateCounter(idx) {
+  var s = stages[idx];
+  var el = document.getElementById('val' + idx);
+  var dur = 1200;
+  var start = performance.now();
+  function tick(now) {
+    var p = Math.min((now - start) / dur, 1);
+    var eased = 1 - Math.pow(1 - p, 3);
+    var val = Math.round(eased * s.target);
+    el.textContent = formatNum(val, s.prefix);
+    if (p < 1) requestAnimationFrame(tick);
+    else el.textContent = formatNum(s.target, s.prefix);
+  }
+  requestAnimationFrame(tick);
+}
+</script>
+</body>
+</html>
