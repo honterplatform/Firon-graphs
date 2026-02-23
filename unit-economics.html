@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit Economics</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0A0A0A;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+  }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    flex-shrink: 0;
+  }
+  .title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ccc;
+  }
+  .tag {
+    font-size: 10px;
+    color: #FB3B24;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border: 1px solid rgba(251,59,36,0.3);
+    border-radius: 4px;
+    padding: 3px 8px;
+  }
+  .hero {
+    text-align: center;
+    padding: 14px 0 18px;
+    border-bottom: 1px solid #1A1A1A;
+    margin-bottom: 14px;
+    flex-shrink: 0;
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .hero.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .hero-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #555;
+    margin-bottom: 6px;
+  }
+  .hero-value {
+    font-size: 48px;
+    font-weight: 800;
+    color: #FB3B24;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .hero-sub {
+    font-size: 11px;
+    color: #444;
+    margin-top: 6px;
+  }
+  .hero-sub span { color: #888; }
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    flex: 1;
+    min-height: 0;
+  }
+  .metric-cell {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 6px;
+    border-right: 1px solid #1A1A1A;
+    border-bottom: 1px solid #1A1A1A;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .metric-cell.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .metric-cell:nth-child(3n) { border-right: none; }
+  .metric-cell:nth-child(n+4) { border-bottom: none; }
+  .metric-name {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #555;
+    margin-bottom: 4px;
+  }
+  .metric-val {
+    font-size: 22px;
+    font-weight: 700;
+    color: #ccc;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+  .metric-delta {
+    font-size: 10px;
+    margin-top: 3px;
+    font-weight: 600;
+  }
+  .metric-delta.up { color: #FB3B24; }
+  .metric-delta.down { color: #666; }
+  @media (max-width: 480px) {
+    .title { font-size: 13px; }
+    .tag { font-size: 9px; padding: 2px 6px; }
+    .hero { padding: 10px 0 14px; margin-bottom: 10px; }
+    .hero-value { font-size: 36px; }
+    .hero-label { font-size: 10px; }
+    .hero-sub { font-size: 10px; }
+    .metric-val { font-size: 17px; }
+    .metric-name { font-size: 9px; }
+    .metric-delta { font-size: 9px; }
+    .metric-cell { padding: 8px 4px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="title">Unit Economics</div>
+    <div class="tag">DTC &amp; E-commerce</div>
+  </div>
+  <div class="hero" id="hero">
+    <div class="hero-label">LTV : CAC Ratio</div>
+    <div class="hero-value" id="heroVal">0x</div>
+    <div class="hero-sub"><span>$286 LTV</span> / <span>$42 CAC</span></div>
+  </div>
+  <div class="metrics-grid" id="grid"></div>
+</div>
+<script>
+var metrics = [
+  { name: 'CAC', target: 42, prefix: '$', decimals: 0, delta: '-12%', dir: 'up' },
+  { name: 'LTV', target: 286, prefix: '$', decimals: 0, delta: '+34%', dir: 'up' },
+  { name: 'AOV', target: 78, prefix: '$', decimals: 0, delta: '+8%', dir: 'up' },
+  { name: 'MRR', target: 124, prefix: '$', suffix: 'K', decimals: 0, delta: '+22%', dir: 'up' },
+  { name: 'Churn', target: 3.2, prefix: '', suffix: '%', decimals: 1, delta: '-0.8%', dir: 'up' },
+  { name: 'Payback', target: 4.2, prefix: '', suffix: 'mo', decimals: 1, delta: '-1.1mo', dir: 'up' },
+];
+
+var grid = document.getElementById('grid');
+var cellEls = [];
+
+metrics.forEach(function(m) {
+  var cell = document.createElement('div');
+  cell.className = 'metric-cell';
+  cell.innerHTML =
+    '<div class="metric-name">' + m.name + '</div>' +
+    '<div class="metric-val" id="mv-' + m.name + '">0</div>' +
+    '<div class="metric-delta ' + m.dir + '">' + m.delta + '</div>';
+  grid.appendChild(cell);
+  cellEls.push(cell);
+});
+
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+function animateVal(el, target, prefix, suffix, decimals, dur) {
+  prefix = prefix || '';
+  suffix = suffix || '';
+  var start = performance.now();
+  function tick(now) {
+    var p = Math.min((now - start) / dur, 1);
+    var val = easeOutCubic(p) * target;
+    el.textContent = prefix + val.toFixed(decimals) + suffix;
+    if (p < 1) requestAnimationFrame(tick);
+    else el.textContent = prefix + target.toFixed(decimals) + suffix;
+  }
+  requestAnimationFrame(tick);
+}
+
+// Hero reveal
+setTimeout(function() {
+  var hero = document.getElementById('hero');
+  hero.classList.add('visible');
+  var heroEl = document.getElementById('heroVal');
+  var start = performance.now();
+  var dur = 1400;
+  function tickHero(now) {
+    var p = Math.min((now - start) / dur, 1);
+    var val = easeOutCubic(p) * 6.8;
+    heroEl.textContent = val.toFixed(1) + 'x';
+    if (p < 1) requestAnimationFrame(tickHero);
+    else heroEl.textContent = '6.8x';
+  }
+  requestAnimationFrame(tickHero);
+}, 200);
+
+// Grid cells staggered
+cellEls.forEach(function(cell, i) {
+  var m = metrics[i];
+  setTimeout(function() {
+    cell.classList.add('visible');
+    var valEl = cell.querySelector('.metric-val');
+    animateVal(valEl, m.target, m.prefix, m.suffix || '', m.decimals, 1000);
+  }, 600 + i * 150);
+});
+</script>
+</body>
+</html>
