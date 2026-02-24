@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Scaling</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0A0A0A;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+  }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+  }
+  .title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ccc;
+  }
+  .phase-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #555;
+    transition: color 0.4s ease;
+  }
+  .phase-label.after { color: #FB3B24; }
+  .chart-area {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+  }
+  canvas { display: block; }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 10px;
+    flex-shrink: 0;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: #888;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .legend-item.visible { opacity: 1; }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .legend-pct {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    min-width: 28px;
+    color: #ccc;
+    transition: color 0.3s ease;
+  }
+  @media (max-width: 480px) {
+    .title { font-size: 13px; }
+    .legend { gap: 8px; margin-top: 6px; }
+    .legend-item { font-size: 10px; }
+    .legend-dot { width: 8px; height: 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="title">Smart Scaling</div>
+    <div class="phase-label" id="phaseLabel">Before</div>
+  </div>
+  <div class="chart-area">
+    <canvas id="donut"></canvas>
+  </div>
+  <div class="legend" id="legend"></div>
+</div>
+<script>
+var channels = [
+  { name: 'Paid Search', color: '#FB3B24', before: 14, after: 28 },
+  { name: 'Paid Social', color: '#FC5844', before: 12, after: 24 },
+  { name: 'SEO', color: '#FF7A6B', before: 10, after: 20 },
+  { name: 'Email', color: '#FFB0A5', before: 8, after: 16 },
+  { name: 'Direct', color: '#FDD8D3', before: 6, after: 10 },
+  { name: 'Unattributed', color: '#2A2A2A', before: 50, after: 2 },
+];
+
+var canvas = document.getElementById('donut');
+var ctx = canvas.getContext('2d');
+var dpr = window.devicePixelRatio || 1;
+var size = Math.min(260, window.innerWidth - 40, (window.innerHeight - 120) * 0.7);
+canvas.width = size * dpr;
+canvas.height = size * dpr;
+canvas.style.width = size + 'px';
+canvas.style.height = size + 'px';
+ctx.scale(dpr, dpr);
+
+var cx = size / 2;
+var cy = size / 2;
+var outerR = size / 2 - 6;
+var innerR = outerR * 0.58;
+
+// Build legend
+var legendEl = document.getElementById('legend');
+var pctEls = [];
+channels.forEach(function(ch) {
+  var item = document.createElement('div');
+  item.className = 'legend-item';
+  var pctSpan = document.createElement('span');
+  pctSpan.className = 'legend-pct';
+  pctSpan.textContent = '0%';
+  item.innerHTML = '<div class="legend-dot" style="background:' + ch.color + '"></div>' + ch.name + ' ';
+  item.appendChild(pctSpan);
+  legendEl.appendChild(item);
+  pctEls.push(pctSpan);
+});
+
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function getValues(t) {
+  return channels.map(function(ch) {
+    return lerp(ch.before, ch.after, t);
+  });
+}
+
+function drawDonut(values) {
+  var total = values.reduce(function(s, v) { return s + v; }, 0);
+  ctx.clearRect(0, 0, size, size);
+
+  var angle = -Math.PI / 2;
+  values.forEach(function(val, i) {
+    var sliceAngle = (val / total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerR, angle, angle + sliceAngle);
+    ctx.arc(cx, cy, innerR, angle + sliceAngle, angle, true);
+    ctx.closePath();
+    ctx.fillStyle = channels[i].color;
+    ctx.fill();
+
+    // Subtle gap between slices
+    ctx.beginPath();
+    ctx.moveTo(cx + innerR * Math.cos(angle), cy + innerR * Math.sin(angle));
+    ctx.lineTo(cx + outerR * Math.cos(angle), cy + outerR * Math.sin(angle));
+    ctx.strokeStyle = '#0F0F0F';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    angle += sliceAngle;
+  });
+
+  // Update legend percentages
+  values.forEach(function(val, i) {
+    pctEls[i].textContent = Math.round(val) + '%';
+    if (channels[i].name === 'Unattributed' && val < 10) {
+      pctEls[i].style.color = '#555';
+    } else {
+      pctEls[i].style.color = '#ccc';
+    }
+  });
+}
+
+// Phase 1: Draw initial donut (before state)
+var introStart = null;
+var introDuration = 1200;
+
+function drawIntro(timestamp) {
+  if (!introStart) introStart = timestamp;
+  var p = Math.min((timestamp - introStart) / introDuration, 1);
+  var ep = easeOutCubic(p);
+
+  var values = getValues(0);
+  var total = values.reduce(function(s, v) { return s + v; }, 0);
+
+  ctx.clearRect(0, 0, size, size);
+  var maxAngle = ep * Math.PI * 2;
+  var angle = -Math.PI / 2;
+
+  values.forEach(function(val, i) {
+    var sliceAngle = (val / total) * Math.PI * 2;
+    var draw = Math.min(sliceAngle, Math.max(0, maxAngle - (angle + Math.PI / 2)));
+    if (draw > 0) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, outerR, angle, angle + draw);
+      ctx.arc(cx, cy, innerR, angle + draw, angle, true);
+      ctx.closePath();
+      ctx.fillStyle = channels[i].color;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx + innerR * Math.cos(angle), cy + innerR * Math.sin(angle));
+      ctx.lineTo(cx + outerR * Math.cos(angle), cy + outerR * Math.sin(angle));
+      ctx.strokeStyle = '#0F0F0F';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    angle += sliceAngle;
+  });
+
+  // Show legend items during intro
+  var revealAt = 1 / channels.length;
+  channels.forEach(function(ch, i) {
+    if (ep > i * revealAt) {
+      legendEl.children[i].classList.add('visible');
+      pctEls[i].textContent = Math.round(values[i]) + '%';
+    }
+  });
+
+  if (p < 1) {
+    requestAnimationFrame(drawIntro);
+  } else {
+    drawDonut(getValues(0));
+    // Start transition after a pause
+    setTimeout(startTransition, 2000);
+  }
+}
+
+// Phase 2: Animate from before to after
+var transitionDuration = 2000;
+var transStart = null;
+
+function startTransition() {
+  document.getElementById('phaseLabel').textContent = 'After';
+  document.getElementById('phaseLabel').classList.add('after');
+  transStart = null;
+  requestAnimationFrame(animateTransition);
+}
+
+function animateTransition(timestamp) {
+  if (!transStart) transStart = timestamp;
+  var p = Math.min((timestamp - transStart) / transitionDuration, 1);
+  var ep = easeInOutCubic(p);
+
+  var values = getValues(ep);
+  drawDonut(values);
+
+  if (p < 1) {
+    requestAnimationFrame(animateTransition);
+  } else {
+    // Pause, then loop back
+    setTimeout(function() {
+      document.getElementById('phaseLabel').textContent = 'Before';
+      document.getElementById('phaseLabel').classList.remove('after');
+      transStart = null;
+      requestAnimationFrame(animateBack);
+    }, 3000);
+  }
+}
+
+function animateBack(timestamp) {
+  if (!transStart) transStart = timestamp;
+  var p = Math.min((timestamp - transStart) / transitionDuration, 1);
+  var ep = easeInOutCubic(p);
+
+  var values = getValues(1 - ep);
+  drawDonut(values);
+
+  if (p < 1) {
+    requestAnimationFrame(animateBack);
+  } else {
+    setTimeout(startTransition, 2000);
+  }
+}
+
+requestAnimationFrame(drawIntro);
+</script>
+</body>
+</html>
