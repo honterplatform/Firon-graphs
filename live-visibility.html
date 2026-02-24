@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Visibility</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0A0A0A;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+  }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+  }
+  .title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ccc;
+  }
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #FB3B24;
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #FB3B24;
+    animation: blink 1.5s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .summary-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid #1A1A1A;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+    padding-bottom: 10px;
+  }
+  .summary-item {
+    flex: 1;
+    text-align: center;
+    border-right: 1px solid #1A1A1A;
+  }
+  .summary-item:last-child { border-right: none; }
+  .summary-label {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #555;
+    margin-bottom: 2px;
+  }
+  .summary-val {
+    font-size: 16px;
+    font-weight: 700;
+    color: #ccc;
+    font-variant-numeric: tabular-nums;
+  }
+  .summary-val.accent { color: #FB3B24; }
+  .table-head {
+    display: flex;
+    padding: 4px 0 6px;
+    border-bottom: 1px solid #1A1A1A;
+    flex-shrink: 0;
+  }
+  .th {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #444;
+  }
+  .col-time { width: 52px; flex-shrink: 0; }
+  .col-order { width: 58px; flex-shrink: 0; }
+  .col-rev { flex: 1; text-align: right; }
+  .col-cost { flex: 1; text-align: right; }
+  .col-cm { width: 56px; flex-shrink: 0; text-align: right; }
+  .col-bar { width: 56px; flex-shrink: 0; padding-left: 8px; }
+  .feed {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+  .feed-row {
+    display: flex;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid #141414;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    animation: slideIn 0.4s ease forwards;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .feed-row .col-time { color: #444; font-size: 10px; font-family: 'SF Mono', 'Menlo', monospace; }
+  .feed-row .col-order { color: #555; }
+  .feed-row .col-rev { color: #888; text-align: right; }
+  .feed-row .col-cost { color: #555; text-align: right; }
+  .feed-row .col-cm { color: #FB3B24; font-weight: 600; text-align: right; }
+  .cm-bar {
+    height: 10px;
+    border-radius: 2px;
+    background: #FB3B24;
+    opacity: 0.6;
+    transition: width 0.3s ease;
+  }
+  @media (max-width: 480px) {
+    .title { font-size: 13px; }
+    .summary-val { font-size: 14px; }
+    .summary-label { font-size: 8px; }
+    .col-time { width: 44px; }
+    .col-order { display: none; }
+    .th { font-size: 8px; }
+    .feed-row { font-size: 10px; }
+    .feed-row .col-time { font-size: 9px; }
+    .col-cm { width: 48px; }
+    .col-bar { width: 44px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="title">Live Visibility</div>
+    <div class="live-badge"><div class="live-dot"></div>Live</div>
+  </div>
+  <div class="summary-bar">
+    <div class="summary-item">
+      <div class="summary-label">Orders Today</div>
+      <div class="summary-val" id="sOrders">0</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">Revenue</div>
+      <div class="summary-val" id="sRevenue">$0</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">Avg CM</div>
+      <div class="summary-val accent" id="sCM">$0</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">CM %</div>
+      <div class="summary-val accent" id="sCMPct">0%</div>
+    </div>
+  </div>
+  <div class="table-head">
+    <div class="th col-time">Time</div>
+    <div class="th col-order">Order</div>
+    <div class="th col-rev">Rev</div>
+    <div class="th col-cost">Costs</div>
+    <div class="th col-cm">CM</div>
+    <div class="th col-bar"></div>
+  </div>
+  <div class="feed" id="feed"></div>
+</div>
+<script>
+var feed = document.getElementById('feed');
+var orderNum = 4800;
+var totalOrders = 0;
+var totalRevenue = 0;
+var totalCM = 0;
+
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function pad(n) { return n < 10 ? '0' + n : n; }
+
+function getTime() {
+  var h = rand(9, 17);
+  var m = rand(0, 59);
+  var s = rand(0, 59);
+  return pad(h) + ':' + pad(m) + ':' + pad(s);
+}
+
+function formatMoney(n) {
+  if (n >= 1000) return '$' + (n / 1000).toFixed(1) + 'K';
+  return '$' + n;
+}
+
+function addRow() {
+  var rev = rand(38, 220);
+  var cogs = Math.round(rev * (0.25 + Math.random() * 0.15));
+  var adCost = Math.round(rev * (0.08 + Math.random() * 0.14));
+  var totalCost = cogs + adCost;
+  var cm = rev - totalCost;
+  var cmPct = Math.round((cm / rev) * 100);
+  var barW = Math.max(8, Math.min(100, cmPct * 1.4));
+
+  orderNum++;
+  totalOrders++;
+  totalRevenue += rev;
+  totalCM += cm;
+
+  var row = document.createElement('div');
+  row.className = 'feed-row';
+  row.innerHTML =
+    '<div class="col-time">' + getTime() + '</div>' +
+    '<div class="col-order">#' + orderNum + '</div>' +
+    '<div class="col-rev">$' + rev + '</div>' +
+    '<div class="col-cost">$' + totalCost + '</div>' +
+    '<div class="col-cm">$' + cm + '</div>' +
+    '<div class="col-bar"><div class="cm-bar" style="width:' + barW + '%"></div></div>';
+
+  feed.insertBefore(row, feed.firstChild);
+
+  // Remove rows that overflow
+  while (feed.children.length > 20) {
+    feed.removeChild(feed.lastChild);
+  }
+
+  // Update summary
+  document.getElementById('sOrders').textContent = totalOrders;
+  document.getElementById('sRevenue').textContent = formatMoney(totalRevenue);
+  var avgCM = Math.round(totalCM / totalOrders);
+  document.getElementById('sCM').textContent = '$' + avgCM;
+  document.getElementById('sCMPct').textContent = Math.round((totalCM / totalRevenue) * 100) + '%';
+}
+
+// Initial burst
+var burstCount = 8;
+for (var i = 0; i < burstCount; i++) {
+  (function(idx) {
+    setTimeout(function() { addRow(); }, 200 + idx * 200);
+  })(i);
+}
+
+// Then keep adding at random intervals
+function scheduleNext() {
+  var delay = 1800 + Math.random() * 2500;
+  setTimeout(function() {
+    addRow();
+    scheduleNext();
+  }, delay);
+}
+setTimeout(scheduleNext, 200 + burstCount * 200 + 1000);
+</script>
+</body>
+</html>
