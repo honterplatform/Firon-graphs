@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unified Truth</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0A0A0A;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+  }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    flex-shrink: 0;
+  }
+  .title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ccc;
+  }
+  .subtitle {
+    font-size: 11px;
+    color: #555;
+  }
+  .subtitle span { color: #888; }
+  .waterfall {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    min-height: 0;
+  }
+  .wf-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transform: translateX(-14px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .wf-row.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .wf-label {
+    width: 80px;
+    flex-shrink: 0;
+    text-align: right;
+    font-size: 11px;
+    font-weight: 600;
+    color: #666;
+  }
+  .wf-label.add { color: #888; }
+  .wf-label.sub { color: #555; }
+  .wf-label.result { color: #FB3B24; }
+  .wf-track {
+    flex: 1;
+    height: 28px;
+    position: relative;
+  }
+  .wf-bar {
+    height: 100%;
+    border-radius: 3px;
+    position: absolute;
+    top: 0;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), left 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0%;
+  }
+  .wf-bar.add { background: #FB3B24; }
+  .wf-bar.sub { background: #333; }
+  .wf-bar.result { background: #FB3B24; }
+  .wf-connector {
+    position: absolute;
+    top: 0;
+    width: 1px;
+    height: 100%;
+    border-left: 1px dashed #2A2A2A;
+  }
+  .wf-value {
+    width: 62px;
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #888;
+  }
+  .wf-value.add { color: #ccc; }
+  .wf-value.sub { color: #555; }
+  .wf-value.result { color: #FB3B24; }
+  .wf-divider {
+    height: 1px;
+    background: #1A1A1A;
+    margin: 4px 0 4px 90px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .wf-divider.visible { opacity: 1; }
+  @media (max-width: 480px) {
+    .title { font-size: 13px; }
+    .subtitle { font-size: 10px; }
+    .wf-label { width: 64px; font-size: 10px; }
+    .wf-track { height: 22px; }
+    .wf-value { width: 52px; font-size: 10px; }
+    .wf-row { gap: 6px; }
+    .waterfall { gap: 4px; }
+    .wf-divider { margin-left: 70px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="title">Unified Truth</div>
+    <div class="subtitle">Spend <span>→</span> Revenue <span>→</span> Profit</div>
+  </div>
+  <div class="waterfall" id="waterfall"></div>
+</div>
+<script>
+var maxVal = 420;
+
+var steps = [
+  { label: 'Revenue', value: 420000, type: 'add', barStart: 0, barEnd: 420 },
+  { label: 'COGS', value: -126000, type: 'sub', barStart: 420 - 126, barEnd: 420 },
+  { label: 'Ad Spend', value: -108000, type: 'sub', barStart: 420 - 126 - 108, barEnd: 420 - 126 },
+  { label: 'Fulfillment', value: -52000, type: 'sub', barStart: 420 - 126 - 108 - 52, barEnd: 420 - 126 - 108 },
+  { label: 'Overhead', value: -38000, type: 'sub', barStart: 420 - 126 - 108 - 52 - 38, barEnd: 420 - 126 - 108 - 52 },
+  { divider: true },
+  { label: 'Net Profit', value: 96000, type: 'result', barStart: 0, barEnd: 96 },
+];
+
+var waterfall = document.getElementById('waterfall');
+var rowEls = [];
+
+steps.forEach(function(step) {
+  if (step.divider) {
+    var div = document.createElement('div');
+    div.className = 'wf-divider';
+    waterfall.appendChild(div);
+    rowEls.push(div);
+    return;
+  }
+
+  var row = document.createElement('div');
+  row.className = 'wf-row';
+
+  var prefix = step.type === 'sub' ? '– ' : step.type === 'result' ? '= ' : '';
+  var sign = step.value < 0 ? '-' : '';
+  var absVal = Math.abs(step.value);
+  var formatted = sign + '$' + (absVal / 1000) + 'K';
+
+  var leftPct = (step.barStart / maxVal * 100).toFixed(1);
+  var widthPct = ((step.barEnd - step.barStart) / maxVal * 100).toFixed(1);
+
+  row.innerHTML =
+    '<div class="wf-label ' + step.type + '">' + prefix + step.label + '</div>' +
+    '<div class="wf-track">' +
+      '<div class="wf-bar ' + step.type + '" data-left="' + leftPct + '" data-width="' + widthPct + '" style="left:' + leftPct + '%;width:0%"></div>' +
+    '</div>' +
+    '<div class="wf-value ' + step.type + '" data-target="' + formatted + '"></div>';
+
+  waterfall.appendChild(row);
+  rowEls.push(row);
+});
+
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+function animateValue(el, targetStr, dur) {
+  var isNeg = targetStr.charAt(0) === '-';
+  var numStr = targetStr.replace(/[^0-9.]/g, '');
+  var target = parseFloat(numStr);
+  var prefix = isNeg ? '-$' : '$';
+  var start = performance.now();
+  function tick(now) {
+    var p = Math.min((now - start) / dur, 1);
+    var val = easeOutCubic(p) * target;
+    el.textContent = prefix + val.toFixed(0) + 'K';
+    if (p < 1) requestAnimationFrame(tick);
+    else el.textContent = targetStr;
+  }
+  requestAnimationFrame(tick);
+}
+
+// Staggered reveal
+var delay = 300;
+var stepDelay = 280;
+
+rowEls.forEach(function(el, i) {
+  setTimeout(function() {
+    if (el.classList.contains('wf-divider')) {
+      el.classList.add('visible');
+      return;
+    }
+    el.classList.add('visible');
+    var bar = el.querySelector('.wf-bar');
+    if (bar) {
+      requestAnimationFrame(function() {
+        bar.style.width = bar.dataset.width + '%';
+      });
+    }
+    var valEl = el.querySelector('.wf-value');
+    if (valEl && valEl.dataset.target) {
+      animateValue(valEl, valEl.dataset.target, 800);
+    }
+  }, delay + i * stepDelay);
+});
+</script>
+</body>
+</html>
