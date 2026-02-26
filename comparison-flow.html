@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Old Way vs Firon Way</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  .card { background: #0F0F0F; width: 100%; height: 100%; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<div class="card"><canvas id="c"></canvas></div>
+<script>
+var c = document.getElementById('c');
+var ctx = c.getContext('2d');
+var dpr = window.devicePixelRatio || 1;
+
+function resize() {
+  var r = c.parentElement.getBoundingClientRect();
+  c.width = r.width * dpr;
+  c.height = r.height * dpr;
+  c.style.width = r.width + 'px';
+  c.style.height = r.height + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height };
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+}
+
+function drawNode(cx, cy, label, bg, textCol) {
+  var w = ctx.measureText(label).width + 18;
+  var h = 22;
+  roundRect(cx - w / 2, cy - h / 2, w, h, 4);
+  ctx.fillStyle = bg;
+  ctx.fill();
+  ctx.fillStyle = textCol;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, cx, cy);
+}
+
+function drawBez(x1, y1, x2, y2, color, lw, dashed) {
+  ctx.beginPath();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lw;
+  ctx.setLineDash(dashed ? [4, 4] : []);
+  var cpy = (y1 + y2) / 2;
+  ctx.moveTo(x1, y1);
+  ctx.bezierCurveTo(x1, cpy, x2, cpy, x2, y2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawX(x, y, s) {
+  ctx.strokeStyle = '#444';
+  ctx.lineWidth = 1.5;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x - s, y - s); ctx.lineTo(x + s, y + s);
+  ctx.moveTo(x + s, y - s); ctx.lineTo(x - s, y + s);
+  ctx.stroke();
+}
+
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+var d = resize();
+var duration = 3500;
+var startTime = null;
+
+function draw(ts) {
+  if (!startTime) startTime = ts;
+  var p = Math.min((ts - startTime) / duration, 1);
+  d = resize();
+  var w = d.w, h = d.h, hw = w / 2;
+  var mob = w <= 480;
+  var fs = mob ? 9 : 11;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Divider
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = '#1A1A1A';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(hw, 28); ctx.lineTo(hw, h - 6);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ---- LEFT SIDE ----
+  var lp = easeOutCubic(Math.min(p / 0.42, 1));
+  var lcx = hw * 0.5;
+  var sp = mob ? hw * 0.30 : hw * 0.28;
+  var ly = [h * 0.12, h * 0.34, h * 0.56, h * 0.78];
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, hw - 4, h * lp + 10);
+  ctx.clip();
+
+  // Title
+  ctx.font = 'bold ' + (mob ? 11 : 13) + 'px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#555';
+  ctx.fillText('The Old Way', lcx, 18);
+
+  ctx.font = fs + 'px system-ui';
+
+  // Connections
+  drawBez(lcx, ly[0] + 11, lcx - sp, ly[1] - 11, '#333', 1.5, false);
+  drawBez(lcx, ly[0] + 11, lcx, ly[1] - 11, '#333', 1.5, false);
+  drawBez(lcx, ly[0] + 11, lcx + sp, ly[1] - 11, '#333', 1.5, false);
+  drawBez(lcx - sp, ly[1] + 11, lcx - sp, ly[2] - 11, '#2A2A2A', 1, true);
+  drawBez(lcx, ly[1] + 11, lcx, ly[2] - 11, '#2A2A2A', 1, true);
+  drawBez(lcx + sp, ly[1] + 11, lcx + sp, ly[2] - 11, '#2A2A2A', 1, true);
+  drawBez(lcx, ly[2] + 11, lcx, ly[3] - 11, '#1A1A1A', 1, true);
+
+  // Nodes
+  drawNode(lcx, ly[0], 'Budget', '#1A1A1A', '#777');
+  drawNode(lcx - sp, ly[1], 'Generic Ads', '#1A1A1A', '#555');
+  drawNode(lcx, ly[1], 'Broad Social', '#1A1A1A', '#555');
+  drawNode(lcx + sp, ly[1], 'Display', '#1A1A1A', '#555');
+  drawNode(lcx - sp, ly[2], 'Clicks', '#141414', '#444');
+  drawNode(lcx, ly[2], 'CPM', '#141414', '#444');
+  drawNode(lcx + sp, ly[2], 'Impressions', '#141414', '#444');
+  drawNode(lcx, ly[3], '???', '#141414', '#333');
+
+  // X marks
+  drawX(lcx - sp, ly[2] + 18, 4);
+  drawX(lcx, ly[2] + 18, 4);
+  drawX(lcx + sp, ly[2] + 18, 4);
+
+  ctx.restore();
+
+  // ---- RIGHT SIDE ----
+  var rStart = 0.42;
+  var rp = easeOutCubic(Math.max(0, Math.min((p - rStart) / 0.45, 1)));
+  var rcx = hw + hw * 0.5;
+  var ry = [h * 0.12, h * 0.30, h * 0.48, h * 0.66, h * 0.84];
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(hw + 4, 0, hw - 4, h * rp + 10);
+  ctx.clip();
+
+  // Title
+  ctx.font = 'bold ' + (mob ? 11 : 13) + 'px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#FB3B24';
+  ctx.fillText('Firon Way', rcx, 18);
+
+  ctx.font = fs + 'px system-ui';
+
+  // Connections
+  drawBez(rcx, ry[0] + 11, rcx, ry[1] - 11, '#FB3B24', 2, false);
+  drawBez(rcx, ry[1] + 11, rcx, ry[2] - 11, '#FB3B24', 2, false);
+  drawBez(rcx, ry[2] + 11, rcx, ry[3] - 11, '#FB3B24', 2, false);
+  drawBez(rcx, ry[3] + 11, rcx, ry[4] - 13, '#FB3B24', 2, false);
+
+  // Flowing dots on right side
+  if (rp > 0.5) {
+    var dotP = ((ts / 1200) % 1);
+    var totalLen = ry[4] - ry[0];
+    for (var di = 0; di < 3; di++) {
+      var dp = (dotP + di * 0.33) % 1;
+      var dy = ry[0] + 11 + dp * (totalLen - 24);
+      ctx.beginPath();
+      ctx.arc(rcx, dy, 3, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(251,59,36,' + (0.3 + 0.4 * Math.sin(dp * Math.PI)) + ')';
+      ctx.fill();
+    }
+  }
+
+  // Nodes
+  drawNode(rcx, ry[0], 'Budget', '#1A1A1A', '#ccc');
+  drawNode(rcx, ry[1], 'Creative Testing', '#1A1A1A', '#ccc');
+  drawNode(rcx, ry[2], 'CRO', '#1A1A1A', '#ccc');
+  drawNode(rcx, ry[3], 'Unit Economics', '#1A1A1A', '#ccc');
+
+  // Profit node
+  ctx.font = 'bold ' + fs + 'px system-ui';
+  var pw = ctx.measureText('Profit').width + 22;
+  roundRect(rcx - pw / 2, ry[4] - 13, pw, 26, 4);
+  ctx.fillStyle = '#FB3B24';
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Profit', rcx, ry[4]);
+
+  // Glow
+  if (rp > 0.85) {
+    ctx.beginPath();
+    ctx.arc(rcx, ry[4], 22, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(251,59,36,0.08)';
+    ctx.fill();
+  }
+
+  ctx.restore();
+
+  if (p < 1) requestAnimationFrame(draw);
+  else {
+    // Keep drawing for flowing dots
+    requestAnimationFrame(draw);
+  }
+}
+
+requestAnimationFrame(draw);
+window.addEventListener('resize', function() { startTime = null; requestAnimationFrame(draw); });
+</script>
+</body>
+</html>
