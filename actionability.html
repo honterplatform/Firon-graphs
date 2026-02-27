@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Actionability</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+  }
+  .title { font-size: 14px; font-weight: 700; color: #ccc; }
+  .conf-badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #FB3B24;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .conf-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #FB3B24;
+    animation: pulse 1.5s ease infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .summary {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+  .sum-chip {
+    flex: 1;
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    border-radius: 5px;
+    padding: 6px 8px;
+    text-align: center;
+  }
+  .sum-val {
+    font-size: 15px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: #FB3B24;
+  }
+  .sum-label {
+    font-size: 7px;
+    font-weight: 600;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-top: 2px;
+  }
+  .channels {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-height: 0;
+  }
+  .ch-row {
+    flex: 1;
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    gap: 6px;
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.4s ease, transform 0.4s ease, border-color 0.4s ease;
+  }
+  .ch-row.visible { opacity: 1; transform: translateX(0); }
+  .ch-row.top { border-color: rgba(251,59,36,0.2); }
+  .ch-name {
+    font-size: 9px;
+    font-weight: 600;
+    color: #555;
+    width: 46px;
+    flex-shrink: 0;
+    transition: color 0.4s ease;
+  }
+  .ch-row.top .ch-name { color: #ccc; }
+  .ch-margin {
+    font-size: 10px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    width: 32px;
+    flex-shrink: 0;
+    color: #444;
+    transition: color 0.4s ease;
+  }
+  .ch-row.top .ch-margin { color: #FB3B24; }
+  .alloc-wrap {
+    flex: 1;
+    height: 6px;
+    background: #1A1A1A;
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+  }
+  .alloc-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1), background 0.4s ease;
+    width: 0%;
+  }
+  .ch-alloc-val {
+    font-size: 11px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    width: 32px;
+    text-align: right;
+    flex-shrink: 0;
+    color: #333;
+    transition: color 0.4s ease;
+  }
+  .ch-row.top .ch-alloc-val { color: #FB3B24; }
+  .ch-action {
+    width: 14px;
+    flex-shrink: 0;
+    text-align: center;
+    font-size: 10px;
+    transition: opacity 0.4s ease;
+  }
+  .ch-action.up { color: #FB3B24; }
+  .ch-action.down { color: #444; }
+  .ch-action.hold { color: #333; }
+  @media (max-width: 480px) {
+    .title { font-size: 13px; }
+    .sum-val { font-size: 13px; }
+    .ch-name { font-size: 8px; width: 38px; }
+    .ch-margin { font-size: 9px; width: 28px; }
+    .ch-alloc-val { font-size: 10px; width: 28px; }
+    .ch-row { padding: 0 6px; gap: 4px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="title">Capital Allocation</div>
+    <div class="conf-badge"><div class="conf-dot"></div>Decision Ready</div>
+  </div>
+  <div class="summary">
+    <div class="sum-chip">
+      <div class="sum-val" id="totalBudget">$180K</div>
+      <div class="sum-label">Monthly Budget</div>
+    </div>
+    <div class="sum-chip">
+      <div class="sum-val" id="avgMargin">38%</div>
+      <div class="sum-label">Blended Margin</div>
+    </div>
+    <div class="sum-chip">
+      <div class="sum-val" id="confScore">94</div>
+      <div class="sum-label">Confidence</div>
+    </div>
+  </div>
+  <div class="channels" id="channels"></div>
+</div>
+<script>
+var channels = [
+  { name: 'Google',  states: [
+    { margin: 44, alloc: 32, action: 'up' },
+    { margin: 46, alloc: 36, action: 'up' },
+    { margin: 42, alloc: 30, action: 'hold' },
+  ]},
+  { name: 'Meta',    states: [
+    { margin: 38, alloc: 26, action: 'hold' },
+    { margin: 34, alloc: 22, action: 'down' },
+    { margin: 40, alloc: 28, action: 'up' },
+  ]},
+  { name: 'TikTok',  states: [
+    { margin: 52, alloc: 22, action: 'up' },
+    { margin: 48, alloc: 24, action: 'up' },
+    { margin: 54, alloc: 26, action: 'up' },
+  ]},
+  { name: 'Email',   states: [
+    { margin: 68, alloc: 12, action: 'hold' },
+    { margin: 66, alloc: 10, action: 'hold' },
+    { margin: 70, alloc: 10, action: 'hold' },
+  ]},
+  { name: 'SEO',     states: [
+    { margin: 72, alloc: 8, action: 'hold' },
+    { margin: 74, alloc: 8, action: 'hold' },
+    { margin: 70, alloc: 6, action: 'down' },
+  ]},
+];
+
+var summaryStates = [
+  { budget: '$180K', margin: '38%', conf: '94' },
+  { budget: '$180K', margin: '41%', conf: '96' },
+  { budget: '$180K', margin: '36%', conf: '92' },
+];
+
+var arrows = { up: '↑', down: '↓', hold: '→' };
+var stateIdx = 0;
+var channelsEl = document.getElementById('channels');
+var chEls = [];
+
+channels.forEach(function(ch, i) {
+  var el = document.createElement('div');
+  el.className = 'ch-row';
+  el.innerHTML =
+    '<div class="ch-name">' + ch.name + '</div>' +
+    '<div class="ch-margin" id="margin' + i + '">—</div>' +
+    '<div class="alloc-wrap"><div class="alloc-bar" id="abar' + i + '"></div></div>' +
+    '<div class="ch-alloc-val" id="aval' + i + '">—</div>' +
+    '<div class="ch-action" id="act' + i + '"></div>';
+  channelsEl.appendChild(el);
+  chEls.push(el);
+});
+
+function applyState(idx) {
+  var maxAlloc = 0;
+  channels.forEach(function(ch) {
+    if (ch.states[idx].alloc > maxAlloc) maxAlloc = ch.states[idx].alloc;
+  });
+
+  channels.forEach(function(ch, i) {
+    var s = ch.states[idx];
+    var isTop = s.margin >= 48 || s.alloc >= 30;
+    document.getElementById('margin' + i).textContent = s.margin + '%';
+    document.getElementById('abar' + i).style.width = (s.alloc / maxAlloc) * 100 + '%';
+    document.getElementById('abar' + i).style.background = isTop ? '#FB3B24' : '#333';
+    document.getElementById('aval' + i).textContent = s.alloc + '%';
+    var actEl = document.getElementById('act' + i);
+    actEl.textContent = arrows[s.action];
+    actEl.className = 'ch-action ' + s.action;
+    chEls[i].className = 'ch-row visible' + (isTop ? ' top' : '');
+  });
+
+  var sum = summaryStates[idx];
+  document.getElementById('totalBudget').textContent = sum.budget;
+  document.getElementById('avgMargin').textContent = sum.margin;
+  document.getElementById('confScore').textContent = sum.conf;
+}
+
+// Staggered reveal
+chEls.forEach(function(el, i) {
+  setTimeout(function() { el.classList.add('visible'); }, 300 + i * 80);
+});
+
+setTimeout(function() { applyState(0); }, 600);
+
+setInterval(function() {
+  stateIdx = (stateIdx + 1) % channels[0].states.length;
+  applyState(stateIdx);
+}, 3000);
+</script>
+</body>
+</html>
