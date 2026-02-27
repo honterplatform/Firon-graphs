@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rapid Iteration Loops</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+  .title { font-size: 14px; font-weight: 700; color: #ccc; }
+  .iter-counter {
+    font-size: 10px;
+    color: #555;
+    font-variant-numeric: tabular-nums;
+  }
+  .iter-counter span { color: #FB3B24; font-weight: 700; }
+  .stats-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+  .stat-chip {
+    flex: 1;
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    border-radius: 5px;
+    padding: 6px 8px;
+    text-align: center;
+  }
+  .stat-val {
+    font-size: 16px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: #444;
+  }
+  .stat-chip.winners .stat-val { color: #FB3B24; }
+  .stat-chip.killed .stat-val { color: #333; }
+  .stat-label {
+    font-size: 7px;
+    font-weight: 600;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-top: 2px;
+  }
+  .feed {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .feed-row {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    border-radius: 5px;
+    gap: 8px;
+    flex-shrink: 0;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.35s ease, transform 0.35s ease, border-color 0.3s ease;
+  }
+  .feed-row.visible { opacity: 1; transform: translateY(0); }
+  .feed-row.winner { border-color: rgba(251,59,36,0.25); }
+  .feed-row.killed { border-color: rgba(60,60,60,0.3); }
+  .fr-phase {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .fr-phase.testing {
+    background: rgba(251,59,36,0.15);
+    animation: testPulse 1s ease infinite;
+  }
+  .fr-phase.testing::after {
+    content: '';
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: #FB3B24;
+  }
+  .fr-phase.won {
+    background: rgba(251,59,36,0.2);
+  }
+  .fr-phase.won::after {
+    content: '✓';
+    font-size: 7px;
+    color: #FB3B24;
+    font-weight: 800;
+  }
+  .fr-phase.dead {
+    background: rgba(60,60,60,0.3);
+  }
+  .fr-phase.dead::after {
+    content: '✕';
+    font-size: 7px;
+    color: #444;
+    font-weight: 800;
+  }
+  @keyframes testPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .fr-info { flex: 1; min-width: 0; }
+  .fr-name {
+    font-size: 10px;
+    font-weight: 600;
+    color: #555;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .feed-row.winner .fr-name { color: #ccc; }
+  .fr-metrics {
+    display: flex;
+    gap: 8px;
+    margin-top: 1px;
+  }
+  .fr-m {
+    font-size: 8px;
+    color: #444;
+    font-variant-numeric: tabular-nums;
+  }
+  .fr-m span { color: #555; }
+  .feed-row.winner .fr-m span { color: #FB3B24; }
+  .fr-conf {
+    width: 40px;
+    flex-shrink: 0;
+  }
+  .conf-bar-wrap {
+    width: 100%;
+    height: 3px;
+    background: #1A1A1A;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .conf-bar {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.8s ease;
+    width: 0%;
+  }
+  .conf-label {
+    font-size: 7px;
+    color: #444;
+    text-align: right;
+    margin-top: 1px;
+    font-variant-numeric: tabular-nums;
+  }
+  .fr-verdict {
+    width: 44px;
+    flex-shrink: 0;
+    text-align: right;
+  }
+  .verdict-tag {
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    display: inline-block;
+  }
+  .verdict-tag.scale {
+    background: rgba(251,59,36,0.1);
+    color: #FB3B24;
+  }
+  .verdict-tag.kill {
+    background: rgba(60,60,60,0.15);
+    color: #444;
+  }
+  .verdict-tag.testing {
+    background: rgba(251,59,36,0.06);
+    color: #555;
+  }
+  @media (max-width: 480px) {
+    .title { font-size: 13px; }
+    .stat-val { font-size: 14px; }
+    .fr-name { font-size: 9px; }
+    .fr-metrics { gap: 6px; }
+    .fr-m { font-size: 7px; }
+    .fr-conf { width: 32px; }
+    .feed-row { padding: 5px 6px; gap: 6px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="title">Iteration Protocol</div>
+    <div class="iter-counter">Cycle <span id="cycle">1</span> / <span id="totalIter">24</span></div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-chip winners">
+      <div class="stat-val" id="winnersCount">0</div>
+      <div class="stat-label">Scaled</div>
+    </div>
+    <div class="stat-chip killed">
+      <div class="stat-val" id="killedCount">0</div>
+      <div class="stat-label">Killed</div>
+    </div>
+    <div class="stat-chip">
+      <div class="stat-val" id="savedCount">$0</div>
+      <div class="stat-label">Budget Saved</div>
+    </div>
+  </div>
+  <div class="feed" id="feed"></div>
+</div>
+<script>
+var adNames = [
+  'Lifestyle Hook V4', 'UGC Testimonial A', 'Product Demo V2', 'Brand Story V3',
+  'Summer Sale CTA', 'Founder Intro V1', 'Social Proof V5', 'Discount Push V2',
+  'Carousel Format A', 'Video Hook V6', 'Before/After V3', 'Collection Hero V2',
+  'Unboxing UGC V1', 'Pain Point V4', 'Benefit Stack V2', 'Urgency CTA V3'
+];
+
+var feedEl = document.getElementById('feed');
+var cycleEl = document.getElementById('cycle');
+var totalIterEl = document.getElementById('totalIter');
+var winnersEl = document.getElementById('winnersCount');
+var killedEl = document.getElementById('killedCount');
+var savedEl = document.getElementById('savedCount');
+
+var winnersCount = 0;
+var killedCount = 0;
+var savedAmount = 0;
+var cycleNum = 1;
+var totalIter = 24;
+var nameIdx = 0;
+var maxRows = 6;
+var rows = [];
+
+function randomBetween(min, max) {
+  return (Math.random() * (max - min) + min);
+}
+
+function addVariant() {
+  var isWinner = Math.random() > 0.6;
+  var ctr = isWinner ? randomBetween(2.8, 5.2) : randomBetween(0.4, 1.8);
+  var cpa = isWinner ? Math.floor(randomBetween(18, 34)) : Math.floor(randomBetween(52, 88));
+  var conf = isWinner ? Math.floor(randomBetween(88, 99)) : Math.floor(randomBetween(72, 96));
+  var name = adNames[nameIdx % adNames.length];
+  nameIdx++;
+
+  var verdict = isWinner ? 'scale' : 'kill';
+  var phase = isWinner ? 'won' : 'dead';
+  var rowClass = isWinner ? 'winner' : 'killed';
+
+  var el = document.createElement('div');
+  el.className = 'feed-row';
+  el.innerHTML =
+    '<div class="fr-phase testing"></div>' +
+    '<div class="fr-info">' +
+      '<div class="fr-name">' + name + '</div>' +
+      '<div class="fr-metrics">' +
+        '<div class="fr-m">CTR <span>' + ctr.toFixed(1) + '%</span></div>' +
+        '<div class="fr-m">CPA <span>$' + cpa + '</span></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="fr-conf">' +
+      '<div class="conf-bar-wrap"><div class="conf-bar" id="cb' + nameIdx + '"></div></div>' +
+      '<div class="conf-label">' + conf + '%</div>' +
+    '</div>' +
+    '<div class="fr-verdict">' +
+      '<div class="verdict-tag testing">Testing</div>' +
+    '</div>';
+
+  feedEl.insertBefore(el, feedEl.firstChild);
+  rows.unshift(el);
+
+  // Remove excess rows
+  while (rows.length > maxRows) {
+    var old = rows.pop();
+    old.style.transition = 'opacity 0.3s ease';
+    old.style.opacity = '0';
+    setTimeout(function(o) { if (o.parentNode) o.parentNode.removeChild(o); }, 300, old);
+  }
+
+  // Animate in
+  requestAnimationFrame(function() {
+    el.classList.add('visible');
+    var confBar = document.getElementById('cb' + nameIdx);
+    if (confBar) {
+      confBar.style.width = conf + '%';
+      confBar.style.background = isWinner ? '#FB3B24' : '#333';
+    }
+  });
+
+  // Resolve verdict after delay
+  setTimeout(function() {
+    var phaseEl = el.querySelector('.fr-phase');
+    var verdictEl = el.querySelector('.verdict-tag');
+    phaseEl.className = 'fr-phase ' + phase;
+    verdictEl.className = 'verdict-tag ' + verdict;
+    verdictEl.textContent = isWinner ? 'Scale' : 'Kill';
+    el.className = 'feed-row visible ' + rowClass;
+
+    if (isWinner) {
+      winnersCount++;
+      winnersEl.textContent = winnersCount;
+    } else {
+      killedCount++;
+      killedEl.textContent = killedCount;
+      savedAmount += Math.floor(randomBetween(800, 2400));
+      savedEl.textContent = '$' + (savedAmount >= 1000 ? (savedAmount / 1000).toFixed(1) + 'k' : savedAmount);
+    }
+
+    cycleNum++;
+    cycleEl.textContent = cycleNum;
+    totalIter += Math.floor(Math.random() * 3);
+    totalIterEl.textContent = totalIter;
+  }, 1200);
+}
+
+// Initial batch
+setTimeout(function() { addVariant(); }, 400);
+setTimeout(function() { addVariant(); }, 800);
+setTimeout(function() { addVariant(); }, 1200);
+setTimeout(function() { addVariant(); }, 1600);
+setTimeout(function() { addVariant(); }, 2000);
+
+// Continuous loop
+setTimeout(function() {
+  setInterval(addVariant, 2200);
+}, 3000);
+</script>
+</body>
+</html>
