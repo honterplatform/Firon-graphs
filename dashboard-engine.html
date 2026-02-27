@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Engine</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+  }
+  .title { font-size: 14px; font-weight: 700; color: #ccc; }
+  .live-tag {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #FB3B24;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .live-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #FB3B24;
+    animation: pulse 1.5s ease infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .hero-metrics {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+  }
+  .hero {
+    flex: 1;
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    border-radius: 6px;
+    padding: 8px 10px;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .hero.visible { opacity: 1; transform: translateY(0); }
+  .hero-label {
+    font-size: 8px;
+    font-weight: 600;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 2px;
+  }
+  .hero-row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .hero-val {
+    font-size: 22px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: #FB3B24;
+    line-height: 1;
+  }
+  .hero-delta {
+    font-size: 9px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .hero-delta.up { color: #FB3B24; }
+  .hero-delta.down { color: #444; }
+  .sparkline-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 0;
+  }
+  .spark-row {
+    flex: 1;
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    gap: 8px;
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .spark-row.visible { opacity: 1; transform: translateX(0); }
+  .spark-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: #666;
+    width: 46px;
+    flex-shrink: 0;
+  }
+  .spark-canvas {
+    flex: 1;
+    height: 100%;
+  }
+  .spark-val {
+    font-size: 12px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: #FB3B24;
+    width: 46px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .spark-sub {
+    font-size: 7px;
+    font-weight: 600;
+    color: #444;
+    width: 36px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  @media (max-width: 480px) {
+    .title { font-size: 13px; }
+    .hero { padding: 6px 8px; }
+    .hero-val { font-size: 18px; }
+    .hero-delta { font-size: 8px; }
+    .spark-label { font-size: 8px; width: 36px; }
+    .spark-val { font-size: 10px; width: 38px; }
+    .spark-sub { font-size: 6px; width: 28px; }
+    .spark-row { padding: 0 6px; gap: 4px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="title">Looker Studio</div>
+    <div class="live-tag"><div class="live-dot"></div>Real-Time</div>
+  </div>
+  <div class="hero-metrics">
+    <div class="hero" id="h0">
+      <div class="hero-label">CAC</div>
+      <div class="hero-row">
+        <div class="hero-val" id="hv0">$0</div>
+        <div class="hero-delta up" id="hd0"></div>
+      </div>
+    </div>
+    <div class="hero" id="h1">
+      <div class="hero-label">LTV</div>
+      <div class="hero-row">
+        <div class="hero-val" id="hv1">$0</div>
+        <div class="hero-delta up" id="hd1"></div>
+      </div>
+    </div>
+    <div class="hero" id="h2">
+      <div class="hero-label">Cont. Margin</div>
+      <div class="hero-row">
+        <div class="hero-val" id="hv2">0%</div>
+        <div class="hero-delta up" id="hd2"></div>
+      </div>
+    </div>
+  </div>
+  <div class="sparkline-area" id="sparkArea"></div>
+</div>
+<script>
+var dpr = window.devicePixelRatio || 1;
+
+var heroStates = [
+  [{ v: '$32', d: '↓12%', dc: 'up' },   { v: '$286', d: '↑18%', dc: 'up' },  { v: '38%', d: '↑4.2%', dc: 'up' }],
+  [{ v: '$28', d: '↓16%', dc: 'up' },   { v: '$312', d: '↑22%', dc: 'up' },  { v: '42%', d: '↑6.1%', dc: 'up' }],
+  [{ v: '$34', d: '↓8%', dc: 'up' },    { v: '$298', d: '↑14%', dc: 'up' },  { v: '36%', d: '↑2.8%', dc: 'up' }],
+];
+
+var channels = [
+  { label: 'Google', data: [32,34,30,28,26,32,36,34,30,28,32,34], val: '$34K', sub: '38%' },
+  { label: 'Meta',   data: [28,24,22,26,30,28,24,20,22,26,28,24], val: '$28K', sub: '34%' },
+  { label: 'TikTok', data: [12,16,20,24,22,18,16,20,24,28,26,22], val: '$22K', sub: '52%' },
+  { label: 'Email',  data: [18,20,22,20,18,16,18,22,24,22,20,18], val: '$18K', sub: '68%' },
+  { label: 'SEO',    data: [8,10,12,14,16,14,12,14,16,18,20,18],  val: '$16K', sub: '72%' },
+];
+
+var sparkArea = document.getElementById('sparkArea');
+var sparkRows = [];
+var canvases = [];
+
+channels.forEach(function(ch, i) {
+  var row = document.createElement('div');
+  row.className = 'spark-row';
+  row.innerHTML =
+    '<div class="spark-label">' + ch.label + '</div>' +
+    '<canvas class="spark-canvas" id="sc' + i + '"></canvas>' +
+    '<div class="spark-val">' + ch.val + '</div>' +
+    '<div class="spark-sub">' + ch.sub + '</div>';
+  sparkArea.appendChild(row);
+  sparkRows.push(row);
+});
+
+function drawSparkline(canvasId, data, color) {
+  var canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  var rect = canvas.parentElement.getBoundingClientRect();
+  var w = canvas.offsetWidth;
+  var h = canvas.offsetHeight;
+  if (w === 0 || h === 0) return;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  var max = Math.max.apply(null, data);
+  var min = Math.min.apply(null, data);
+  var range = max - min || 1;
+  var pad = 6;
+  var stepX = (w - pad * 2) / (data.length - 1);
+
+  // Area fill
+  ctx.beginPath();
+  ctx.moveTo(pad, h - pad);
+  data.forEach(function(v, j) {
+    var x = pad + j * stepX;
+    var y = pad + (1 - (v - min) / range) * (h - pad * 2);
+    if (j === 0) ctx.lineTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.lineTo(pad + (data.length - 1) * stepX, h - pad);
+  ctx.closePath();
+  ctx.fillStyle = color.replace(')', ',0.08)').replace('rgb', 'rgba');
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  data.forEach(function(v, j) {
+    var x = pad + j * stepX;
+    var y = pad + (1 - (v - min) / range) * (h - pad * 2);
+    if (j === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // End dot
+  var lastX = pad + (data.length - 1) * stepX;
+  var lastY = pad + (1 - (data[data.length - 1] - min) / range) * (h - pad * 2);
+  ctx.beginPath();
+  ctx.arc(lastX, lastY, 2.5, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+// Staggered reveal
+['h0','h1','h2'].forEach(function(id, i) {
+  setTimeout(function() { document.getElementById(id).classList.add('visible'); }, 200 + i * 100);
+});
+sparkRows.forEach(function(el, i) {
+  setTimeout(function() { el.classList.add('visible'); }, 500 + i * 80);
+});
+
+// Initial values & draw
+var stateIdx = 0;
+function applyHeroState(idx) {
+  var s = heroStates[idx];
+  s.forEach(function(h, i) {
+    document.getElementById('hv' + i).textContent = h.v;
+    var dEl = document.getElementById('hd' + i);
+    dEl.textContent = h.d;
+    dEl.className = 'hero-delta ' + h.dc;
+  });
+}
+
+setTimeout(function() {
+  applyHeroState(0);
+  channels.forEach(function(ch, i) {
+    drawSparkline('sc' + i, ch.data, '#FB3B24');
+  });
+}, 600);
+
+// Cycle hero values and shift sparkline data
+setInterval(function() {
+  stateIdx = (stateIdx + 1) % heroStates.length;
+  applyHeroState(stateIdx);
+
+  // Shift sparkline data
+  channels.forEach(function(ch, i) {
+    ch.data.shift();
+    var last = ch.data[ch.data.length - 1];
+    var next = last + Math.floor(Math.random() * 8) - 4;
+    next = Math.max(4, Math.min(40, next));
+    ch.data.push(next);
+    drawSparkline('sc' + i, ch.data, '#FB3B24');
+  });
+}, 2500);
+
+window.addEventListener('resize', function() {
+  channels.forEach(function(ch, i) {
+    drawSparkline('sc' + i, ch.data, '#FB3B24');
+  });
+});
+</script>
+</body>
+</html>
