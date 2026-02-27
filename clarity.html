@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Segment Clarity</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+  .title { font-size: 14px; font-weight: 700; color: #ccc; }
+  .legend {
+    display: flex;
+    gap: 10px;
+  }
+  .leg-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 8px;
+    font-weight: 600;
+    color: #555;
+  }
+  .leg-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+  .leg-dot.dtc { background: #FB3B24; }
+  .leg-dot.b2b { background: #FFB0A5; }
+  .segments {
+    flex: 1;
+    display: flex;
+    gap: 6px;
+    min-height: 0;
+  }
+  .segment {
+    flex: 1;
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .segment.visible { opacity: 1; transform: translateY(0); }
+  .segment.dtc { border-color: rgba(251,59,36,0.2); }
+  .segment.b2b { border-color: rgba(255,176,165,0.2); }
+  .seg-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+  .seg-icon {
+    width: 24px; height: 24px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .segment.dtc .seg-icon { background: rgba(251,59,36,0.12); color: #FB3B24; }
+  .segment.b2b .seg-icon { background: rgba(255,176,165,0.12); color: #FFB0A5; }
+  .seg-name {
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .segment.dtc .seg-name { color: #FB3B24; }
+  .segment.b2b .seg-name { color: #FFB0A5; }
+  .seg-sub {
+    font-size: 7px;
+    color: #555;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .metrics {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 0;
+  }
+  .metric-row {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 0;
+  }
+  .m-label {
+    font-size: 8px;
+    font-weight: 600;
+    color: #444;
+    width: 48px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+  }
+  .m-bar-wrap {
+    flex: 1;
+    height: 4px;
+    background: #1A1A1A;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .m-bar {
+    height: 100%;
+    border-radius: 2px;
+    width: 0%;
+    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .segment.dtc .m-bar { background: #FB3B24; }
+  .segment.b2b .m-bar { background: #FFB0A5; }
+  .m-val {
+    font-size: 11px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    width: 42px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .segment.dtc .m-val { color: #FB3B24; }
+  .segment.b2b .m-val { color: #FFB0A5; }
+  @media (max-width: 480px) {
+    .title { font-size: 13px; }
+    .segment { padding: 8px; }
+    .seg-name { font-size: 10px; }
+    .seg-icon { width: 20px; height: 20px; font-size: 8px; }
+    .m-label { font-size: 7px; width: 38px; }
+    .m-val { font-size: 10px; width: 36px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="title">Customer Segments</div>
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot dtc"></div>DTC</div>
+      <div class="leg-item"><div class="leg-dot b2b"></div>B2B/Trade</div>
+    </div>
+  </div>
+  <div class="segments">
+    <div class="segment dtc" id="segDtc">
+      <div class="seg-header">
+        <div class="seg-icon">D</div>
+        <div>
+          <div class="seg-name">DTC Shopper</div>
+          <div class="seg-sub">Direct to Consumer</div>
+        </div>
+      </div>
+      <div class="metrics" id="dtcMetrics"></div>
+    </div>
+    <div class="segment b2b" id="segB2b">
+      <div class="seg-header">
+        <div class="seg-icon">B</div>
+        <div>
+          <div class="seg-name">B2B / Trade</div>
+          <div class="seg-sub">Wholesale Partner</div>
+        </div>
+      </div>
+      <div class="metrics" id="b2bMetrics"></div>
+    </div>
+  </div>
+</div>
+<script>
+var metrics = [
+  { label: 'AOV',       dtc: { val: '$86',    pct: 22 },  b2b: { val: '$2.4K',  pct: 80 } },
+  { label: 'LTV',       dtc: { val: '$312',   pct: 26 },  b2b: { val: '$18.6K', pct: 95 } },
+  { label: 'Frequency', dtc: { val: '3.2x',   pct: 32 },  b2b: { val: '1.4x',   pct: 14 } },
+  { label: 'Margin',    dtc: { val: '62%',    pct: 62 },  b2b: { val: '34%',    pct: 34 } },
+  { label: 'CAC',       dtc: { val: '$28',    pct: 18 },  b2b: { val: '$420',   pct: 72 } },
+];
+
+var dtcEl = document.getElementById('dtcMetrics');
+var b2bEl = document.getElementById('b2bMetrics');
+
+metrics.forEach(function(m, i) {
+  var dtcRow = document.createElement('div');
+  dtcRow.className = 'metric-row';
+  dtcRow.innerHTML =
+    '<div class="m-label">' + m.label + '</div>' +
+    '<div class="m-bar-wrap"><div class="m-bar" id="dbar' + i + '"></div></div>' +
+    '<div class="m-val" id="dval' + i + '">—</div>';
+  dtcEl.appendChild(dtcRow);
+
+  var b2bRow = document.createElement('div');
+  b2bRow.className = 'metric-row';
+  b2bRow.innerHTML =
+    '<div class="m-label">' + m.label + '</div>' +
+    '<div class="m-bar-wrap"><div class="m-bar" id="bbar' + i + '"></div></div>' +
+    '<div class="m-val" id="bval' + i + '">—</div>';
+  b2bEl.appendChild(b2bRow);
+});
+
+// Reveal
+setTimeout(function() { document.getElementById('segDtc').classList.add('visible'); }, 300);
+setTimeout(function() { document.getElementById('segB2b').classList.add('visible'); }, 500);
+
+// Animate values in
+setTimeout(function() {
+  metrics.forEach(function(m, i) {
+    document.getElementById('dbar' + i).style.width = m.dtc.pct + '%';
+    document.getElementById('dval' + i).textContent = m.dtc.val;
+    document.getElementById('bbar' + i).style.width = m.b2b.pct + '%';
+    document.getElementById('bval' + i).textContent = m.b2b.val;
+  });
+}, 800);
+</script>
+</body>
+</html>
