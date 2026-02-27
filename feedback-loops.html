@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feedback Loops</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  .card { background: #0F0F0F; width: 100%; height: 100%; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<div class="card"><canvas id="c"></canvas></div>
+<script>
+var c = document.getElementById('c');
+var ctx = c.getContext('2d');
+var dpr = window.devicePixelRatio || 1;
+
+function resize() {
+  var r = c.parentElement.getBoundingClientRect();
+  c.width = r.width * dpr;
+  c.height = r.height * dpr;
+  c.style.width = r.width + 'px';
+  c.style.height = r.height + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height };
+}
+
+var nodes = [
+  { label: 'Ad Platforms', sub: 'Meta / Google', angle: -Math.PI / 2 },
+  { label: 'Clicks', sub: 'Optimized Targeting', angle: 0 },
+  { label: 'Conversions', sub: 'Closed-Won Revenue', angle: Math.PI / 2 },
+  { label: 'CRM / Backend', sub: 'LTV + Profit Data', angle: Math.PI },
+];
+
+var signals = [
+  'Closed-Won $4.2K', 'LTV: $312 (High)', 'Margin: 42%', 'Revenue: $8.6K',
+  'Subscriber LTV: $486', 'Profit: $1.8K', 'AOV: $128', 'LTV: $624 (Top 10%)',
+];
+
+var particles = [];
+var signalIdx = 0;
+var time = 0;
+
+function spawnParticle() {
+  var seg = Math.floor(Math.random() * 4);
+  particles.push({
+    seg: seg,
+    t: 0,
+    speed: 0.004 + Math.random() * 0.003,
+    signal: signals[signalIdx % signals.length],
+    showSignal: seg === 2,
+    alpha: 1,
+  });
+  signalIdx++;
+}
+
+// Spawn initial batch
+for (var i = 0; i < 8; i++) {
+  var p = {
+    seg: i % 4,
+    t: Math.random(),
+    speed: 0.004 + Math.random() * 0.003,
+    signal: signals[i % signals.length],
+    showSignal: (i % 4) === 2,
+    alpha: 1,
+  };
+  particles.push(p);
+}
+
+function draw() {
+  var d = resize();
+  var w = d.w, h = d.h;
+  var mob = w <= 480;
+  var cx = w / 2;
+  var cy = h / 2;
+  var rx = Math.min(w * 0.34, h * 0.34);
+  var ry = rx * 0.72;
+
+  ctx.clearRect(0, 0, w, h);
+  time += 0.016;
+
+  // Title
+  ctx.font = 'bold ' + (mob ? 11 : 13) + 'px system-ui';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#ccc';
+  ctx.fillText('Feedback Loop', 10, mob ? 16 : 20);
+  ctx.font = (mob ? 8 : 9) + 'px system-ui';
+  ctx.fillStyle = '#FB3B24';
+  ctx.fillText('Training algorithms on profit', 10, mob ? 28 : 34);
+
+  // Draw loop path (ellipse)
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+  ctx.strokeStyle = '#1A1A1A';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Glow path
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(251,59,36,0.06)';
+  ctx.lineWidth = 12;
+  ctx.stroke();
+
+  // Direction arrows on path
+  for (var a = 0; a < 4; a++) {
+    var angle = (a * Math.PI / 2) + time * 0.3;
+    var ax = cx + Math.cos(angle) * rx;
+    var ay = cy + Math.sin(angle) * ry;
+    var tangent = Math.atan2(-Math.sin(angle) * rx, Math.cos(angle) * ry);
+    // Skipped — too subtle, let particles show direction
+  }
+
+  // Draw nodes
+  var nodePositions = [];
+  nodes.forEach(function(node, i) {
+    var angle = node.angle;
+    var nx = cx + Math.cos(angle) * rx;
+    var ny = cy + Math.sin(angle) * ry;
+    nodePositions.push({ x: nx, y: ny });
+
+    // Node bg
+    var nw = mob ? 64 : 82;
+    var nh = mob ? 28 : 32;
+    ctx.fillStyle = '#141414';
+    ctx.strokeStyle = i === 0 || i === 3 ? 'rgba(251,59,36,0.3)' : '#1A1A1A';
+    ctx.lineWidth = 1;
+    roundRect(ctx, nx - nw/2, ny - nh/2, nw, nh, 5);
+    ctx.fill();
+    ctx.stroke();
+
+    // Label
+    ctx.font = 'bold ' + (mob ? 8 : 9) + 'px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = i === 0 || i === 3 ? '#FB3B24' : '#888';
+    ctx.fillText(node.label, nx, ny - 2);
+    ctx.font = (mob ? 6 : 7) + 'px system-ui';
+    ctx.fillStyle = '#555';
+    ctx.fillText(node.sub, nx, ny + (mob ? 9 : 10));
+  });
+
+  // Update and draw particles
+  var newParticles = [];
+  particles.forEach(function(p) {
+    p.t += p.speed;
+    if (p.t >= 1) {
+      p.seg = (p.seg + 1) % 4;
+      p.t = 0;
+      p.showSignal = p.seg === 2;
+    }
+
+    // Interpolate position along ellipse
+    var startAngle = nodes[p.seg].angle;
+    var endAngle = nodes[(p.seg + 1) % 4].angle;
+    if (endAngle <= startAngle) endAngle += Math.PI * 2;
+    var curAngle = startAngle + (endAngle - startAngle) * p.t;
+    var px = cx + Math.cos(curAngle) * rx;
+    var py = cy + Math.sin(curAngle) * ry;
+
+    // Particle dot
+    ctx.beginPath();
+    ctx.arc(px, py, mob ? 2.5 : 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#FB3B24';
+    ctx.globalAlpha = 0.9;
+    ctx.fill();
+
+    // Trail
+    for (var tr = 1; tr <= 3; tr++) {
+      var trAngle = curAngle - tr * 0.04;
+      var trx = cx + Math.cos(trAngle) * rx;
+      var tryy = cy + Math.sin(trAngle) * ry;
+      ctx.beginPath();
+      ctx.arc(trx, tryy, mob ? 1.5 : 2, 0, Math.PI * 2);
+      ctx.fillStyle = '#FB3B24';
+      ctx.globalAlpha = 0.3 - tr * 0.08;
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // Signal label floating near particle (only on the CRM→Platform leg)
+    if (p.showSignal && p.t > 0.2 && p.t < 0.8) {
+      ctx.font = 'bold ' + (mob ? 7 : 8) + 'px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(251,59,36,0.6)';
+      ctx.fillText(p.signal, px, py - (mob ? 8 : 10));
+    }
+
+    newParticles.push(p);
+  });
+  particles = newParticles;
+
+  // Spawn new particles periodically
+  if (Math.random() < 0.02) spawnParticle();
+
+  requestAnimationFrame(draw);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
