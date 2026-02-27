@@ -222,15 +222,10 @@ setTimeout(function() {
 }, 300);
 
 // Cycle between states
-function cycle() {
-  setTimeout(function() {
-    isOptimized = !isOptimized;
-    applyState(isOptimized);
-    setTimeout(cycle, 1800);
-  }, 1800);
-}
-
-setTimeout(cycle, 1500);
+setInterval(function() {
+  isOptimized = !isOptimized;
+  applyState(isOptimized);
+}, 1500);
 </script>
 </body>
 </html>
