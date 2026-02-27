@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attribution Comparison</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    overflow: hidden;
+  }
+  .side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 12px 10px;
+    overflow: hidden;
+  }
+  .side-left { border-right: 1px dashed #1A1A1A; }
+  .side-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+  .side-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+  .side-left .side-dot { background: #333; }
+  .side-right .side-dot { background: #FB3B24; }
+  .side-title {
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .side-left .side-title { color: #555; }
+  .side-right .side-title { color: #FB3B24; }
+  .sources {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+  }
+  .src-chip {
+    flex: 1;
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    border-radius: 4px;
+    padding: 3px 0;
+    text-align: center;
+    font-size: 7px;
+    font-weight: 700;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .side-right .src-chip {
+    border-color: rgba(251,59,36,0.15);
+    color: #666;
+  }
+  .arrow-down {
+    text-align: center;
+    font-size: 7px;
+    color: #282828;
+    margin-bottom: 4px;
+    flex-shrink: 0;
+  }
+  .side-right .arrow-down { color: rgba(251,59,36,0.3); }
+  .data-table {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-height: 0;
+  }
+  .data-row {
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    border-radius: 4px;
+    flex: 1;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .data-row.visible { opacity: 1; }
+  .side-right .data-row { border-color: rgba(251,59,36,0.08); }
+  .dr-channel {
+    font-size: 9px;
+    font-weight: 600;
+    color: #444;
+    width: 42px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .side-right .dr-channel { color: #888; }
+  .dr-values {
+    flex: 1;
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+    align-items: center;
+  }
+  .dr-val {
+    font-size: 10px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    transition: color 0.3s ease;
+    min-width: 36px;
+  }
+  /* Old way: flickering, conflicting */
+  .side-left .dr-val { color: #444; }
+  .side-left .dr-val.conflict { color: #662222; }
+  /* Firon way: clean, stable */
+  .side-right .dr-val { color: #FB3B24; }
+  .dr-status {
+    width: 12px;
+    flex-shrink: 0;
+    text-align: center;
+    font-size: 8px;
+    font-weight: 800;
+  }
+  .side-left .dr-status { color: #442222; }
+  .side-right .dr-status { color: rgba(251,59,36,0.6); }
+  .total-row {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 5px 6px;
+    border-top: 1px solid #1A1A1A;
+    margin-top: 2px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .total-row.visible { opacity: 1; }
+  .total-label {
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    flex: 1;
+  }
+  .side-left .total-label { color: #444; }
+  .side-right .total-label { color: #888; }
+  .total-val {
+    font-size: 13px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+  .side-left .total-val { color: #444; }
+  .side-right .total-val { color: #FB3B24; }
+  .total-note {
+    font-size: 7px;
+    font-weight: 600;
+    margin-left: 6px;
+  }
+  .side-left .total-note { color: #662222; }
+  .side-right .total-note { color: rgba(251,59,36,0.5); }
+  @media (max-width: 480px) {
+    .side { padding: 10px 6px; }
+    .side-title { font-size: 10px; }
+    .dr-channel { font-size: 8px; width: 34px; }
+    .dr-val { font-size: 9px; min-width: 30px; }
+    .total-val { font-size: 11px; }
+    .src-chip { font-size: 6px; padding: 2px 0; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <!-- LEFT: OLD WAY -->
+  <div class="side side-left">
+    <div class="side-header">
+      <div class="side-dot"></div>
+      <div class="side-title">The Old Way</div>
+    </div>
+    <div class="sources">
+      <div class="src-chip">Meta</div>
+      <div class="src-chip">Google</div>
+      <div class="src-chip">Shopify</div>
+    </div>
+    <div class="arrow-down">▼ fragmented ▼</div>
+    <div class="data-table" id="leftTable"></div>
+    <div class="total-row" id="leftTotal">
+      <div class="total-label">Revenue</div>
+      <div class="total-val" id="leftTotalVal">$0</div>
+      <div class="total-note" id="leftTotalNote"></div>
+    </div>
+  </div>
+  <!-- RIGHT: FIRON WAY -->
+  <div class="side side-right">
+    <div class="side-header">
+      <div class="side-dot"></div>
+      <div class="side-title">Firon Way</div>
+    </div>
+    <div class="sources">
+      <div class="src-chip">Meta</div>
+      <div class="src-chip">Google</div>
+      <div class="src-chip">Shopify</div>
+    </div>
+    <div class="arrow-down">▼ unified ▼</div>
+    <div class="data-table" id="rightTable"></div>
+    <div class="total-row" id="rightTotal">
+      <div class="total-label">Revenue</div>
+      <div class="total-val" id="rightTotalVal">$0</div>
+      <div class="total-note" id="rightTotalNote"></div>
+    </div>
+  </div>
+</div>
+<script>
+var channels = ['Meta', 'Google', 'Email', 'SEO', 'Direct'];
+
+// Old way: conflicting numbers that don't add up, flicker
+var oldData = [
+  { ch: 'Meta',   vals: ['$48K','$52K','$44K','$56K'], status: '✕' },
+  { ch: 'Google', vals: ['$36K','$41K','$33K','$38K'], status: '✕' },
+  { ch: 'Email',  vals: ['$22K','$18K','$26K','$20K'], status: '✕' },
+  { ch: 'SEO',    vals: ['—','—','—','—'],              status: '?' },
+  { ch: 'Direct', vals: ['$84K','$92K','$78K','$88K'],  status: '?' },
+];
+var oldTotals = ['$190K','$203K','$181K','$202K'];
+var oldNotes = ['Mismatch','Mismatch','Mismatch','Mismatch'];
+
+// Firon way: clean, reconciled, stable
+var fironData = [
+  { ch: 'Meta',   val: '$42.8K', status: '✓' },
+  { ch: 'Google', val: '$34.2K', status: '✓' },
+  { ch: 'Email',  val: '$21.6K', status: '✓' },
+  { ch: 'SEO',    val: '$18.4K', status: '✓' },
+  { ch: 'Direct', val: '$12.0K', status: '✓' },
+];
+var fironTotal = '$129.0K';
+var fironNote = 'Reconciled';
+
+var leftTable = document.getElementById('leftTable');
+var rightTable = document.getElementById('rightTable');
+var leftRows = [];
+var rightRows = [];
+
+// Build left rows
+oldData.forEach(function(d, i) {
+  var el = document.createElement('div');
+  el.className = 'data-row';
+  el.innerHTML =
+    '<div class="dr-channel">' + d.ch + '</div>' +
+    '<div class="dr-values">' +
+      '<div class="dr-val" id="lv' + i + '">' + d.vals[0] + '</div>' +
+    '</div>' +
+    '<div class="dr-status">' + d.status + '</div>';
+  leftTable.appendChild(el);
+  leftRows.push(el);
+});
+
+// Build right rows
+fironData.forEach(function(d, i) {
+  var el = document.createElement('div');
+  el.className = 'data-row';
+  el.innerHTML =
+    '<div class="dr-channel">' + d.ch + '</div>' +
+    '<div class="dr-values">' +
+      '<div class="dr-val">' + d.val + '</div>' +
+    '</div>' +
+    '<div class="dr-status">' + d.status + '</div>';
+  rightTable.appendChild(el);
+  rightRows.push(el);
+});
+
+// Staggered reveal
+leftRows.forEach(function(el, i) {
+  setTimeout(function() { el.classList.add('visible'); }, 300 + i * 100);
+});
+rightRows.forEach(function(el, i) {
+  setTimeout(function() { el.classList.add('visible'); }, 600 + i * 100);
+});
+setTimeout(function() {
+  document.getElementById('leftTotal').classList.add('visible');
+  document.getElementById('rightTotal').classList.add('visible');
+  document.getElementById('rightTotalVal').textContent = fironTotal;
+  document.getElementById('rightTotalNote').textContent = fironNote;
+}, 1200);
+
+// Flicker old way values
+var flickerIdx = 0;
+setInterval(function() {
+  flickerIdx = (flickerIdx + 1) % oldData[0].vals.length;
+  oldData.forEach(function(d, i) {
+    var el = document.getElementById('lv' + i);
+    if (el) {
+      el.textContent = d.vals[flickerIdx];
+      el.classList.toggle('conflict', Math.random() > 0.4);
+    }
+  });
+  document.getElementById('leftTotalVal').textContent = oldTotals[flickerIdx];
+  document.getElementById('leftTotalNote').textContent = oldNotes[flickerIdx];
+}, 1800);
+</script>
+</body>
+</html>
