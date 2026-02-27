@@ -47,7 +47,7 @@
   .hero-metrics {
     display: flex;
     gap: 6px;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     flex-shrink: 0;
   }
   .hero {
@@ -87,15 +87,14 @@
     font-variant-numeric: tabular-nums;
   }
   .hero-delta.up { color: #FB3B24; }
-  .hero-delta.down { color: #444; }
-  .sparkline-area {
+  .channels {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 4px;
     min-height: 0;
   }
-  .spark-row {
+  .ch-row {
     flex: 1;
     background: #141414;
     border: 1px solid #1A1A1A;
@@ -106,46 +105,78 @@
     gap: 8px;
     opacity: 0;
     transform: translateX(-6px);
-    transition: opacity 0.4s ease, transform 0.4s ease;
+    transition: opacity 0.4s ease, transform 0.4s ease, border-color 0.4s ease;
   }
-  .spark-row.visible { opacity: 1; transform: translateX(0); }
-  .spark-label {
+  .ch-row.visible { opacity: 1; transform: translateX(0); }
+  .ch-row.top { border-color: rgba(251,59,36,0.2); }
+  .ch-rank {
     font-size: 9px;
+    font-weight: 800;
+    color: #333;
+    width: 12px;
+    flex-shrink: 0;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    transition: color 0.4s ease;
+  }
+  .ch-row.top .ch-rank { color: #FB3B24; }
+  .ch-name {
+    font-size: 10px;
     font-weight: 600;
-    color: #666;
+    color: #555;
     width: 46px;
     flex-shrink: 0;
+    transition: color 0.4s ease;
   }
-  .spark-canvas {
+  .ch-row.top .ch-name { color: #ccc; }
+  .ch-bar-wrap {
     flex: 1;
-    height: 100%;
+    height: 6px;
+    background: #1A1A1A;
+    border-radius: 3px;
+    overflow: hidden;
   }
-  .spark-val {
-    font-size: 12px;
+  .ch-bar {
+    height: 100%;
+    border-radius: 3px;
+    width: 0%;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1), background 0.4s ease;
+  }
+  .ch-metrics {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .ch-m {
+    text-align: right;
+  }
+  .ch-m-val {
+    font-size: 11px;
     font-weight: 800;
     font-variant-numeric: tabular-nums;
-    color: #FB3B24;
-    width: 46px;
-    text-align: right;
-    flex-shrink: 0;
-  }
-  .spark-sub {
-    font-size: 7px;
-    font-weight: 600;
+    line-height: 1;
     color: #444;
-    width: 36px;
-    text-align: right;
-    flex-shrink: 0;
+    transition: color 0.4s ease;
+  }
+  .ch-row.top .ch-m-val { color: #FB3B24; }
+  .ch-m-label {
+    font-size: 6px;
+    font-weight: 600;
+    color: #333;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-top: 1px;
   }
   @media (max-width: 480px) {
     .title { font-size: 13px; }
     .hero { padding: 6px 8px; }
     .hero-val { font-size: 18px; }
     .hero-delta { font-size: 8px; }
-    .spark-label { font-size: 8px; width: 36px; }
-    .spark-val { font-size: 10px; width: 38px; }
-    .spark-sub { font-size: 6px; width: 28px; }
-    .spark-row { padding: 0 6px; gap: 4px; }
+    .ch-name { font-size: 9px; width: 38px; }
+    .ch-m-val { font-size: 10px; }
+    .ch-metrics { gap: 6px; }
+    .ch-row { padding: 0 8px; gap: 6px; }
+    .ch-rank { font-size: 8px; }
   }
 </style>
 </head>
@@ -178,11 +209,9 @@
       </div>
     </div>
   </div>
-  <div class="sparkline-area" id="sparkArea"></div>
+  <div class="channels" id="channels"></div>
 </div>
 <script>
-var dpr = window.devicePixelRatio || 1;
-
 var heroStates = [
   [{ v: '$32', d: '↓12%', dc: 'up' },   { v: '$286', d: '↑18%', dc: 'up' },  { v: '38%', d: '↑4.2%', dc: 'up' }],
   [{ v: '$28', d: '↓16%', dc: 'up' },   { v: '$312', d: '↑22%', dc: 'up' },  { v: '42%', d: '↑6.1%', dc: 'up' }],
@@ -190,133 +219,90 @@ var heroStates = [
 ];
 
 var channels = [
-  { label: 'Google', data: [32,34,30,28,26,32,36,34,30,28,32,34], val: '$34K', sub: '38%' },
-  { label: 'Meta',   data: [28,24,22,26,30,28,24,20,22,26,28,24], val: '$28K', sub: '34%' },
-  { label: 'TikTok', data: [12,16,20,24,22,18,16,20,24,28,26,22], val: '$22K', sub: '52%' },
-  { label: 'Email',  data: [18,20,22,20,18,16,18,22,24,22,20,18], val: '$18K', sub: '68%' },
-  { label: 'SEO',    data: [8,10,12,14,16,14,12,14,16,18,20,18],  val: '$16K', sub: '72%' },
+  { name: 'SEO',    states: [
+    { cm: 72, cac: '$14', ltv: '$380', bar: 95 },
+    { cm: 74, cac: '$12', ltv: '$392', bar: 97 },
+    { cm: 70, cac: '$16', ltv: '$368', bar: 92 },
+  ]},
+  { name: 'Email',  states: [
+    { cm: 68, cac: '$8',  ltv: '$312', bar: 88 },
+    { cm: 66, cac: '$10', ltv: '$298', bar: 86 },
+    { cm: 70, cac: '$7',  ltv: '$326', bar: 92 },
+  ]},
+  { name: 'TikTok', states: [
+    { cm: 52, cac: '$22', ltv: '$264', bar: 68 },
+    { cm: 56, cac: '$18', ltv: '$278', bar: 73 },
+    { cm: 48, cac: '$26', ltv: '$248', bar: 63 },
+  ]},
+  { name: 'Google', states: [
+    { cm: 44, cac: '$32', ltv: '$286', bar: 58 },
+    { cm: 46, cac: '$28', ltv: '$298', bar: 60 },
+    { cm: 42, cac: '$34', ltv: '$272', bar: 55 },
+  ]},
+  { name: 'Meta',   states: [
+    { cm: 38, cac: '$36', ltv: '$242', bar: 50 },
+    { cm: 34, cac: '$42', ltv: '$228', bar: 45 },
+    { cm: 40, cac: '$34', ltv: '$256', bar: 53 },
+  ]},
 ];
 
-var sparkArea = document.getElementById('sparkArea');
-var sparkRows = [];
-var canvases = [];
+var channelsEl = document.getElementById('channels');
+var chEls = [];
 
 channels.forEach(function(ch, i) {
-  var row = document.createElement('div');
-  row.className = 'spark-row';
-  row.innerHTML =
-    '<div class="spark-label">' + ch.label + '</div>' +
-    '<canvas class="spark-canvas" id="sc' + i + '"></canvas>' +
-    '<div class="spark-val">' + ch.val + '</div>' +
-    '<div class="spark-sub">' + ch.sub + '</div>';
-  sparkArea.appendChild(row);
-  sparkRows.push(row);
+  var el = document.createElement('div');
+  el.className = 'ch-row';
+  el.innerHTML =
+    '<div class="ch-rank">' + (i + 1) + '</div>' +
+    '<div class="ch-name">' + ch.name + '</div>' +
+    '<div class="ch-bar-wrap"><div class="ch-bar" id="cbar' + i + '"></div></div>' +
+    '<div class="ch-metrics">' +
+      '<div class="ch-m"><div class="ch-m-val" id="ccm' + i + '">—</div><div class="ch-m-label">CM</div></div>' +
+      '<div class="ch-m"><div class="ch-m-val" id="ccac' + i + '">—</div><div class="ch-m-label">CAC</div></div>' +
+      '<div class="ch-m"><div class="ch-m-val" id="cltv' + i + '">—</div><div class="ch-m-label">LTV</div></div>' +
+    '</div>';
+  channelsEl.appendChild(el);
+  chEls.push(el);
 });
 
-function drawSparkline(canvasId, data, color) {
-  var canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  var rect = canvas.parentElement.getBoundingClientRect();
-  var w = canvas.offsetWidth;
-  var h = canvas.offsetHeight;
-  if (w === 0 || h === 0) return;
-  canvas.width = w * dpr;
-  canvas.height = h * dpr;
-  canvas.style.width = w + 'px';
-  canvas.style.height = h + 'px';
-  var ctx = canvas.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+var stateIdx = 0;
 
-  var max = Math.max.apply(null, data);
-  var min = Math.min.apply(null, data);
-  var range = max - min || 1;
-  var pad = 6;
-  var stepX = (w - pad * 2) / (data.length - 1);
-
-  // Area fill
-  ctx.beginPath();
-  ctx.moveTo(pad, h - pad);
-  data.forEach(function(v, j) {
-    var x = pad + j * stepX;
-    var y = pad + (1 - (v - min) / range) * (h - pad * 2);
-    if (j === 0) ctx.lineTo(x, y);
-    else ctx.lineTo(x, y);
+function applyState(idx) {
+  channels.forEach(function(ch, i) {
+    var s = ch.states[idx];
+    var isTop = s.cm >= 52;
+    var bar = document.getElementById('cbar' + i);
+    bar.style.width = s.bar + '%';
+    bar.style.background = isTop ? '#FB3B24' : '#333';
+    document.getElementById('ccm' + i).textContent = s.cm + '%';
+    document.getElementById('ccac' + i).textContent = s.cac;
+    document.getElementById('cltv' + i).textContent = s.ltv;
+    chEls[i].className = 'ch-row visible' + (isTop ? ' top' : '');
   });
-  ctx.lineTo(pad + (data.length - 1) * stepX, h - pad);
-  ctx.closePath();
-  ctx.fillStyle = color.replace(')', ',0.08)').replace('rgb', 'rgba');
-  ctx.fill();
 
-  // Line
-  ctx.beginPath();
-  data.forEach(function(v, j) {
-    var x = pad + j * stepX;
-    var y = pad + (1 - (v - min) / range) * (h - pad * 2);
-    if (j === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
+  var h = heroStates[idx];
+  h.forEach(function(hero, i) {
+    document.getElementById('hv' + i).textContent = hero.v;
+    var dEl = document.getElementById('hd' + i);
+    dEl.textContent = hero.d;
+    dEl.className = 'hero-delta ' + hero.dc;
   });
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 1.5;
-  ctx.lineJoin = 'round';
-  ctx.stroke();
-
-  // End dot
-  var lastX = pad + (data.length - 1) * stepX;
-  var lastY = pad + (1 - (data[data.length - 1] - min) / range) * (h - pad * 2);
-  ctx.beginPath();
-  ctx.arc(lastX, lastY, 2.5, 0, Math.PI * 2);
-  ctx.fillStyle = color;
-  ctx.fill();
 }
 
 // Staggered reveal
 ['h0','h1','h2'].forEach(function(id, i) {
   setTimeout(function() { document.getElementById(id).classList.add('visible'); }, 200 + i * 100);
 });
-sparkRows.forEach(function(el, i) {
+chEls.forEach(function(el, i) {
   setTimeout(function() { el.classList.add('visible'); }, 500 + i * 80);
 });
 
-// Initial values & draw
-var stateIdx = 0;
-function applyHeroState(idx) {
-  var s = heroStates[idx];
-  s.forEach(function(h, i) {
-    document.getElementById('hv' + i).textContent = h.v;
-    var dEl = document.getElementById('hd' + i);
-    dEl.textContent = h.d;
-    dEl.className = 'hero-delta ' + h.dc;
-  });
-}
+setTimeout(function() { applyState(0); }, 600);
 
-setTimeout(function() {
-  applyHeroState(0);
-  channels.forEach(function(ch, i) {
-    drawSparkline('sc' + i, ch.data, '#FB3B24');
-  });
-}, 600);
-
-// Cycle hero values and shift sparkline data
 setInterval(function() {
   stateIdx = (stateIdx + 1) % heroStates.length;
-  applyHeroState(stateIdx);
-
-  // Shift sparkline data
-  channels.forEach(function(ch, i) {
-    ch.data.shift();
-    var last = ch.data[ch.data.length - 1];
-    var next = last + Math.floor(Math.random() * 8) - 4;
-    next = Math.max(4, Math.min(40, next));
-    ch.data.push(next);
-    drawSparkline('sc' + i, ch.data, '#FB3B24');
-  });
-}, 2500);
-
-window.addEventListener('resize', function() {
-  channels.forEach(function(ch, i) {
-    drawSparkline('sc' + i, ch.data, '#FB3B24');
-  });
-});
+  applyState(stateIdx);
+}, 3000);
 </script>
 </body>
 </html>
