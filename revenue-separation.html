@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revenue Separation</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+  }
+  .title { font-size: 14px; font-weight: 700; color: #ccc; }
+  .tag {
+    font-size: 8px;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    padding: 2px 7px;
+    border-radius: 3px;
+  }
+  .mixed-bar {
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    border-radius: 5px;
+    padding: 6px 10px;
+    margin-bottom: 4px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mixed-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: #555;
+    width: 70px;
+    flex-shrink: 0;
+  }
+  .mixed-bar-wrap {
+    flex: 1;
+    height: 8px;
+    background: #1A1A1A;
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+  }
+  .mixed-seg {
+    height: 100%;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .mixed-seg.dtc { background: #FB3B24; }
+  .mixed-seg.b2b { background: #FFB0A5; }
+  .mixed-seg.unknown { background: #333; }
+  .mixed-val {
+    font-size: 11px;
+    font-weight: 800;
+    color: #FB3B24;
+    font-variant-numeric: tabular-nums;
+    width: 50px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .split-arrow {
+    text-align: center;
+    font-size: 7px;
+    color: #282828;
+    margin-bottom: 4px;
+    flex-shrink: 0;
+    letter-spacing: 2px;
+  }
+  .segments {
+    flex: 1;
+    display: flex;
+    gap: 6px;
+    min-height: 0;
+  }
+  .seg-card {
+    flex: 1;
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    border-radius: 6px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .seg-card.visible { opacity: 1; transform: translateY(0); }
+  .seg-card.dtc { border-color: rgba(251,59,36,0.2); }
+  .seg-card.b2b { border-color: rgba(255,176,165,0.2); }
+  .seg-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+  }
+  .seg-name {
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .seg-card.dtc .seg-name { color: #FB3B24; }
+  .seg-card.b2b .seg-name { color: #FFB0A5; }
+  .seg-pct {
+    font-size: 9px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .seg-card.dtc .seg-pct { color: #FB3B24; }
+  .seg-card.b2b .seg-pct { color: #FFB0A5; }
+  .seg-metrics {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 0;
+  }
+  .sm-row {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .sm-label {
+    font-size: 7px;
+    font-weight: 600;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+    width: 34px;
+    flex-shrink: 0;
+  }
+  .sm-bar-wrap {
+    flex: 1;
+    height: 3px;
+    background: #1A1A1A;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .sm-bar {
+    height: 100%;
+    border-radius: 2px;
+    width: 0%;
+    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .seg-card.dtc .sm-bar { background: #FB3B24; }
+  .seg-card.b2b .sm-bar { background: #FFB0A5; }
+  .sm-val {
+    font-size: 10px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    width: 38px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .seg-card.dtc .sm-val { color: #FB3B24; }
+  .seg-card.b2b .sm-val { color: #FFB0A5; }
+  @media (max-width: 480px) {
+    .title { font-size: 13px; }
+    .mixed-label { font-size: 8px; width: 56px; }
+    .mixed-val { font-size: 10px; width: 42px; }
+    .seg-card { padding: 6px; }
+    .seg-name { font-size: 9px; }
+    .sm-label { font-size: 6px; width: 28px; }
+    .sm-val { font-size: 9px; width: 32px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="title">Revenue Separation</div>
+    <div class="tag">First-Party</div>
+  </div>
+  <div class="mixed-bar">
+    <div class="mixed-label">Total Revenue</div>
+    <div class="mixed-bar-wrap">
+      <div class="mixed-seg dtc" id="mixDtc" style="width:0%"></div>
+      <div class="mixed-seg b2b" id="mixB2b" style="width:0%"></div>
+      <div class="mixed-seg unknown" id="mixUnk" style="width:0%"></div>
+    </div>
+    <div class="mixed-val" id="totalRev">$0</div>
+  </div>
+  <div class="split-arrow">▼ SEGMENTED ▼</div>
+  <div class="segments">
+    <div class="seg-card dtc" id="segDtc">
+      <div class="seg-top">
+        <div class="seg-name">DTC Consumer</div>
+        <div class="seg-pct" id="dtcPct">0%</div>
+      </div>
+      <div class="seg-metrics" id="dtcMetrics"></div>
+    </div>
+    <div class="seg-card b2b" id="segB2b">
+      <div class="seg-top">
+        <div class="seg-name">B2B / Wholesale</div>
+        <div class="seg-pct" id="b2bPct">0%</div>
+      </div>
+      <div class="seg-metrics" id="b2bMetrics"></div>
+    </div>
+  </div>
+</div>
+<script>
+var dtcMetrics = [
+  { label: 'LTV',   val: '$312',  pct: 26 },
+  { label: 'AOV',   val: '$86',   pct: 22 },
+  { label: 'Freq',  val: '3.2x',  pct: 64 },
+  { label: 'CAC',   val: '$28',   pct: 14 },
+];
+var b2bMetrics = [
+  { label: 'LTV',   val: '$18.6K', pct: 95 },
+  { label: 'AOV',   val: '$2.4K',  pct: 80 },
+  { label: 'Freq',  val: '1.4x',   pct: 28 },
+  { label: 'CAC',   val: '$420',   pct: 42 },
+];
+
+var states = [
+  { dtcPct: 64, b2bPct: 36, unkPct: 0, total: '$486K' },
+  { dtcPct: 58, b2bPct: 42, unkPct: 0, total: '$512K' },
+  { dtcPct: 68, b2bPct: 32, unkPct: 0, total: '$462K' },
+];
+
+var dtcEl = document.getElementById('dtcMetrics');
+var b2bEl = document.getElementById('b2bMetrics');
+
+dtcMetrics.forEach(function(m, i) {
+  var row = document.createElement('div');
+  row.className = 'sm-row';
+  row.innerHTML =
+    '<div class="sm-label">' + m.label + '</div>' +
+    '<div class="sm-bar-wrap"><div class="sm-bar" id="dbar' + i + '"></div></div>' +
+    '<div class="sm-val" id="dval' + i + '">—</div>';
+  dtcEl.appendChild(row);
+});
+
+b2bMetrics.forEach(function(m, i) {
+  var row = document.createElement('div');
+  row.className = 'sm-row';
+  row.innerHTML =
+    '<div class="sm-label">' + m.label + '</div>' +
+    '<div class="sm-bar-wrap"><div class="sm-bar" id="bbar' + i + '"></div></div>' +
+    '<div class="sm-val" id="bval' + i + '">—</div>';
+  b2bEl.appendChild(row);
+});
+
+var stateIdx = 0;
+
+function applyState(idx) {
+  var s = states[idx];
+  document.getElementById('mixDtc').style.width = s.dtcPct + '%';
+  document.getElementById('mixB2b').style.width = s.b2bPct + '%';
+  document.getElementById('mixUnk').style.width = s.unkPct + '%';
+  document.getElementById('totalRev').textContent = s.total;
+  document.getElementById('dtcPct').textContent = s.dtcPct + '%';
+  document.getElementById('b2bPct').textContent = s.b2bPct + '%';
+}
+
+// Reveal
+setTimeout(function() {
+  document.getElementById('segDtc').classList.add('visible');
+}, 400);
+setTimeout(function() {
+  document.getElementById('segB2b').classList.add('visible');
+}, 600);
+
+// Animate metrics
+setTimeout(function() {
+  applyState(0);
+  dtcMetrics.forEach(function(m, i) {
+    document.getElementById('dbar' + i).style.width = m.pct + '%';
+    document.getElementById('dval' + i).textContent = m.val;
+  });
+  b2bMetrics.forEach(function(m, i) {
+    document.getElementById('bbar' + i).style.width = m.pct + '%';
+    document.getElementById('bval' + i).textContent = m.val;
+  });
+}, 800);
+
+// Cycle mix ratio
+setInterval(function() {
+  stateIdx = (stateIdx + 1) % states.length;
+  applyState(stateIdx);
+}, 3000);
+</script>
+</body>
+</html>
