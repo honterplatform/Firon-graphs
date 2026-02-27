@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attribution Audit</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+  }
+  .title { font-size: 14px; font-weight: 700; color: #ccc; }
+  .scan-badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #FB3B24;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .scan-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #FB3B24;
+    animation: pulse 1.2s ease infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
+  .stats {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+  }
+  .stat {
+    flex: 1;
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    border-radius: 4px;
+    padding: 5px 6px;
+    text-align: center;
+  }
+  .stat-val {
+    font-size: 14px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .stat-val.red { color: #FB3B24; }
+  .stat-val.gray { color: #444; }
+  .stat-val.green { color: #FB3B24; }
+  .stat-label {
+    font-size: 7px;
+    font-weight: 600;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-top: 2px;
+  }
+  .links {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .link-row {
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    border-radius: 4px;
+    flex-shrink: 0;
+    height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: height 0.4s ease, opacity 0.4s ease, border-color 0.4s ease;
+  }
+  .link-row.visible { height: 34px; opacity: 1; }
+  .link-row.fixed { border-color: rgba(251,59,36,0.15); }
+  .link-row.broken { border-color: rgba(80,30,25,0.3); }
+  .lr-source {
+    font-size: 9px;
+    font-weight: 600;
+    color: #666;
+    width: 52px;
+    flex-shrink: 0;
+  }
+  .lr-arrow {
+    font-size: 8px;
+    color: #333;
+    margin: 0 4px;
+    flex-shrink: 0;
+  }
+  .lr-dest {
+    font-size: 9px;
+    font-weight: 600;
+    color: #666;
+    width: 52px;
+    flex-shrink: 0;
+  }
+  .lr-issue {
+    flex: 1;
+    font-size: 8px;
+    color: #444;
+    padding: 0 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lr-status {
+    flex-shrink: 0;
+    font-size: 7px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+  .lr-status.scanning {
+    background: rgba(251,59,36,0.08);
+    color: #555;
+    animation: pulse 1.2s ease infinite;
+  }
+  .lr-status.fixed {
+    background: rgba(251,59,36,0.1);
+    color: #FB3B24;
+  }
+  .lr-status.broken {
+    background: rgba(80,30,25,0.15);
+    color: #662222;
+  }
+  .progress-wrap {
+    margin-top: 4px;
+    flex-shrink: 0;
+  }
+  .progress-bar-bg {
+    width: 100%;
+    height: 3px;
+    background: #1A1A1A;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: #FB3B24;
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .progress-text {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2px;
+  }
+  .progress-label {
+    font-size: 7px;
+    font-weight: 600;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .progress-pct {
+    font-size: 7px;
+    font-weight: 700;
+    color: #FB3B24;
+    font-variant-numeric: tabular-nums;
+  }
+  @media (max-width: 480px) {
+    .title { font-size: 13px; }
+    .stat-val { font-size: 12px; }
+    .lr-source, .lr-dest { font-size: 8px; width: 42px; }
+    .lr-issue { font-size: 7px; }
+    .link-row { padding: 0 6px; }
+    .link-row.visible { height: 30px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="title">Attribution Audit</div>
+    <div class="scan-badge"><div class="scan-dot"></div>Scanning</div>
+  </div>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-val red" id="fixedCount">0</div>
+      <div class="stat-label">Resolved</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val gray" id="brokenCount">0</div>
+      <div class="stat-label">Found</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val red" id="dataRecov">0%</div>
+      <div class="stat-label">Data Recovered</div>
+    </div>
+  </div>
+  <div class="links" id="links"></div>
+  <div class="progress-wrap">
+    <div class="progress-bar-bg"><div class="progress-bar" id="progBar"></div></div>
+    <div class="progress-text">
+      <div class="progress-label">Audit Progress</div>
+      <div class="progress-pct" id="progPct">0%</div>
+    </div>
+  </div>
+</div>
+<script>
+var issues = [
+  { src: 'Meta',    dest: 'Shopify',  issue: 'CAPI event mismatch on Purchase' },
+  { src: 'Google',  dest: 'GA4',      issue: 'Enhanced Conversions tag firing twice' },
+  { src: 'Meta',    dest: 'HubSpot',  issue: 'UTM params stripped on redirect' },
+  { src: 'Google',  dest: 'Shopify',  issue: 'Offline conversion import delay >48h' },
+  { src: 'TikTok',  dest: 'GA4',      issue: 'Click ID not persisting past landing' },
+  { src: 'Meta',    dest: 'GA4',      issue: 'Cross-domain tracking broken on checkout' },
+  { src: 'Google',  dest: 'HubSpot',  issue: 'GCLID not mapping to CRM contact' },
+  { src: 'Email',   dest: 'Shopify',  issue: 'Klaviyo UTMs overwriting paid source' },
+];
+
+var linksEl = document.getElementById('links');
+var fixedEl = document.getElementById('fixedCount');
+var brokenEl = document.getElementById('brokenCount');
+var recovEl = document.getElementById('dataRecov');
+var progBar = document.getElementById('progBar');
+var progPct = document.getElementById('progPct');
+
+var fixedCount = 0;
+var brokenCount = 0;
+var rowEls = [];
+var issueIdx = 0;
+var maxVisible = 7;
+
+function addIssue() {
+  if (issueIdx >= issues.length) issueIdx = 0;
+  var iss = issues[issueIdx];
+  issueIdx++;
+  brokenCount++;
+  brokenEl.textContent = brokenCount;
+
+  var el = document.createElement('div');
+  el.className = 'link-row broken';
+  el.innerHTML =
+    '<div class="lr-source">' + iss.src + '</div>' +
+    '<div class="lr-arrow">→</div>' +
+    '<div class="lr-dest">' + iss.dest + '</div>' +
+    '<div class="lr-issue">' + iss.issue + '</div>' +
+    '<div class="lr-status scanning">Scanning</div>';
+
+  linksEl.insertBefore(el, linksEl.firstChild);
+  rowEls.unshift(el);
+
+  requestAnimationFrame(function() {
+    el.classList.add('visible');
+  });
+
+  // Remove excess
+  while (rowEls.length > maxVisible) {
+    var old = rowEls.pop();
+    old.style.opacity = '0';
+    old.style.height = '0';
+    setTimeout(function(o) { if (o.parentNode) o.parentNode.removeChild(o); }, 400, old);
+  }
+
+  // Fix after delay
+  setTimeout(function() {
+    var status = el.querySelector('.lr-status');
+    status.className = 'lr-status fixed';
+    status.textContent = 'Fixed';
+    el.className = 'link-row visible fixed';
+    fixedCount++;
+    fixedEl.textContent = fixedCount;
+
+    var pct = Math.min(Math.round((fixedCount / (fixedCount + 2)) * 100), 98);
+    recovEl.textContent = pct + '%';
+    progBar.style.width = pct + '%';
+    progPct.textContent = pct + '%';
+  }, 1400);
+}
+
+// Initial batch staggered
+setTimeout(function() { addIssue(); }, 400);
+setTimeout(function() { addIssue(); }, 900);
+setTimeout(function() { addIssue(); }, 1400);
+setTimeout(function() { addIssue(); }, 1900);
+
+// Continuous
+setTimeout(function() {
+  setInterval(addIssue, 2400);
+}, 2800);
+</script>
+</body>
+</html>
