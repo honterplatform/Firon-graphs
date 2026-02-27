@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Platform Agnostic Deployment</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+  }
+  .title { font-size: 14px; font-weight: 700; color: #ccc; }
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #555;
+    transition: color 0.4s ease;
+  }
+  .status.active { color: #FB3B24; }
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #333;
+    transition: background 0.4s ease;
+  }
+  .status.active .status-dot {
+    background: #FB3B24;
+    animation: pulse 1.5s ease infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .channels {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+  }
+  .channel {
+    flex: 1;
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    gap: 10px;
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: opacity 0.4s ease, transform 0.4s ease, border-color 0.5s ease;
+  }
+  .channel.visible { opacity: 1; transform: translateX(0); }
+  .channel.top { border-color: rgba(251,59,36,0.25); }
+  .ch-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: #1A1A1A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+    color: #444;
+    flex-shrink: 0;
+    transition: background 0.4s ease, color 0.4s ease;
+  }
+  .channel.top .ch-icon {
+    background: rgba(251,59,36,0.12);
+    color: #FB3B24;
+  }
+  .ch-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .ch-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 3px;
+    transition: color 0.4s ease;
+  }
+  .channel.top .ch-name { color: #ccc; }
+  .ch-bar-wrap {
+    width: 100%;
+    height: 4px;
+    background: #1A1A1A;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .ch-bar {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.4s ease;
+    width: 0%;
+  }
+  .ch-metrics {
+    display: flex;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .ch-metric {
+    text-align: right;
+  }
+  .ch-metric-val {
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #444;
+    line-height: 1;
+    transition: color 0.4s ease;
+  }
+  .channel.top .ch-metric-val { color: #FB3B24; }
+  .ch-metric-label {
+    font-size: 7px;
+    font-weight: 600;
+    color: #333;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-top: 1px;
+  }
+  .ch-alloc {
+    width: 44px;
+    flex-shrink: 0;
+    text-align: right;
+    font-size: 14px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: #333;
+    transition: color 0.4s ease;
+  }
+  .channel.top .ch-alloc { color: #FB3B24; }
+  .ch-delta {
+    font-size: 8px;
+    font-weight: 600;
+    color: #333;
+    text-align: right;
+    margin-top: 1px;
+    font-variant-numeric: tabular-nums;
+    transition: color 0.4s ease;
+  }
+  .ch-delta.up { color: #FB3B24; }
+  .ch-delta.down { color: #444; }
+  @media (max-width: 480px) {
+    .title { font-size: 13px; }
+    .ch-icon { width: 22px; height: 22px; font-size: 9px; }
+    .ch-name { font-size: 10px; }
+    .ch-metrics { gap: 8px; }
+    .ch-metric-val { font-size: 11px; }
+    .ch-alloc { font-size: 12px; width: 36px; }
+    .channel { padding: 0 8px; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="title">Capital Deployment</div>
+    <div class="status" id="status">
+      <div class="status-dot"></div>
+      <span>Rebalancing</span>
+    </div>
+  </div>
+  <div class="channels" id="channels"></div>
+</div>
+<script>
+var channels = [
+  { name: 'Google Ads', icon: 'G', states: [
+    { alloc: 34, margin: 42, cac: 28 },
+    { alloc: 38, margin: 48, cac: 24 },
+    { alloc: 31, margin: 38, cac: 31 },
+    { alloc: 36, margin: 45, cac: 26 }
+  ]},
+  { name: 'Meta', icon: 'M', states: [
+    { alloc: 28, margin: 38, cac: 32 },
+    { alloc: 24, margin: 34, cac: 36 },
+    { alloc: 32, margin: 44, cac: 26 },
+    { alloc: 26, margin: 36, cac: 34 }
+  ]},
+  { name: 'TikTok', icon: 'T', states: [
+    { alloc: 22, margin: 52, cac: 18 },
+    { alloc: 26, margin: 56, cac: 16 },
+    { alloc: 24, margin: 50, cac: 20 },
+    { alloc: 28, margin: 58, cac: 15 }
+  ]},
+  { name: 'Bing', icon: 'B', states: [
+    { alloc: 16, margin: 28, cac: 42 },
+    { alloc: 12, margin: 22, cac: 48 },
+    { alloc: 13, margin: 24, cac: 46 },
+    { alloc: 10, margin: 18, cac: 52 }
+  ]}
+];
+
+var stateIdx = 0;
+var channelsEl = document.getElementById('channels');
+var statusEl = document.getElementById('status');
+var channelEls = [];
+
+channels.forEach(function(ch, i) {
+  var el = document.createElement('div');
+  el.className = 'channel';
+  el.innerHTML =
+    '<div class="ch-icon">' + ch.icon + '</div>' +
+    '<div class="ch-info">' +
+      '<div class="ch-name">' + ch.name + '</div>' +
+      '<div class="ch-bar-wrap"><div class="ch-bar" id="bar' + i + '"></div></div>' +
+    '</div>' +
+    '<div class="ch-metrics">' +
+      '<div class="ch-metric"><div class="ch-metric-val" id="margin' + i + '">0%</div><div class="ch-metric-label">Margin</div></div>' +
+      '<div class="ch-metric"><div class="ch-metric-val" id="cac' + i + '">$0</div><div class="ch-metric-label">CAC</div></div>' +
+    '</div>' +
+    '<div>' +
+      '<div class="ch-alloc" id="alloc' + i + '">0%</div>' +
+      '<div class="ch-delta" id="delta' + i + '"></div>' +
+    '</div>';
+  channelsEl.appendChild(el);
+  channelEls.push(el);
+});
+
+function applyState(idx) {
+  var maxAlloc = 0;
+  channels.forEach(function(ch) {
+    if (ch.states[idx].alloc > maxAlloc) maxAlloc = ch.states[idx].alloc;
+  });
+
+  channels.forEach(function(ch, i) {
+    var s = ch.states[idx];
+    var prev = ch.states[(idx - 1 + ch.states.length) % ch.states.length];
+    var isTop = s.alloc === maxAlloc || s.margin > 45;
+    var bar = document.getElementById('bar' + i);
+    var alloc = document.getElementById('alloc' + i);
+    var margin = document.getElementById('margin' + i);
+    var cac = document.getElementById('cac' + i);
+    var delta = document.getElementById('delta' + i);
+
+    bar.style.width = (s.alloc / maxAlloc) * 100 + '%';
+    bar.style.background = isTop ? '#FB3B24' : '#333';
+    alloc.textContent = s.alloc + '%';
+    margin.textContent = s.margin + '%';
+    cac.textContent = '$' + s.cac;
+
+    var diff = s.alloc - prev.alloc;
+    if (diff > 0) {
+      delta.textContent = '+' + diff + '%';
+      delta.className = 'ch-delta up';
+    } else if (diff < 0) {
+      delta.textContent = diff + '%';
+      delta.className = 'ch-delta down';
+    } else {
+      delta.textContent = '—';
+      delta.className = 'ch-delta';
+    }
+
+    channelEls[i].className = 'channel visible' + (isTop ? ' top' : '');
+  });
+}
+
+// Staggered reveal
+channelEls.forEach(function(el, i) {
+  setTimeout(function() { el.classList.add('visible'); }, 300 + i * 120);
+});
+
+// Initial state
+setTimeout(function() {
+  applyState(0);
+  statusEl.classList.add('active');
+}, 600);
+
+// Cycle states
+setInterval(function() {
+  stateIdx = (stateIdx + 1) % channels[0].states.length;
+  applyState(stateIdx);
+}, 3000);
+</script>
+</body>
+</html>
