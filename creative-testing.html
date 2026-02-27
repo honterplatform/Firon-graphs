@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creative Testing</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+  }
+  .title { font-size: 14px; font-weight: 700; color: #ccc; }
+  .counter {
+    font-size: 11px;
+    color: #555;
+    font-variant-numeric: tabular-nums;
+  }
+  .counter span { color: #FB3B24; font-weight: 700; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    flex: 1;
+    min-height: 0;
+  }
+  .variant-card {
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.4s ease, transform 0.4s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+  }
+  .variant-card.visible { opacity: 1; transform: translateY(0); }
+  .variant-card.scaling {
+    border-color: rgba(251,59,36,0.35);
+    box-shadow: 0 0 12px rgba(251,59,36,0.06);
+  }
+  .thumb {
+    width: 100%;
+    aspect-ratio: 4/3;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+  .thumb-inner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 4px;
+  }
+  .thumb-block {
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .variant-name {
+    font-size: 9px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .variant-card.scaling .variant-name { color: #888; }
+  .variant-score {
+    font-size: 16px;
+    font-weight: 800;
+    color: #444;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    transition: color 0.4s ease;
+  }
+  .variant-card.scaling .variant-score { color: #FB3B24; }
+  .variant-status {
+    font-size: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-top: 3px;
+    color: #333;
+    transition: color 0.4s ease;
+  }
+  .variant-card.scaling .variant-status { color: #FB3B24; }
+  .metrics-row {
+    display: flex;
+    gap: 6px;
+    margin-top: auto;
+    padding-top: 4px;
+  }
+  .mini-metric {
+    font-size: 8px;
+    color: #444;
+    font-variant-numeric: tabular-nums;
+  }
+  .mini-metric span { color: #555; }
+  .variant-card.scaling .mini-metric span { color: #FB3B24; }
+  @media (max-width: 480px) {
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .variant-score { font-size: 14px; }
+    .variant-name { font-size: 8px; }
+    .title { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="title">Creative Testing</div>
+    <div class="counter"><span id="varCount">0</span> variants tested</div>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+<script>
+var variants = [
+  { name: 'Hook: Lifestyle A', bg: '#1E1412', blocks: ['#2A1A16','#3A2218','#2A1A16'], ctr: 3.8, cpc: 0.42, score: 88 },
+  { name: 'Hook: UGC Review', bg: '#1A1416', blocks: ['#261A22','#361E2A','#261A22'], ctr: 3.2, cpc: 0.51, score: 74 },
+  { name: 'Hook: Product Close', bg: '#14161A', blocks: ['#1A2030','#1E2838','#1A2030'], ctr: 2.4, cpc: 0.68, score: 52 },
+  { name: 'Hook: Founder Story', bg: '#161A14', blocks: ['#1E2A1A','#223218','#1E2A1A'], ctr: 1.6, cpc: 0.84, score: 34 },
+];
+
+var statuses = ['Scaling', 'Testing', 'Testing', 'Paused'];
+var winnerIdx = 0;
+
+var grid = document.getElementById('grid');
+var cardEls = [];
+
+variants.forEach(function(v, i) {
+  var card = document.createElement('div');
+  card.className = 'variant-card' + (i === winnerIdx ? ' scaling' : '');
+
+  var blocksHtml = v.blocks.map(function(color, bi) {
+    var h = bi === 1 ? 'flex:1' : 'height:30%';
+    return '<div class="thumb-block" style="background:' + color + ';' + h + '"></div>';
+  }).join('');
+
+  card.innerHTML =
+    '<div class="thumb" style="background:' + v.bg + '"><div class="thumb-inner">' + blocksHtml + '</div></div>' +
+    '<div class="variant-name">' + v.name + '</div>' +
+    '<div class="variant-score">' + v.score + '</div>' +
+    '<div class="variant-status">' + statuses[i] + '</div>' +
+    '<div class="metrics-row">' +
+      '<div class="mini-metric">CTR <span>' + v.ctr + '%</span></div>' +
+      '<div class="mini-metric">CPC <span>$' + v.cpc + '</span></div>' +
+    '</div>';
+
+  grid.appendChild(card);
+  cardEls.push(card);
+});
+
+// Staggered reveal
+cardEls.forEach(function(card, i) {
+  setTimeout(function() { card.classList.add('visible'); }, 300 + i * 150);
+});
+
+// Animate counter
+var countEl = document.getElementById('varCount');
+var countTarget = 142;
+function animateCount() {
+  var start = performance.now();
+  var dur = 1500;
+  function tick(now) {
+    var p = Math.min((now - start) / dur, 1);
+    var ep = 1 - Math.pow(1 - p, 3);
+    countEl.textContent = Math.round(ep * countTarget);
+    if (p < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+setTimeout(animateCount, 400);
+
+// Cycle winner every 4 seconds
+function shuffleWinner() {
+  // Pick new winner
+  var newWinner = (winnerIdx + 1 + Math.floor(Math.random() * (variants.length - 1))) % variants.length;
+
+  // Remove scaling from current
+  cardEls[winnerIdx].classList.remove('scaling');
+  cardEls[winnerIdx].querySelector('.variant-status').textContent = 'Testing';
+
+  // Apply scaling to new
+  winnerIdx = newWinner;
+  cardEls[winnerIdx].classList.add('scaling');
+  cardEls[winnerIdx].querySelector('.variant-status').textContent = 'Scaling';
+
+  // Randomize scores slightly
+  cardEls.forEach(function(card, i) {
+    var base = variants[i].score;
+    var newScore = i === winnerIdx
+      ? base + Math.floor(Math.random() * 8)
+      : base - Math.floor(Math.random() * 12) + Math.floor(Math.random() * 6);
+    newScore = Math.max(10, Math.min(99, newScore));
+    card.querySelector('.variant-score').textContent = newScore;
+  });
+
+  // Bump counter
+  countTarget += Math.floor(Math.random() * 8) + 3;
+  countEl.textContent = countTarget;
+}
+
+setTimeout(function() {
+  setInterval(shuffleWinner, 3500);
+}, 2500);
+</script>
+</body>
+</html>
