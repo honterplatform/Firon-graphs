@@ -147,17 +147,6 @@ function draw(ts) {
       ctx.fillStyle = f.label === 'Wasted' ? '#555' : '#444';
       ctx.fillText(f.label + (f.label === 'Wasted' ? '' : ''), lDestX + 6, dp.cy + 3);
 
-      if (f.label === 'Wasted') {
-        // X mark
-        var xx = lDestX + ctx.measureText(f.label).width + 14;
-        ctx.strokeStyle = '#444';
-        ctx.lineWidth = 1.5;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.moveTo(xx - 4, dp.cy - 2); ctx.lineTo(xx + 4, dp.cy + 6);
-        ctx.moveTo(xx + 4, dp.cy - 2); ctx.lineTo(xx - 4, dp.cy + 6);
-        ctx.stroke();
-      }
     }
   });
 
@@ -206,10 +195,7 @@ function draw(ts) {
   ctx.font = 'bold ' + (mob ? 12 : 14) + 'px system-ui';
   if (rp > 0.5) {
     ctx.globalAlpha = (rp - 0.5) / 0.5;
-    ctx.fillText('Profit', rDestX + 4, profitY - 18);
-    ctx.font = fs + 'px system-ui';
-    ctx.fillStyle = '#888';
-    ctx.fillText('100% attributed', rDestX + 4, profitY + 2);
+    ctx.fillText('Profit', rDestX + 4, profitY - 8);
     ctx.globalAlpha = rp;
   }
 
