@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creative Performance</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .title { font-size: 14px; font-weight: 700; color: #ccc; }
+  .count { font-size: 10px; color: #555; }
+  .count span { color: #FB3B24; font-weight: 600; }
+  .creative-list {
+    overflow-y: auto;
+    height: calc(100% - 30px);
+  }
+  .creative-list::-webkit-scrollbar { display: none; }
+  .creative-row {
+    display: flex;
+    align-items: center;
+    padding: 7px 0;
+    border-bottom: 1px solid #1A1A1A;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .creative-row.visible { opacity: 1; transform: translateX(0); }
+  .rank {
+    width: 18px;
+    flex-shrink: 0;
+    font-size: 10px;
+    color: #444;
+    font-weight: 600;
+    text-align: center;
+  }
+  .rank.top { color: #FB3B24; }
+  .creative-info { flex: 1; min-width: 0; }
+  .creative-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .creative-name.top { color: #ccc; }
+  .winner-tag {
+    font-size: 8px;
+    color: #FB3B24;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    background: rgba(251,59,36,0.1);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .creative-metrics {
+    display: flex;
+    gap: 10px;
+    margin-top: 2px;
+  }
+  .cm {
+    font-size: 9px;
+    color: #444;
+    font-variant-numeric: tabular-nums;
+  }
+  .cm span { color: #666; }
+  .cm.top span { color: #FB3B24; }
+  .score-bar {
+    width: 50px;
+    flex-shrink: 0;
+    height: 5px;
+    background: #1A1A1A;
+    border-radius: 3px;
+    margin-left: 8px;
+    overflow: hidden;
+  }
+  .score-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0%;
+  }
+  @media (max-width: 480px) {
+    .creative-name { font-size: 10px; }
+    .creative-metrics { gap: 6px; }
+    .cm { font-size: 8px; }
+    .score-bar { width: 36px; }
+    .creative-row { padding: 5px 0; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="title">Creative Performance</div>
+    <div class="count"><span>6</span> active creatives</div>
+  </div>
+  <div class="creative-list" id="list"></div>
+</div>
+<script>
+var creatives = [
+  { name: 'Summer Sale V3', ctr: 4.2, cpa: 24, ltv: 312, score: 92, top: true },
+  { name: 'DTC Bundle Hero', ctr: 3.8, cpa: 28, ltv: 286, score: 84, top: true },
+  { name: 'Brand Story V2', ctr: 2.1, cpa: 41, ltv: 198, score: 52, top: false },
+  { name: 'Lifestyle V1', ctr: 1.8, cpa: 48, ltv: 164, score: 44, top: false },
+  { name: 'Generic Promo', ctr: 1.2, cpa: 62, ltv: 120, score: 28, top: false },
+  { name: 'Discount Push V4', ctr: 0.8, cpa: 71, ltv: 86, score: 18, top: false },
+];
+
+var list = document.getElementById('list');
+creatives.forEach(function(c, i) {
+  var row = document.createElement('div');
+  row.className = 'creative-row';
+  var barColor = c.top ? '#FB3B24' : '#333';
+  row.innerHTML =
+    '<div class="rank ' + (c.top ? 'top' : '') + '">' + (i + 1) + '</div>' +
+    '<div class="creative-info">' +
+      '<div class="creative-name ' + (c.top ? 'top' : '') + '">' + c.name + (c.top ? '<span class="winner-tag">Winner</span>' : '') + '</div>' +
+      '<div class="creative-metrics">' +
+        '<div class="cm ' + (c.top ? 'top' : '') + '">CTR <span>' + c.ctr + '%</span></div>' +
+        '<div class="cm ' + (c.top ? 'top' : '') + '">CPA <span>$' + c.cpa + '</span></div>' +
+        '<div class="cm ' + (c.top ? 'top' : '') + '">LTV <span>$' + c.ltv + '</span></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="score-bar"><div class="score-fill" data-w="' + c.score + '" style="background:' + barColor + '"></div></div>';
+  list.appendChild(row);
+});
+
+var rows = document.querySelectorAll('.creative-row');
+rows.forEach(function(row, i) {
+  setTimeout(function() {
+    row.classList.add('visible');
+    var fill = row.querySelector('.score-fill');
+    requestAnimationFrame(function() {
+      fill.style.width = fill.dataset.w + '%';
+    });
+  }, 200 + i * 120);
+});
+</script>
+</body>
+</html>

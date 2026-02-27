@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retention Curves</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+  }
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .title { font-size: 14px; font-weight: 700; color: #ccc; }
+  .legend { display: flex; gap: 14px; }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: #888;
+  }
+  .legend-dot {
+    width: 10px; height: 3px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  canvas { display: block; width: 100%; }
+  @media (max-width: 480px) {
+    .title { font-size: 13px; }
+    .legend { gap: 8px; }
+    .legend-item { font-size: 9px; }
+    .top-bar { flex-direction: column; align-items: flex-start; gap: 6px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="top-bar">
+    <div class="title">Cohort Retention</div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#FB3B24"></div>DTC Subscribers</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#333"></div>One-Time Shoppers</div>
+    </div>
+  </div>
+  <canvas id="chart"></canvas>
+</div>
+<script>
+var canvas = document.getElementById('chart');
+var ctx = canvas.getContext('2d');
+var dpr = window.devicePixelRatio || 1;
+
+function resize() {
+  var card = canvas.parentElement;
+  var rect = card.getBoundingClientRect();
+  var w = rect.width;
+  var usedH = card.querySelector('.top-bar').offsetHeight;
+  var h = rect.height - usedH;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: w, h: h };
+}
+
+// Retention data (Month 0-12)
+var subscribers = [100, 88, 80, 74, 70, 67, 64, 62, 60, 59, 58, 57, 56];
+var shoppers = [100, 38, 22, 15, 11, 9, 7, 6, 5, 5, 4, 4, 4];
+var months = 13;
+var maxVal = 100;
+
+var isMobile = window.innerWidth <= 480;
+var padding = { left: isMobile ? 28 : 36, right: 16, top: 12, bottom: isMobile ? 28 : 36 };
+
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+var dims = resize();
+var duration = 2200;
+var startTime = null;
+
+function getPoints(data, w, h) {
+  var chartW = w - padding.left - padding.right;
+  var chartH = h - padding.top - padding.bottom;
+  return data.map(function(val, i) {
+    return {
+      x: padding.left + (i / (months - 1)) * chartW,
+      y: padding.top + chartH - (val / maxVal) * chartH
+    };
+  });
+}
+
+function drawCurve(points, color, lineWidth, progress, fillColor) {
+  var total = points.length;
+  var revealIdx = progress * (total - 1);
+  var lastFull = Math.floor(revealIdx);
+  if (lastFull < 0) return;
+
+  // Fill area
+  if (fillColor) {
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, dims.h - padding.bottom);
+    ctx.lineTo(points[0].x, points[0].y);
+    for (var j = 1; j <= lastFull && j < total; j++) {
+      ctx.lineTo(points[j].x, points[j].y);
+    }
+    if (lastFull < total - 1) {
+      var f = revealIdx - lastFull;
+      ctx.lineTo(
+        points[lastFull].x + (points[lastFull + 1].x - points[lastFull].x) * f,
+        points[lastFull].y + (points[lastFull + 1].y - points[lastFull].y) * f
+      );
+      ctx.lineTo(
+        points[lastFull].x + (points[lastFull + 1].x - points[lastFull].x) * f,
+        dims.h - padding.bottom
+      );
+    } else {
+      ctx.lineTo(points[lastFull].x, dims.h - padding.bottom);
+    }
+    ctx.closePath();
+    ctx.fillStyle = fillColor;
+    ctx.fill();
+  }
+
+  // Line
+  ctx.beginPath();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lineWidth;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.moveTo(points[0].x, points[0].y);
+  for (var i = 1; i <= lastFull && i < total; i++) {
+    ctx.lineTo(points[i].x, points[i].y);
+  }
+  if (lastFull < total - 1) {
+    var frac = revealIdx - lastFull;
+    ctx.lineTo(
+      points[lastFull].x + (points[lastFull + 1].x - points[lastFull].x) * frac,
+      points[lastFull].y + (points[lastFull + 1].y - points[lastFull].y) * frac
+    );
+  }
+  ctx.stroke();
+
+  // End label
+  if (progress >= 1) {
+    var lastPt = points[total - 1];
+    ctx.font = 'bold ' + (isMobile ? '9px' : '11px') + ' system-ui';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = color;
+    ctx.fillText(points === getPoints(subscribers, dims.w, dims.h) ? '56%' : '4%', lastPt.x + 6, lastPt.y + 4);
+  }
+}
+
+function draw(ts) {
+  if (!startTime) startTime = ts;
+  var p = Math.min((ts - startTime) / duration, 1);
+  var ep = easeOutCubic(p);
+
+  dims = resize();
+  var w = dims.w, h = dims.h;
+  var chartW = w - padding.left - padding.right;
+  var chartH = h - padding.top - padding.bottom;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Grid lines
+  var yTicks = [0, 25, 50, 75, 100];
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = '#1A1A1A';
+  ctx.lineWidth = 0.5;
+  yTicks.forEach(function(val) {
+    var y = padding.top + chartH - (val / maxVal) * chartH;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(w - padding.right, y);
+    ctx.stroke();
+    ctx.fillStyle = '#555';
+    ctx.font = (isMobile ? '8px' : '10px') + ' system-ui';
+    ctx.textAlign = 'right';
+    ctx.fillText(val + '%', padding.left - 6, y + 3);
+  });
+  ctx.setLineDash([]);
+
+  // X labels
+  ctx.fillStyle = '#555';
+  ctx.font = (isMobile ? '8px' : '10px') + ' system-ui';
+  ctx.textAlign = 'center';
+  var labelStep = isMobile ? 3 : 2;
+  for (var i = 0; i < months; i += labelStep) {
+    var x = padding.left + (i / (months - 1)) * chartW;
+    ctx.fillText('M' + i, x, h - 4);
+  }
+
+  // Draw curves
+  var subPts = getPoints(subscribers, w, h);
+  var shopPts = getPoints(shoppers, w, h);
+
+  drawCurve(shopPts, '#333', 2, ep, 'rgba(60,60,60,0.08)');
+  drawCurve(subPts, '#FB3B24', 2.5, ep, 'rgba(251,59,36,0.06)');
+
+  // End labels after animation
+  if (p >= 1) {
+    var subLast = subPts[subPts.length - 1];
+    var shopLast = shopPts[shopPts.length - 1];
+    ctx.font = 'bold ' + (isMobile ? '9px' : '11px') + ' system-ui';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#FB3B24';
+    ctx.fillText('56%', subLast.x + 6, subLast.y + 4);
+    ctx.fillStyle = '#555';
+    ctx.fillText('4%', shopLast.x + 6, shopLast.y + 4);
+  }
+
+  if (p < 1) requestAnimationFrame(draw);
+}
+
+requestAnimationFrame(draw);
+window.addEventListener('resize', function() { startTime = null; requestAnimationFrame(draw); });
+</script>
+</body>
+</html>
