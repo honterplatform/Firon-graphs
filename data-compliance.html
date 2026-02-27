@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>First-Party Data Compliance</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+  .title { font-size: 14px; font-weight: 700; color: #ccc; }
+  .shield-tag {
+    font-size: 8px;
+    font-weight: 700;
+    color: #FB3B24;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    background: rgba(251,59,36,0.08);
+    padding: 2px 8px;
+    border-radius: 3px;
+    border: 1px solid rgba(251,59,36,0.15);
+  }
+  .threats {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-height: 0;
+  }
+  .threat-row {
+    flex: 1;
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    gap: 8px;
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .threat-row.visible { opacity: 1; transform: translateX(0); }
+  .threat-icon {
+    width: 24px; height: 24px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+    transition: background 0.5s ease;
+  }
+  .threat-icon.danger { background: rgba(80,30,25,0.2); color: #662222; }
+  .threat-icon.safe { background: rgba(251,59,36,0.12); color: #FB3B24; }
+  .threat-info { flex: 1; min-width: 0; }
+  .threat-name {
+    font-size: 10px;
+    font-weight: 600;
+    color: #666;
+    transition: color 0.4s ease;
+  }
+  .threat-row.protected .threat-name { color: #ccc; }
+  .threat-sub {
+    font-size: 7px;
+    font-weight: 600;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+    margin-top: 1px;
+    transition: color 0.4s ease;
+  }
+  .threat-row.protected .threat-sub { color: #555; }
+  .integrity-area {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .int-bar-wrap {
+    width: 60px;
+    height: 4px;
+    background: #1A1A1A;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .int-bar {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1), background 0.4s ease;
+    width: 0%;
+  }
+  .int-val {
+    font-size: 12px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    width: 34px;
+    text-align: right;
+    flex-shrink: 0;
+    transition: color 0.4s ease;
+  }
+  .int-status {
+    width: 52px;
+    flex-shrink: 0;
+    text-align: right;
+  }
+  .status-tag {
+    font-size: 7px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    display: inline-block;
+    transition: background 0.4s ease, color 0.4s ease;
+  }
+  .status-tag.degraded { background: rgba(80,30,25,0.15); color: #662222; }
+  .status-tag.protected { background: rgba(251,59,36,0.1); color: #FB3B24; }
+  .summary-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
+    padding: 6px 10px;
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    border-radius: 5px;
+    flex-shrink: 0;
+    transition: border-color 0.4s ease;
+  }
+  .summary-bar.protected { border-color: rgba(251,59,36,0.2); }
+  .sum-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: #555;
+  }
+  .sum-method {
+    font-size: 8px;
+    font-weight: 700;
+    color: #444;
+    transition: color 0.4s ease;
+  }
+  .summary-bar.protected .sum-method { color: #FB3B24; }
+  .sum-val {
+    font-size: 16px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    transition: color 0.4s ease;
+  }
+  @media (max-width: 480px) {
+    .title { font-size: 13px; }
+    .threat-row { padding: 0 8px; gap: 6px; }
+    .threat-icon { width: 20px; height: 20px; font-size: 9px; }
+    .threat-name { font-size: 9px; }
+    .int-bar-wrap { width: 40px; }
+    .int-val { font-size: 10px; width: 28px; }
+    .int-status { width: 44px; }
+    .sum-val { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="title">Data Integrity</div>
+    <div class="shield-tag">Server-Side</div>
+  </div>
+  <div class="threats" id="threats"></div>
+  <div class="summary-bar" id="summary">
+    <div>
+      <div class="sum-label">Total Data Integrity</div>
+      <div class="sum-method" id="sumMethod">Client-Side Pixels</div>
+    </div>
+    <div class="sum-val" id="sumVal" style="color:#444">0%</div>
+  </div>
+</div>
+<script>
+var threats = [
+  { name: 'Pixel Degradation', icon: '◉', pixel: 62, capi: 100, sub: 'Cookie decay + browser limits' },
+  { name: 'iOS 14.5+ Updates', icon: '◉', pixel: 38, capi: 100, sub: 'ATT opt-out rate ~75%' },
+  { name: 'Ad-Blockers',       icon: '◉', pixel: 44, capi: 100, sub: '~32% of users blocking' },
+  { name: 'Cross-Domain',      icon: '◉', pixel: 56, capi: 100, sub: 'ITP + redirect stripping' },
+  { name: '3P Cookie Sunset',  icon: '◉', pixel: 28, capi: 100, sub: 'Chrome deprecation 2025' },
+];
+
+var threatsEl = document.getElementById('threats');
+var summaryEl = document.getElementById('summary');
+var sumMethod = document.getElementById('sumMethod');
+var sumVal = document.getElementById('sumVal');
+var rowEls = [];
+var isProtected = false;
+
+threats.forEach(function(t, i) {
+  var el = document.createElement('div');
+  el.className = 'threat-row';
+  el.innerHTML =
+    '<div class="threat-icon danger" id="icon' + i + '">' + t.icon + '</div>' +
+    '<div class="threat-info">' +
+      '<div class="threat-name">' + t.name + '</div>' +
+      '<div class="threat-sub">' + t.sub + '</div>' +
+    '</div>' +
+    '<div class="integrity-area">' +
+      '<div class="int-bar-wrap"><div class="int-bar" id="ibar' + i + '"></div></div>' +
+      '<div class="int-val" id="ival' + i + '">0%</div>' +
+    '</div>' +
+    '<div class="int-status"><div class="status-tag degraded" id="stag' + i + '">Degraded</div></div>';
+  threatsEl.appendChild(el);
+  rowEls.push(el);
+});
+
+function applyState(prot) {
+  var totalInt = 0;
+  threats.forEach(function(t, i) {
+    var val = prot ? t.capi : t.pixel;
+    totalInt += val;
+    var bar = document.getElementById('ibar' + i);
+    var valEl = document.getElementById('ival' + i);
+    var icon = document.getElementById('icon' + i);
+    var stag = document.getElementById('stag' + i);
+
+    bar.style.width = val + '%';
+    bar.style.background = prot ? '#FB3B24' : '#333';
+    valEl.textContent = val + '%';
+    valEl.style.color = prot ? '#FB3B24' : '#444';
+    icon.className = 'threat-icon ' + (prot ? 'safe' : 'danger');
+    stag.className = 'status-tag ' + (prot ? 'protected' : 'degraded');
+    stag.textContent = prot ? 'Protected' : 'Degraded';
+    rowEls[i].className = 'threat-row visible' + (prot ? ' protected' : '');
+  });
+
+  var avg = Math.round(totalInt / threats.length);
+  sumVal.textContent = avg + '%';
+  sumVal.style.color = prot ? '#FB3B24' : '#444';
+  sumMethod.textContent = prot ? 'Server-Side CAPI' : 'Client-Side Pixels';
+  summaryEl.className = 'summary-bar' + (prot ? ' protected' : '');
+}
+
+// Staggered reveal
+rowEls.forEach(function(el, i) {
+  setTimeout(function() { el.classList.add('visible'); }, 300 + i * 100);
+});
+
+// Initial state
+setTimeout(function() { applyState(false); }, 600);
+
+// Cycle
+setInterval(function() {
+  isProtected = !isProtected;
+  applyState(isProtected);
+}, 3000);
+</script>
+</body>
+</html>
