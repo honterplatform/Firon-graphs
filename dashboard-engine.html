@@ -20,7 +20,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     flex-shrink: 0;
   }
   .title { font-size: 14px; font-weight: 700; color: #ccc; }
@@ -47,7 +47,7 @@
   .hero-metrics {
     display: flex;
     gap: 6px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     flex-shrink: 0;
   }
   .hero {
@@ -55,128 +55,49 @@
     background: #141414;
     border: 1px solid #1A1A1A;
     border-radius: 6px;
-    padding: 8px 10px;
-    opacity: 0;
-    transform: translateY(6px);
-    transition: opacity 0.4s ease, transform 0.4s ease;
+    padding: 6px 10px;
   }
-  .hero.visible { opacity: 1; transform: translateY(0); }
   .hero-label {
-    font-size: 8px;
+    font-size: 7px;
     font-weight: 600;
     color: #444;
     text-transform: uppercase;
     letter-spacing: 0.4px;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
   }
   .hero-row {
     display: flex;
     align-items: baseline;
-    gap: 6px;
+    gap: 5px;
   }
   .hero-val {
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 800;
     font-variant-numeric: tabular-nums;
     color: #FB3B24;
     line-height: 1;
   }
   .hero-delta {
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
+    color: #FB3B24;
   }
-  .hero-delta.up { color: #FB3B24; }
-  .channels {
+  .chart-area {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+    position: relative;
     min-height: 0;
   }
-  .ch-row {
-    flex: 1;
-    background: #141414;
-    border: 1px solid #1A1A1A;
-    border-radius: 5px;
-    display: flex;
-    align-items: center;
-    padding: 0 10px;
-    gap: 8px;
-    opacity: 0;
-    transform: translateX(-6px);
-    transition: opacity 0.4s ease, transform 0.4s ease, border-color 0.4s ease;
-  }
-  .ch-row.visible { opacity: 1; transform: translateX(0); }
-  .ch-row.top { border-color: rgba(251,59,36,0.2); }
-  .ch-rank {
-    font-size: 9px;
-    font-weight: 800;
-    color: #333;
-    width: 12px;
-    flex-shrink: 0;
-    text-align: center;
-    font-variant-numeric: tabular-nums;
-    transition: color 0.4s ease;
-  }
-  .ch-row.top .ch-rank { color: #FB3B24; }
-  .ch-name {
-    font-size: 10px;
-    font-weight: 600;
-    color: #555;
-    width: 46px;
-    flex-shrink: 0;
-    transition: color 0.4s ease;
-  }
-  .ch-row.top .ch-name { color: #ccc; }
-  .ch-bar-wrap {
-    flex: 1;
-    height: 2px;
-    background: #1A1A1A;
-    border-radius: 1px;
-    overflow: hidden;
-  }
-  .ch-bar {
+  canvas {
+    display: block;
+    width: 100%;
     height: 100%;
-    border-radius: 1px;
-    width: 0%;
-    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1), background 0.4s ease;
-  }
-  .ch-metrics {
-    display: flex;
-    gap: 10px;
-    flex-shrink: 0;
-  }
-  .ch-m {
-    text-align: right;
-  }
-  .ch-m-val {
-    font-size: 11px;
-    font-weight: 800;
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-    color: #444;
-    transition: color 0.4s ease;
-  }
-  .ch-row.top .ch-m-val { color: #FB3B24; }
-  .ch-m-label {
-    font-size: 6px;
-    font-weight: 600;
-    color: #333;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    margin-top: 1px;
   }
   @media (max-width: 480px) {
     .title { font-size: 13px; }
-    .hero { padding: 6px 8px; }
-    .hero-val { font-size: 18px; }
-    .hero-delta { font-size: 8px; }
-    .ch-name { font-size: 9px; width: 38px; }
-    .ch-m-val { font-size: 10px; }
-    .ch-metrics { gap: 6px; }
-    .ch-row { padding: 0 8px; gap: 6px; }
-    .ch-rank { font-size: 8px; }
+    .hero { padding: 5px 8px; }
+    .hero-val { font-size: 15px; }
+    .hero-delta { font-size: 7px; }
   }
 </style>
 </head>
@@ -187,122 +108,202 @@
     <div class="live-tag"><div class="live-dot"></div>Real-Time</div>
   </div>
   <div class="hero-metrics">
-    <div class="hero" id="h0">
-      <div class="hero-label">CAC</div>
+    <div class="hero">
+      <div class="hero-label">Blended CAC</div>
       <div class="hero-row">
-        <div class="hero-val" id="hv0">$0</div>
-        <div class="hero-delta up" id="hd0"></div>
+        <div class="hero-val" id="hv0">$32</div>
+        <div class="hero-delta" id="hd0">↓12%</div>
       </div>
     </div>
-    <div class="hero" id="h1">
-      <div class="hero-label">LTV</div>
+    <div class="hero">
+      <div class="hero-label">Avg LTV</div>
       <div class="hero-row">
-        <div class="hero-val" id="hv1">$0</div>
-        <div class="hero-delta up" id="hd1"></div>
+        <div class="hero-val" id="hv1">$286</div>
+        <div class="hero-delta" id="hd1">↑18%</div>
       </div>
     </div>
-    <div class="hero" id="h2">
+    <div class="hero">
       <div class="hero-label">Cont. Margin</div>
       <div class="hero-row">
-        <div class="hero-val" id="hv2">0%</div>
-        <div class="hero-delta up" id="hd2"></div>
+        <div class="hero-val" id="hv2">38%</div>
+        <div class="hero-delta" id="hd2">↑4.2%</div>
       </div>
     </div>
   </div>
-  <div class="channels" id="channels"></div>
+  <div class="chart-area"><canvas id="c"></canvas></div>
 </div>
 <script>
-var heroStates = [
-  [{ v: '$32', d: '↓12%', dc: 'up' },   { v: '$286', d: '↑18%', dc: 'up' },  { v: '38%', d: '↑4.2%', dc: 'up' }],
-  [{ v: '$28', d: '↓16%', dc: 'up' },   { v: '$312', d: '↑22%', dc: 'up' },  { v: '42%', d: '↑6.1%', dc: 'up' }],
-  [{ v: '$34', d: '↓8%', dc: 'up' },    { v: '$298', d: '↑14%', dc: 'up' },  { v: '36%', d: '↑2.8%', dc: 'up' }],
-];
+var c = document.getElementById('c');
+var ctx = c.getContext('2d');
+var dpr = window.devicePixelRatio || 1;
 
 var channels = [
-  { name: 'SEO',    states: [
-    { cm: 72, cac: '$14', ltv: '$380', bar: 95 },
-    { cm: 74, cac: '$12', ltv: '$392', bar: 97 },
-    { cm: 70, cac: '$16', ltv: '$368', bar: 92 },
+  { name: 'SEO',    color: '#FB3B24', states: [
+    { cac: 14, ltv: 380, cm: 72 }, { cac: 12, ltv: 392, cm: 74 }, { cac: 16, ltv: 368, cm: 70 }
   ]},
-  { name: 'Email',  states: [
-    { cm: 68, cac: '$8',  ltv: '$312', bar: 88 },
-    { cm: 66, cac: '$10', ltv: '$298', bar: 86 },
-    { cm: 70, cac: '$7',  ltv: '$326', bar: 92 },
+  { name: 'Email',  color: '#FC5844', states: [
+    { cac: 8,  ltv: 312, cm: 68 }, { cac: 10, ltv: 298, cm: 66 }, { cac: 7,  ltv: 326, cm: 70 }
   ]},
-  { name: 'TikTok', states: [
-    { cm: 52, cac: '$22', ltv: '$264', bar: 68 },
-    { cm: 56, cac: '$18', ltv: '$278', bar: 73 },
-    { cm: 48, cac: '$26', ltv: '$248', bar: 63 },
+  { name: 'TikTok', color: '#FF7A6B', states: [
+    { cac: 22, ltv: 264, cm: 52 }, { cac: 18, ltv: 278, cm: 56 }, { cac: 26, ltv: 248, cm: 48 }
   ]},
-  { name: 'Google', states: [
-    { cm: 44, cac: '$32', ltv: '$286', bar: 58 },
-    { cm: 46, cac: '$28', ltv: '$298', bar: 60 },
-    { cm: 42, cac: '$34', ltv: '$272', bar: 55 },
+  { name: 'Google', color: '#FFB0A5', states: [
+    { cac: 32, ltv: 286, cm: 44 }, { cac: 28, ltv: 298, cm: 46 }, { cac: 34, ltv: 272, cm: 42 }
   ]},
-  { name: 'Meta',   states: [
-    { cm: 38, cac: '$36', ltv: '$242', bar: 50 },
-    { cm: 34, cac: '$42', ltv: '$228', bar: 45 },
-    { cm: 40, cac: '$34', ltv: '$256', bar: 53 },
+  { name: 'Meta',   color: '#FDD8D3', states: [
+    { cac: 36, ltv: 242, cm: 38 }, { cac: 42, ltv: 228, cm: 34 }, { cac: 34, ltv: 256, cm: 40 }
   ]},
 ];
 
-var channelsEl = document.getElementById('channels');
-var chEls = [];
-
-channels.forEach(function(ch, i) {
-  var el = document.createElement('div');
-  el.className = 'ch-row';
-  el.innerHTML =
-    '<div class="ch-rank">' + (i + 1) + '</div>' +
-    '<div class="ch-name">' + ch.name + '</div>' +
-    '<div class="ch-bar-wrap"><div class="ch-bar" id="cbar' + i + '"></div></div>' +
-    '<div class="ch-metrics">' +
-      '<div class="ch-m"><div class="ch-m-val" id="ccm' + i + '">—</div><div class="ch-m-label">CM</div></div>' +
-      '<div class="ch-m"><div class="ch-m-val" id="ccac' + i + '">—</div><div class="ch-m-label">CAC</div></div>' +
-      '<div class="ch-m"><div class="ch-m-val" id="cltv' + i + '">—</div><div class="ch-m-label">LTV</div></div>' +
-    '</div>';
-  channelsEl.appendChild(el);
-  chEls.push(el);
-});
+var heroStates = [
+  { cac: '$32', cd: '↓12%', ltv: '$286', ld: '↑18%', cm: '38%', cmd: '↑4.2%' },
+  { cac: '$28', cd: '↓16%', ltv: '$312', ld: '↑22%', cm: '42%', cmd: '↑6.1%' },
+  { cac: '$34', cd: '↓8%',  ltv: '$298', ld: '↑14%', cm: '36%', cmd: '↑2.8%' },
+];
 
 var stateIdx = 0;
+// Current animated positions
+var current = channels.map(function(ch) {
+  var s = ch.states[0];
+  return { cac: s.cac, ltv: s.ltv, cm: s.cm };
+});
+var target = channels.map(function(ch) {
+  var s = ch.states[0];
+  return { cac: s.cac, ltv: s.ltv, cm: s.cm };
+});
 
-function applyState(idx) {
-  channels.forEach(function(ch, i) {
-    var s = ch.states[idx];
-    var isTop = s.cm >= 52;
-    var bar = document.getElementById('cbar' + i);
-    bar.style.width = s.bar + '%';
-    bar.style.background = isTop ? '#FB3B24' : '#333';
-    document.getElementById('ccm' + i).textContent = s.cm + '%';
-    document.getElementById('ccac' + i).textContent = s.cac;
-    document.getElementById('cltv' + i).textContent = s.ltv;
-    chEls[i].className = 'ch-row visible' + (isTop ? ' top' : '');
-  });
-
-  var h = heroStates[idx];
-  h.forEach(function(hero, i) {
-    document.getElementById('hv' + i).textContent = hero.v;
-    var dEl = document.getElementById('hd' + i);
-    dEl.textContent = hero.d;
-    dEl.className = 'hero-delta ' + hero.dc;
-  });
+function resize() {
+  var r = c.parentElement.getBoundingClientRect();
+  c.width = r.width * dpr;
+  c.height = r.height * dpr;
+  c.style.width = r.width + 'px';
+  c.style.height = r.height + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height };
 }
 
-// Staggered reveal
-['h0','h1','h2'].forEach(function(id, i) {
-  setTimeout(function() { document.getElementById(id).classList.add('visible'); }, 200 + i * 100);
-});
-chEls.forEach(function(el, i) {
-  setTimeout(function() { el.classList.add('visible'); }, 500 + i * 80);
-});
+function lerp(a, b, t) { return a + (b - a) * t; }
 
-setTimeout(function() { applyState(0); }, 600);
+// Axis ranges
+var cacMin = 0, cacMax = 50;
+var ltvMin = 180, ltvMax = 420;
 
+function draw() {
+  var d = resize();
+  var w = d.w, h = d.h;
+  var mob = w <= 480;
+  var pad = { l: mob ? 30 : 38, r: 14, t: 10, b: mob ? 22 : 26 };
+  var cw = w - pad.l - pad.r;
+  var ch = h - pad.t - pad.b;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Lerp current toward target
+  for (var i = 0; i < current.length; i++) {
+    current[i].cac = lerp(current[i].cac, target[i].cac, 0.06);
+    current[i].ltv = lerp(current[i].ltv, target[i].ltv, 0.06);
+    current[i].cm = lerp(current[i].cm, target[i].cm, 0.06);
+  }
+
+  // Grid lines
+  ctx.strokeStyle = '#1A1A1A';
+  ctx.lineWidth = 0.5;
+  var fs = mob ? 7 : 8;
+  ctx.font = fs + 'px system-ui';
+  ctx.fillStyle = '#333';
+
+  // Y-axis (LTV)
+  for (var lv = 200; lv <= 400; lv += 50) {
+    var y = pad.t + ch - ((lv - ltvMin) / (ltvMax - ltvMin)) * ch;
+    ctx.beginPath();
+    ctx.moveTo(pad.l, y);
+    ctx.lineTo(w - pad.r, y);
+    ctx.stroke();
+    ctx.textAlign = 'right';
+    ctx.fillText('$' + lv, pad.l - 4, y + 3);
+  }
+
+  // X-axis (CAC)
+  for (var cv = 10; cv <= 40; cv += 10) {
+    var x = pad.l + ((cv - cacMin) / (cacMax - cacMin)) * cw;
+    ctx.beginPath();
+    ctx.moveTo(x, pad.t);
+    ctx.lineTo(x, pad.t + ch);
+    ctx.stroke();
+    ctx.textAlign = 'center';
+    ctx.fillText('$' + cv, x, h - pad.b + 12);
+  }
+
+  // Axis labels
+  ctx.fillStyle = '#444';
+  ctx.font = 'bold ' + (mob ? 7 : 8) + 'px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText('CAC →', pad.l + cw / 2, h - 2);
+  ctx.save();
+  ctx.translate(8, pad.t + ch / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('LTV →', 0, 0);
+  ctx.restore();
+
+  // Draw bubbles
+  channels.forEach(function(chan, i) {
+    var cur = current[i];
+    var bx = pad.l + ((cur.cac - cacMin) / (cacMax - cacMin)) * cw;
+    var by = pad.t + ch - ((cur.ltv - ltvMin) / (ltvMax - ltvMin)) * ch;
+    var radius = Math.max(8, (cur.cm / 100) * (mob ? 28 : 36));
+
+    // Glow
+    ctx.beginPath();
+    ctx.arc(bx, by, radius + 6, 0, Math.PI * 2);
+    ctx.fillStyle = chan.color.replace(')', ',0.06)').replace('#', 'rgba(');
+    // Convert hex to rgba for glow
+    var r2 = parseInt(chan.color.slice(1,3), 16);
+    var g2 = parseInt(chan.color.slice(3,5), 16);
+    var b2 = parseInt(chan.color.slice(5,7), 16);
+    ctx.fillStyle = 'rgba(' + r2 + ',' + g2 + ',' + b2 + ',0.08)';
+    ctx.fill();
+
+    // Bubble
+    ctx.beginPath();
+    ctx.arc(bx, by, radius, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(' + r2 + ',' + g2 + ',' + b2 + ',0.2)';
+    ctx.fill();
+    ctx.strokeStyle = chan.color;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Label
+    ctx.fillStyle = chan.color;
+    ctx.font = 'bold ' + (mob ? 8 : 9) + 'px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText(chan.name, bx, by - radius - 5);
+
+    // CM inside bubble
+    ctx.fillStyle = chan.color;
+    ctx.font = 'bold ' + (mob ? 9 : 11) + 'px system-ui';
+    ctx.fillText(Math.round(cur.cm) + '%', bx, by + 4);
+  });
+
+  requestAnimationFrame(draw);
+}
+
+// Cycle states
 setInterval(function() {
-  stateIdx = (stateIdx + 1) % heroStates.length;
-  applyState(stateIdx);
+  stateIdx = (stateIdx + 1) % channels[0].states.length;
+  channels.forEach(function(ch, i) {
+    var s = ch.states[stateIdx];
+    target[i] = { cac: s.cac, ltv: s.ltv, cm: s.cm };
+  });
+  var hs = heroStates[stateIdx];
+  document.getElementById('hv0').textContent = hs.cac;
+  document.getElementById('hd0').textContent = hs.cd;
+  document.getElementById('hv1').textContent = hs.ltv;
+  document.getElementById('hd1').textContent = hs.ld;
+  document.getElementById('hv2').textContent = hs.cm;
+  document.getElementById('hd2').textContent = hs.cmd;
 }, 3000);
+
+requestAnimationFrame(draw);
 </script>
 </body>
 </html>
