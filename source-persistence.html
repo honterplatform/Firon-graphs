@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Source Persistence</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  .card { background: #0F0F0F; width: 100%; height: 100%; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<div class="card"><canvas id="c"></canvas></div>
+<script>
+var c = document.getElementById('c');
+var ctx = c.getContext('2d');
+var dpr = window.devicePixelRatio || 1;
+
+function resize() {
+  var r = c.parentElement.getBoundingClientRect();
+  c.width = r.width * dpr;
+  c.height = r.height * dpr;
+  c.style.width = r.width + 'px';
+  c.style.height = r.height + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height };
+}
+
+var sources = [
+  { name: 'Google Ads',  before: 14, after: 28, color: '#FB3B24' },
+  { name: 'Meta',        before: 12, after: 24, color: '#FC5844' },
+  { name: 'Email',       before: 10, after: 18, color: '#FF7A6B' },
+  { name: 'SEO',         before: 8,  after: 16, color: '#FFB0A5' },
+  { name: 'TikTok',      before: 6,  after: 10, color: '#FDD8D3' },
+  { name: 'Direct',      before: 50, after: 4,  color: '#333' },
+];
+
+var current = sources.map(function(s) { return s.before; });
+var targetState = 0; // 0 = before, 1 = after
+var animProgress = 0;
+var stateTimer = 0;
+var stateDuration = 3;
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+function easeInOutCubic(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; }
+
+function draw() {
+  var d = resize();
+  var w = d.w, h = d.h;
+  var mob = w <= 480;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Timer logic
+  stateTimer += 0.016;
+  if (stateTimer > stateDuration) {
+    stateTimer = 0;
+    targetState = 1 - targetState;
+    animProgress = 0;
+  }
+  animProgress = Math.min(animProgress + 0.025, 1);
+  var ease = easeInOutCubic(animProgress);
+
+  // Interpolate values
+  var total = 0;
+  sources.forEach(function(s, i) {
+    var target = targetState === 0 ? s.before : s.after;
+    var from = targetState === 0 ? s.after : s.before;
+    current[i] = lerp(from, target, ease);
+    total += current[i];
+  });
+
+  // Layout
+  var donutCx = mob ? w * 0.5 : w * 0.35;
+  var donutCy = h * 0.52;
+  var outerR = Math.min(mob ? w * 0.32 : w * 0.24, h * 0.38);
+  var innerR = outerR * 0.58;
+
+  // Header
+  ctx.font = 'bold ' + (mob ? 12 : 14) + 'px system-ui';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#ccc';
+  ctx.fillText('Traffic Attribution', mob ? 10 : 14, mob ? 18 : 22);
+
+  // State label
+  var stateLabel = targetState === 0 ? 'Before' : 'With Firon';
+  var stateColor = targetState === 0 ? '#555' : '#FB3B24';
+  ctx.font = 'bold ' + (mob ? 9 : 10) + 'px system-ui';
+  ctx.fillStyle = stateColor;
+  ctx.textAlign = 'left';
+  ctx.fillText(stateLabel, mob ? 10 : 14, mob ? 32 : 38);
+
+  // Draw donut
+  var startAngle = -Math.PI / 2;
+  sources.forEach(function(s, i) {
+    var sliceAngle = (current[i] / total) * Math.PI * 2;
+    var endAngle = startAngle + sliceAngle;
+
+    ctx.beginPath();
+    ctx.arc(donutCx, donutCy, outerR, startAngle, endAngle);
+    ctx.arc(donutCx, donutCy, innerR, endAngle, startAngle, true);
+    ctx.closePath();
+    ctx.fillStyle = s.color;
+    ctx.globalAlpha = s.name === 'Direct' ? 0.6 : 0.85;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Slice border
+    ctx.strokeStyle = '#0F0F0F';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    startAngle = endAngle;
+  });
+
+  // Center text
+  var directPct = Math.round(current[5]);
+  ctx.font = 'bold ' + (mob ? 22 : 28) + 'px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = directPct > 10 ? '#555' : '#FB3B24';
+  ctx.fillText(directPct + '%', donutCx, donutCy + (mob ? 2 : 4));
+  ctx.font = (mob ? 8 : 9) + 'px system-ui';
+  ctx.fillStyle = '#444';
+  ctx.fillText('Direct / Unknown', donutCx, donutCy + (mob ? 14 : 18));
+
+  // Legend (right side on desktop, below on mobile)
+  var legX, legStartY, legGap;
+  if (mob) {
+    legX = 14;
+    legStartY = donutCy + outerR + 20;
+    legGap = 16;
+  } else {
+    legX = w * 0.62;
+    legStartY = h * 0.18;
+    legGap = (h * 0.7) / sources.length;
+  }
+
+  sources.forEach(function(s, i) {
+    var ly = legStartY + i * legGap;
+    var pct = Math.round(current[i]);
+
+    // Color dot
+    ctx.beginPath();
+    ctx.arc(legX, ly, mob ? 3 : 4, 0, Math.PI * 2);
+    ctx.fillStyle = s.color;
+    ctx.fill();
+
+    // Name
+    ctx.font = (mob ? 9 : 11) + 'px system-ui';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = s.name === 'Direct' ? '#555' : '#999';
+    ctx.fillText(s.name, legX + (mob ? 10 : 14), ly + 3);
+
+    // Percentage
+    ctx.font = 'bold ' + (mob ? 10 : 13) + 'px system-ui';
+    ctx.textAlign = 'right';
+    var valX = mob ? w - 14 : w - 20;
+    ctx.fillStyle = s.name === 'Direct' ? (pct > 10 ? '#555' : '#333') : '#FB3B24';
+    ctx.fillText(pct + '%', valX, ly + 4);
+
+    // Bar
+    var barX = legX + (mob ? 58 : 80);
+    var barW = valX - barX - (mob ? 10 : 16);
+    var barH = mob ? 2 : 3;
+    ctx.fillStyle = '#1A1A1A';
+    roundRectFill(ctx, barX, ly - barH/2, barW, barH, 1);
+    var fillW = (pct / 50) * barW;
+    ctx.fillStyle = s.name === 'Direct' ? '#333' : s.color;
+    ctx.globalAlpha = 0.7;
+    roundRectFill(ctx, barX, ly - barH/2, Math.min(fillW, barW), barH, 1);
+    ctx.globalAlpha = 1;
+
+    // Strike-through on Direct when small
+    if (s.name === 'Direct' && pct < 10) {
+      ctx.strokeStyle = '#FB3B24';
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.4;
+      ctx.beginPath();
+      ctx.moveTo(legX + (mob ? 10 : 14), ly + 1);
+      ctx.lineTo(legX + (mob ? 38 : 48), ly + 1);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  });
+
+  requestAnimationFrame(draw);
+}
+
+function roundRectFill(ctx, x, y, w, h, r) {
+  if (w <= 0) return;
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  ctx.fill();
+}
+
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
