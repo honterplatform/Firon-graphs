@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Margin Bidding</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+  .title { font-size: 14px; font-weight: 700; color: #ccc; }
+  .live-tag {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #FB3B24;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .live-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #FB3B24;
+    animation: pulse 1.5s ease infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .pipeline {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    gap: 6px;
+  }
+  .sources-row, .destinations-row {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .source-chip, .dest-chip {
+    flex: 1;
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    border-radius: 5px;
+    padding: 5px 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .chip-icon {
+    width: 20px; height: 20px;
+    border-radius: 4px;
+    background: #1A1A1A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: 800;
+    color: #555;
+    flex-shrink: 0;
+  }
+  .chip-name {
+    font-size: 9px;
+    font-weight: 600;
+    color: #666;
+  }
+  .chip-sub {
+    font-size: 7px;
+    color: #444;
+  }
+  .dest-chip { border-color: rgba(251,59,36,0.15); }
+  .dest-chip .chip-icon { background: rgba(251,59,36,0.1); color: #FB3B24; }
+  .dest-chip .chip-name { color: #999; }
+  .signals-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 0;
+  }
+  .signal-row {
+    flex: 1;
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .signal-row.visible { opacity: 1; transform: translateY(0); }
+  .signal-flow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .signal-particle {
+    position: absolute;
+    width: 20px;
+    height: 2px;
+    border-radius: 1px;
+    background: linear-gradient(90deg, transparent, rgba(251,59,36,0.3), transparent);
+    top: 50%;
+    transform: translateY(-50%);
+    animation: flowRight 2.5s linear infinite;
+  }
+  .signal-particle:nth-child(2) { animation-delay: -0.8s; }
+  .signal-particle:nth-child(3) { animation-delay: -1.6s; }
+  @keyframes flowRight {
+    0% { left: -20px; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { left: 100%; opacity: 0; }
+  }
+  .sig-label {
+    width: 90px;
+    flex-shrink: 0;
+    z-index: 1;
+  }
+  .sig-name {
+    font-size: 10px;
+    font-weight: 600;
+    color: #888;
+  }
+  .sig-type {
+    font-size: 7px;
+    font-weight: 600;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .sig-values {
+    flex: 1;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    align-items: center;
+    z-index: 1;
+  }
+  .sig-metric {
+    text-align: right;
+  }
+  .sig-metric-val {
+    font-size: 14px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: #FB3B24;
+  }
+  .sig-metric-label {
+    font-size: 7px;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-top: 1px;
+  }
+  .roas-compare {
+    text-align: right;
+    z-index: 1;
+    width: 56px;
+    flex-shrink: 0;
+  }
+  .roas-fake {
+    font-size: 10px;
+    font-weight: 700;
+    color: #333;
+    text-decoration: line-through;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .roas-real {
+    font-size: 7px;
+    color: #444;
+    margin-top: 1px;
+  }
+  .arrow-col {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 2px 0;
+  }
+  .arrow-down {
+    font-size: 8px;
+    color: #333;
+  }
+  @media (max-width: 480px) {
+    .title { font-size: 13px; }
+    .sig-label { width: 72px; }
+    .sig-name { font-size: 9px; }
+    .sig-metric-val { font-size: 12px; }
+    .sig-values { gap: 8px; }
+    .roas-compare { width: 46px; }
+    .roas-fake { font-size: 9px; }
+    .signal-row { padding: 0 8px; gap: 6px; }
+    .chip-icon { width: 16px; height: 16px; font-size: 7px; }
+    .source-chip, .dest-chip { padding: 4px 6px; gap: 4px; }
+    .chip-name { font-size: 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="title">Server-Side Signals</div>
+    <div class="live-tag"><div class="live-dot"></div>Streaming</div>
+  </div>
+  <div class="pipeline">
+    <div class="sources-row">
+      <div class="source-chip">
+        <div class="chip-icon">S</div>
+        <div><div class="chip-name">Shopify</div><div class="chip-sub">Backend</div></div>
+      </div>
+      <div class="source-chip">
+        <div class="chip-icon">GA</div>
+        <div><div class="chip-name">GA4</div><div class="chip-sub">Analytics</div></div>
+      </div>
+    </div>
+    <div class="arrow-col"><div class="arrow-down">▼ ▼ ▼</div></div>
+    <div class="signals-area" id="signals"></div>
+    <div class="arrow-col"><div class="arrow-down">▼ ▼ ▼</div></div>
+    <div class="destinations-row">
+      <div class="dest-chip">
+        <div class="chip-icon">M</div>
+        <div><div class="chip-name">Meta CAPI</div><div class="chip-sub">Conversions API</div></div>
+      </div>
+      <div class="dest-chip">
+        <div class="chip-icon">G</div>
+        <div><div class="chip-name">Google EC</div><div class="chip-sub">Enhanced Conv.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+var signals = [
+  { name: 'Profit Margins', type: 'Unit Economics', values: [
+    { real: '38%', roas: '4.2x' },
+    { real: '42%', roas: '3.8x' },
+    { real: '35%', roas: '5.1x' },
+    { real: '44%', roas: '4.6x' }
+  ]},
+  { name: 'Offline Conversions', type: 'Attribution', values: [
+    { real: '847', roas: '2.1x' },
+    { real: '912', roas: '2.4x' },
+    { real: '786', roas: '1.9x' },
+    { real: '968', roas: '2.8x' }
+  ]},
+  { name: 'Subscriber LTV', type: 'Lifetime Value', values: [
+    { real: '$286', roas: '3.6x' },
+    { real: '$312', roas: '3.2x' },
+    { real: '$298', roas: '4.0x' },
+    { real: '$324', roas: '3.4x' }
+  ]}
+];
+
+var stateIdx = 0;
+var signalsEl = document.getElementById('signals');
+var signalEls = [];
+
+signals.forEach(function(sig, i) {
+  var el = document.createElement('div');
+  el.className = 'signal-row';
+  el.innerHTML =
+    '<div class="signal-flow">' +
+      '<div class="signal-particle"></div>' +
+      '<div class="signal-particle"></div>' +
+      '<div class="signal-particle"></div>' +
+    '</div>' +
+    '<div class="sig-label">' +
+      '<div class="sig-name">' + sig.name + '</div>' +
+      '<div class="sig-type">' + sig.type + '</div>' +
+    '</div>' +
+    '<div class="sig-values">' +
+      '<div class="sig-metric">' +
+        '<div class="sig-metric-val" id="real' + i + '">' + sig.values[0].real + '</div>' +
+        '<div class="sig-metric-label">Real Signal</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="roas-compare">' +
+      '<div class="roas-fake" id="roas' + i + '">' + sig.values[0].roas + '</div>' +
+      '<div class="roas-real">Platform ROAS</div>' +
+    '</div>';
+  signalsEl.appendChild(el);
+  signalEls.push(el);
+});
+
+// Staggered reveal
+signalEls.forEach(function(el, i) {
+  setTimeout(function() { el.classList.add('visible'); }, 400 + i * 150);
+});
+
+// Cycle values
+setInterval(function() {
+  stateIdx = (stateIdx + 1) % signals[0].values.length;
+  signals.forEach(function(sig, i) {
+    var v = sig.values[stateIdx];
+    document.getElementById('real' + i).textContent = v.real;
+    document.getElementById('roas' + i).textContent = v.roas;
+  });
+}, 2500);
+</script>
+</body>
+</html>
