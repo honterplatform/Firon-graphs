@@ -195,7 +195,7 @@ function draw(ts) {
   ctx.font = 'bold ' + (mob ? 12 : 14) + 'px system-ui';
   if (rp > 0.5) {
     ctx.globalAlpha = (rp - 0.5) / 0.5;
-    ctx.fillText('Profit', rDestX + 4, profitY - 8);
+    ctx.fillText('Profit', rDestX + 4, profitY - 36);
     ctx.globalAlpha = rp;
   }
 
