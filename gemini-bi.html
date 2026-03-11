@@ -61,7 +61,10 @@
     flex-direction: column;
     gap: 10px;
     min-height: 0;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #1A1A1A #0F0F0F;
   }
   .msg {
     max-width: 88%;
@@ -258,13 +261,14 @@ function typeText(el, text, cb) {
   }, 30);
 }
 
+function scrollToBottom() {
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
 function showConversation(idx) {
   if (isAnimating) return;
   isAnimating = true;
   var conv = conversations[idx % conversations.length];
-
-  // Clear chat
-  chatEl.innerHTML = '';
 
   // Type question in input
   typeText(inputEl, conv.q, function() {
@@ -276,7 +280,10 @@ function showConversation(idx) {
       userMsg.className = 'msg user';
       userMsg.textContent = conv.q;
       chatEl.appendChild(userMsg);
-      requestAnimationFrame(function() { userMsg.classList.add('visible'); });
+      requestAnimationFrame(function() {
+        userMsg.classList.add('visible');
+        scrollToBottom();
+      });
 
       // Show AI response after delay
       setTimeout(function() {
@@ -284,7 +291,10 @@ function showConversation(idx) {
         aiMsg.className = 'msg ai';
         aiMsg.innerHTML = conv.a;
         chatEl.appendChild(aiMsg);
-        requestAnimationFrame(function() { aiMsg.classList.add('visible'); });
+        requestAnimationFrame(function() {
+          aiMsg.classList.add('visible');
+          scrollToBottom();
+        });
         isAnimating = false;
       }, 800);
     }, 400);
