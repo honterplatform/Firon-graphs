@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gemini BI</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #1A1A1A;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ai-icon {
+    width: 18px; height: 18px;
+    border-radius: 4px;
+    background: rgba(251,59,36,0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: #FB3B24;
+    font-weight: 800;
+  }
+  .header-title { font-size: 12px; font-weight: 700; color: #ccc; }
+  .header-sub { font-size: 8px; color: #444; font-weight: 600; }
+  .source-tag {
+    font-size: 7px;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+  .chat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .msg {
+    max-width: 88%;
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-size: 10px;
+    line-height: 1.5;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .msg.visible { opacity: 1; transform: translateY(0); }
+  .msg.user {
+    align-self: flex-end;
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    color: #ccc;
+    font-weight: 600;
+  }
+  .msg.ai {
+    align-self: flex-start;
+    background: #111;
+    border: 1px solid rgba(251,59,36,0.12);
+    color: #999;
+  }
+  .msg.ai .ai-label {
+    font-size: 7px;
+    font-weight: 700;
+    color: #FB3B24;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 3px;
+  }
+  .msg.ai .highlight { color: #FB3B24; font-weight: 700; }
+  .data-table {
+    width: 100%;
+    margin: 5px 0 3px;
+    border-collapse: collapse;
+  }
+  .data-table td {
+    padding: 2px 6px;
+    font-size: 9px;
+    font-variant-numeric: tabular-nums;
+    border-bottom: 1px solid #1A1A1A;
+  }
+  .data-table td:first-child { color: #888; font-weight: 600; }
+  .data-table td:nth-child(2) { color: #FB3B24; font-weight: 800; text-align: right; }
+  .data-table td:nth-child(3) { color: #444; font-size: 8px; text-align: right; }
+  .mini-bars {
+    display: flex;
+    gap: 3px;
+    align-items: flex-end;
+    height: 20px;
+    margin: 4px 0 2px;
+  }
+  .mini-bar {
+    flex: 1;
+    background: rgba(251,59,36,0.25);
+    border-radius: 2px 2px 0 0;
+    transition: height 0.6s ease;
+  }
+  .mini-bar.top { background: #FB3B24; }
+  .export-btn {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 7px;
+    font-weight: 700;
+    color: #FB3B24;
+    background: rgba(251,59,36,0.08);
+    border: 1px solid rgba(251,59,36,0.2);
+    padding: 2px 8px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .input-bar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 0 0;
+    border-top: 1px solid #1A1A1A;
+    margin-top: 4px;
+  }
+  .input-field {
+    flex: 1;
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    border-radius: 5px;
+    padding: 5px 8px;
+    font-size: 9px;
+    color: #555;
+    font-family: inherit;
+  }
+  .send-btn {
+    width: 24px; height: 24px;
+    border-radius: 5px;
+    background: rgba(251,59,36,0.12);
+    border: 1px solid rgba(251,59,36,0.2);
+    color: #FB3B24;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: default;
+  }
+  @media (max-width: 480px) {
+    .header-title { font-size: 11px; }
+    .msg { font-size: 9px; padding: 6px 8px; }
+    .data-table td { font-size: 8px; padding: 2px 4px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="header-left">
+      <div class="ai-icon">G</div>
+      <div>
+        <div class="header-title">Gemini AI Assistant</div>
+        <div class="header-sub">Connected to BigQuery</div>
+      </div>
+    </div>
+    <div class="source-tag">Looker Studio Pro</div>
+  </div>
+  <div class="chat" id="chat"></div>
+  <div class="input-bar">
+    <div class="input-field" id="inputField">Ask about your data...</div>
+    <div class="send-btn">→</div>
+  </div>
+</div>
+<script>
+var chatEl = document.getElementById('chat');
+var inputEl = document.getElementById('inputField');
+
+var conversations = [
+  {
+    q: 'What\'s our top channel by margin this month?',
+    a: '<div class="ai-label">Gemini · BigQuery</div>' +
+       'Your top channel by contribution margin is <span class="highlight">SEO at 72%</span>, followed by Email at 68%.' +
+       '<table class="data-table">' +
+       '<tr><td>SEO</td><td>72%</td><td>↑ 4%</td></tr>' +
+       '<tr><td>Email</td><td>68%</td><td>↑ 2%</td></tr>' +
+       '<tr><td>TikTok</td><td>52%</td><td>↑ 8%</td></tr>' +
+       '<tr><td>Google</td><td>44%</td><td>↓ 2%</td></tr>' +
+       '<tr><td>Meta</td><td>38%</td><td>↓ 4%</td></tr>' +
+       '</table>' +
+       '<div class="export-btn">Export to Slides</div>'
+  },
+  {
+    q: 'Show revenue trend for the last 7 days',
+    a: '<div class="ai-label">Gemini · BigQuery</div>' +
+       'Revenue is trending <span class="highlight">up 18%</span> week-over-week. Peak was Thursday at <span class="highlight">£4.2K</span>.' +
+       '<div class="mini-bars">' +
+       '<div class="mini-bar" style="height:55%"></div>' +
+       '<div class="mini-bar" style="height:62%"></div>' +
+       '<div class="mini-bar" style="height:48%"></div>' +
+       '<div class="mini-bar top" style="height:95%"></div>' +
+       '<div class="mini-bar" style="height:78%"></div>' +
+       '<div class="mini-bar" style="height:72%"></div>' +
+       '<div class="mini-bar" style="height:85%"></div>' +
+       '</div>' +
+       '<div class="export-btn">Export to Slides</div>'
+  },
+  {
+    q: 'Any anomalies in CAC this week?',
+    a: '<div class="ai-label">Gemini · BigQuery</div>' +
+       'Detected <span class="highlight">1 anomaly</span>: Meta CAC spiked to <span class="highlight">$52 on Tuesday</span> (usual avg $36). Root cause: audience overlap in 2 ad sets competing for same segment. Recommend excluding overlap.' +
+       '<table class="data-table">' +
+       '<tr><td>Meta CAC Tue</td><td>$52</td><td>↑ 44%</td></tr>' +
+       '<tr><td>Meta CAC Avg</td><td>$36</td><td>baseline</td></tr>' +
+       '<tr><td>All other channels</td><td>Normal</td><td>—</td></tr>' +
+       '</table>' +
+       '<div class="export-btn">Export to Slides</div>'
+  },
+];
+
+var convIdx = 0;
+var isAnimating = false;
+
+function typeText(el, text, cb) {
+  var i = 0;
+  el.textContent = '';
+  var interval = setInterval(function() {
+    el.textContent = text.slice(0, i + 1);
+    i++;
+    if (i >= text.length) {
+      clearInterval(interval);
+      if (cb) cb();
+    }
+  }, 30);
+}
+
+function showConversation(idx) {
+  if (isAnimating) return;
+  isAnimating = true;
+  var conv = conversations[idx % conversations.length];
+
+  // Clear chat
+  chatEl.innerHTML = '';
+
+  // Type question in input
+  typeText(inputEl, conv.q, function() {
+    setTimeout(function() {
+      inputEl.textContent = 'Ask about your data...';
+
+      // Show user message
+      var userMsg = document.createElement('div');
+      userMsg.className = 'msg user';
+      userMsg.textContent = conv.q;
+      chatEl.appendChild(userMsg);
+      requestAnimationFrame(function() { userMsg.classList.add('visible'); });
+
+      // Show AI response after delay
+      setTimeout(function() {
+        var aiMsg = document.createElement('div');
+        aiMsg.className = 'msg ai';
+        aiMsg.innerHTML = conv.a;
+        chatEl.appendChild(aiMsg);
+        requestAnimationFrame(function() { aiMsg.classList.add('visible'); });
+        isAnimating = false;
+      }, 800);
+    }, 400);
+  });
+}
+
+// Initial
+setTimeout(function() { showConversation(0); }, 500);
+
+// Cycle
+setInterval(function() {
+  convIdx++;
+  showConversation(convIdx);
+}, 6000);
+</script>
+</body>
+</html>
