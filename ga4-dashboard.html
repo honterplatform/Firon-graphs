@@ -18,7 +18,7 @@
   }
   .chart-wrap {
     flex: 1;
-    border: 1px solid #222;
+    border: 1px solid #1A1A1A;
     border-radius: 6px;
     margin-bottom: 6px;
     position: relative;
@@ -44,10 +44,10 @@
     width: 14px; height: 10px;
     border-radius: 2px;
   }
-  .leg-swatch.sessions { background: rgba(180,180,180,0.4); }
+  .leg-swatch.sessions { background: rgba(251,59,36,0.25); }
   .leg-line {
     width: 14px; height: 2px;
-    background: #FFB09C;
+    background: #FB3B24;
     border-radius: 1px;
     position: relative;
   }
@@ -57,7 +57,7 @@
     top: -3px; left: 5px;
     width: 6px; height: 6px;
     border-radius: 50%;
-    border: 1.5px solid #FFB09C;
+    border: 1.5px solid #FB3B24;
     background: #0F0F0F;
   }
   .table-wrap {
@@ -75,8 +75,8 @@
     padding: 5px 6px;
     text-align: right;
     font-weight: 700;
-    color: #999;
-    border-bottom: 1px solid #222;
+    color: #666;
+    border-bottom: 1px solid #1A1A1A;
     position: sticky;
     top: 0;
     white-space: nowrap;
@@ -88,8 +88,8 @@
   tbody td {
     padding: 4px 6px;
     text-align: right;
-    color: #bbb;
-    border-bottom: 1px solid #1A1A1A;
+    color: #888;
+    border-bottom: 1px solid #141414;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
@@ -100,7 +100,7 @@
   }
   tbody td:nth-child(2) {
     text-align: left;
-    color: #7AB8FF;
+    color: #FB3B24;
     max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -109,8 +109,8 @@
     padding: 5px 6px;
     text-align: right;
     font-weight: 800;
-    color: #ccc;
-    border-top: 1px solid #333;
+    color: #FB3B24;
+    border-top: 1px solid #1A1A1A;
     font-variant-numeric: tabular-nums;
   }
   tfoot td:first-child { text-align: center; }
@@ -246,7 +246,7 @@ function drawChart() {
     var bh = (v / maxSessions) * ch;
     var y = pad.t + ch - bh;
 
-    ctx.fillStyle = 'rgba(160,160,160,0.3)';
+    ctx.fillStyle = 'rgba(251,59,36,0.2)';
     ctx.fillRect(x, y, bw, bh);
   });
 
@@ -258,7 +258,7 @@ function drawChart() {
     if (i === 0) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
   });
-  ctx.strokeStyle = '#FFB09C';
+  ctx.strokeStyle = '#FB3B24';
   ctx.lineWidth = 2;
   ctx.lineJoin = 'round';
   ctx.stroke();
@@ -271,7 +271,7 @@ function drawChart() {
     ctx.arc(x, y, 3, 0, Math.PI * 2);
     ctx.fillStyle = '#0F0F0F';
     ctx.fill();
-    ctx.strokeStyle = '#FFB09C';
+    ctx.strokeStyle = '#FB3B24';
     ctx.lineWidth = 1.5;
     ctx.stroke();
   });
