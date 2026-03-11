@@ -301,14 +301,10 @@ function showConversation(idx) {
   });
 }
 
-// Initial
+// Play through all 3 conversations once, staggered
 setTimeout(function() { showConversation(0); }, 500);
-
-// Cycle
-setInterval(function() {
-  convIdx++;
-  showConversation(convIdx);
-}, 6000);
+setTimeout(function() { showConversation(1); }, 6000);
+setTimeout(function() { showConversation(2); }, 11500);
 </script>
 </body>
 </html>
