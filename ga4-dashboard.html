@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analytics Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .chart-wrap {
+    flex: 1;
+    border: 1px solid #222;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    position: relative;
+    min-height: 0;
+  }
+  canvas { display: block; width: 100%; height: 100%; }
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 6px 0 2px;
+    flex-shrink: 0;
+  }
+  .leg-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #999;
+  }
+  .leg-swatch {
+    width: 14px; height: 10px;
+    border-radius: 2px;
+  }
+  .leg-swatch.sessions { background: rgba(180,180,180,0.4); }
+  .leg-line {
+    width: 14px; height: 2px;
+    background: #FFB09C;
+    border-radius: 1px;
+    position: relative;
+  }
+  .leg-line::after {
+    content: '';
+    position: absolute;
+    top: -3px; left: 5px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    border: 1.5px solid #FFB09C;
+    background: #0F0F0F;
+  }
+  .table-wrap {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10px;
+  }
+  thead th {
+    background: #141414;
+    padding: 5px 6px;
+    text-align: right;
+    font-weight: 700;
+    color: #999;
+    border-bottom: 1px solid #222;
+    position: sticky;
+    top: 0;
+    white-space: nowrap;
+  }
+  thead th:first-child,
+  thead th:nth-child(2) {
+    text-align: left;
+  }
+  tbody td {
+    padding: 4px 6px;
+    text-align: right;
+    color: #bbb;
+    border-bottom: 1px solid #1A1A1A;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  tbody td:first-child {
+    color: #666;
+    text-align: center;
+    width: 24px;
+  }
+  tbody td:nth-child(2) {
+    text-align: left;
+    color: #7AB8FF;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  tfoot td {
+    padding: 5px 6px;
+    text-align: right;
+    font-weight: 800;
+    color: #ccc;
+    border-top: 1px solid #333;
+    font-variant-numeric: tabular-nums;
+  }
+  tfoot td:first-child { text-align: center; }
+  tfoot td:nth-child(2) { text-align: left; }
+  @media (max-width: 480px) {
+    table { font-size: 8px; }
+    thead th, tbody td, tfoot td { padding: 3px 4px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="chart-wrap">
+    <div class="legend">
+      <div class="leg-item"><div class="leg-swatch sessions"></div>Sessions</div>
+      <div class="leg-item"><div class="leg-line"></div>Purchases</div>
+    </div>
+    <canvas id="c"></canvas>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>Landing page + query string</th>
+          <th>Sessions</th>
+          <th>New users</th>
+          <th>Engaged sessi...</th>
+          <th>Purch... ▼</th>
+          <th>Revenue</th>
+          <th>CVR</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1.</td><td>/</td><td>2,662</td><td>1,579</td><td>1,948</td><td>19</td><td>£4,955</td><td>0.7%</td></tr>
+        <tr><td>2.</td><td>/cart</td><td>207</td><td>28</td><td>111</td><td>5</td><td>£1,013.17</td><td>2.4%</td></tr>
+        <tr><td>3.</td><td>/collections/ashtrays</td><td>226</td><td>191</td><td>166</td><td>2</td><td>£143.68</td><td>0.9%</td></tr>
+        <tr><td>4.</td><td>/collections/casabyjj</td><td>14</td><td>12</td><td>12</td><td>2</td><td>£38</td><td>14.3%</td></tr>
+        <tr><td>5.</td><td>/collections/hum-london</td><td>21</td><td>14</td><td>17</td><td>2</td><td>£129.6</td><td>9.5%</td></tr>
+        <tr><td>6.</td><td>/products/904976-mug?variant=</td><td>1</td><td>1</td><td>1</td><td>2</td><td>£210</td><td>200.0%</td></tr>
+        <tr><td>7.</td><td>/products/562349-alcove-ouro?variant=...</td><td>1</td><td>1</td><td>1</td><td>1</td><td>£709.23</td><td>100.0%</td></tr>
+        <tr><td>8.</td><td>/products/zodiac-dinner-plate?variant=...</td><td>3</td><td>1</td><td>2</td><td>1</td><td>£52.82</td><td>33.3%</td></tr>
+        <tr><td>9.</td><td>/checkouts/cn/hWN8TVsb4jaeHtoTYwTQklDG/...</td><td>1</td><td>0</td><td>1</td><td>1</td><td>£20.49</td><td>100.0%</td></tr>
+        <tr><td>10.</td><td>/checkouts/cn/hWN8ikvjcFbHG9txA8PKGjqM/...</td><td>1</td><td>0</td><td>1</td><td>1</td><td>£350.13</td><td>100.0%</td></tr>
+      </tbody>
+      <tfoot>
+        <tr><td></td><td>Grand total</td><td>28,124</td><td>17,473</td><td>16,874</td><td>119</td><td>£20,006.6</td><td>0.4%</td></tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+<script>
+var canvas = document.getElementById('c');
+var ctx = canvas.getContext('2d');
+var dpr = window.devicePixelRatio || 1;
+
+var dates = [
+  'Feb 11','Feb 12','Feb 13','Feb 14','Feb 15','Feb 16','Feb 17',
+  'Feb 18','Feb 19','Feb 20','Feb 21','Feb 22','Feb 23','Feb 24',
+  'Feb 25','Feb 26','Feb 27','Feb 28','Mar 1','Mar 2','Mar 3',
+  'Mar 4','Mar 5','Mar 6','Mar 7','Mar 8','Mar 9','Mar 10'
+];
+
+var sessions = [
+  950, 880, 920, 200, 180, 850, 820,
+  860, 840, 830, 520, 1050, 1020, 1000,
+  700, 650, 800, 920, 1080, 1050, 1000,
+  900, 870, 840, 780, 520, 850, 880
+];
+
+var purchases = [
+  4, 5, 5, 2, 1, 5, 5,
+  5, 4, 4, 3, 7, 6, 7,
+  5, 5, 6, 7, 8, 9, 8,
+  5, 6, 7, 6, 3, 7, 7
+];
+
+var maxSessions = 1100;
+var maxPurchases = 10;
+
+function drawChart() {
+  var wrap = canvas.parentElement;
+  var legendH = wrap.querySelector('.legend').offsetHeight;
+  var w = wrap.offsetWidth;
+  var h = wrap.offsetHeight - legendH;
+  if (w <= 0 || h <= 0) return;
+
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  var mob = w <= 480;
+  var pad = { l: mob ? 30 : 40, r: mob ? 24 : 36, t: 8, b: mob ? 50 : 58 };
+  var cw = w - pad.l - pad.r;
+  var ch = h - pad.t - pad.b;
+  var n = dates.length;
+  var barW = cw / n;
+  var barPad = barW * 0.2;
+
+  // Y-axis gridlines (sessions)
+  ctx.font = (mob ? 8 : 9) + 'px system-ui';
+  ctx.fillStyle = '#666';
+  ctx.textAlign = 'right';
+  var yTicks = [0, 250, 500, 750, 1000];
+  yTicks.forEach(function(v) {
+    var y = pad.t + ch - (v / maxSessions) * ch;
+    ctx.beginPath();
+    ctx.moveTo(pad.l, y);
+    ctx.lineTo(w - pad.r, y);
+    ctx.strokeStyle = '#1A1A1A';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+    ctx.fillStyle = '#666';
+    ctx.fillText(v >= 1000 ? (v/1000) + 'K' : v, pad.l - 4, y + 3);
+  });
+
+  // Right Y-axis labels (purchases)
+  ctx.textAlign = 'left';
+  var pTicks = [0, 2, 4, 6, 8, 10];
+  pTicks.forEach(function(v) {
+    var y = pad.t + ch - (v / maxPurchases) * ch;
+    ctx.fillStyle = '#666';
+    ctx.fillText(v, w - pad.r + 4, y + 3);
+  });
+
+  // Session bars
+  sessions.forEach(function(v, i) {
+    var x = pad.l + i * barW + barPad;
+    var bw = barW - barPad * 2;
+    var bh = (v / maxSessions) * ch;
+    var y = pad.t + ch - bh;
+
+    ctx.fillStyle = 'rgba(160,160,160,0.3)';
+    ctx.fillRect(x, y, bw, bh);
+  });
+
+  // Purchase line
+  ctx.beginPath();
+  purchases.forEach(function(v, i) {
+    var x = pad.l + i * barW + barW / 2;
+    var y = pad.t + ch - (v / maxPurchases) * ch;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = '#FFB09C';
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // Purchase dots
+  purchases.forEach(function(v, i) {
+    var x = pad.l + i * barW + barW / 2;
+    var y = pad.t + ch - (v / maxPurchases) * ch;
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#0F0F0F';
+    ctx.fill();
+    ctx.strokeStyle = '#FFB09C';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  });
+
+  // X-axis dates
+  ctx.font = (mob ? 6 : 8) + 'px system-ui';
+  ctx.fillStyle = '#666';
+  ctx.textAlign = 'right';
+  dates.forEach(function(d, i) {
+    var x = pad.l + i * barW + barW / 2;
+    var y = pad.t + ch + 10;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(-Math.PI / 3);
+    ctx.fillText(d + ', 2026', 0, 0);
+    ctx.restore();
+  });
+}
+
+drawChart();
+window.addEventListener('resize', drawChart);
+</script>
+</body>
+</html>
