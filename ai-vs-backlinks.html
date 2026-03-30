@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Rankings vs Backlinks</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  .card { background: #0F0F0F; width: 100%; height: 100%; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<div class="card"><canvas id="c"></canvas></div>
+<script>
+var c = document.getElementById('c');
+var ctx = c.getContext('2d');
+var dpr = window.devicePixelRatio || 1;
+var time = 0;
+var animDone = false;
+
+function resize() {
+  var r = c.parentElement.getBoundingClientRect();
+  c.width = r.width * dpr;
+  c.height = r.height * dpr;
+  c.style.width = r.width + 'px';
+  c.style.height = r.height + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height };
+}
+
+// Trend data (12 months)
+var aiData =    [0.32, 0.36, 0.39, 0.42, 0.46, 0.48, 0.52, 0.56, 0.58, 0.61, 0.64, 0.664];
+var blData =    [0.52, 0.50, 0.48, 0.46, 0.44, 0.42, 0.39, 0.36, 0.34, 0.32, 0.30, 0.287];
+
+var currentAi = 0;
+var currentBl = 0;
+var targetAi = 0.664;
+var targetBl = 0.287;
+
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+function draw() {
+  var d = resize();
+  var w = d.w, h = d.h;
+  var mob = w <= 480;
+  time += 0.016;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Subtle grid
+  ctx.strokeStyle = 'rgba(251,59,36,0.03)';
+  ctx.lineWidth = 0.5;
+  var gs = mob ? 20 : 28;
+  for (var gx = 0; gx < w; gx += gs) {
+    ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); ctx.stroke();
+  }
+  for (var gy = 0; gy < h; gy += gs) {
+    ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke();
+  }
+
+  // Animate counters
+  var animT = Math.min(time / 2.5, 1);
+  var ease = easeOutCubic(animT);
+  currentAi = targetAi * ease;
+  currentBl = targetBl * ease;
+
+  // Reveal progress for chart
+  var chartReveal = Math.min(Math.max((time - 0.5) / 2, 0), 1);
+
+  // Layout
+  var splitY = h * 0.5;
+  var chartX = mob ? w * 0.02 : w * 0.5;
+  var chartW = mob ? w * 0.96 : w * 0.44;
+  var chartH = mob ? h * 0.22 : h * 0.5;
+  var chartCenterY = mob ? h * 0.78 : h * 0.5;
+
+  // Divider line
+  if (!mob) {
+    ctx.beginPath();
+    ctx.moveTo(w * 0.48, h * 0.08);
+    ctx.lineTo(w * 0.48, h * 0.92);
+    ctx.strokeStyle = '#1A1A1A';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(w * 0.05, splitY + 6);
+    ctx.lineTo(w * 0.95, splitY + 6);
+    ctx.strokeStyle = '#1A1A1A';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // --- AI RANKINGS (top/left) ---
+  var aiX = mob ? w * 0.06 : w * 0.04;
+  var aiY = mob ? h * 0.15 : h * 0.28;
+
+  ctx.font = 'bold ' + (mob ? 42 : 64) + 'px system-ui';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#fff';
+  ctx.fillText(currentAi.toFixed(3), aiX, aiY);
+
+  // Arrow up
+  var numW = ctx.measureText(currentAi.toFixed(3)).width;
+  ctx.font = 'bold ' + (mob ? 16 : 22) + 'px system-ui';
+  ctx.fillStyle = '#FB3B24';
+  ctx.fillText('↑', aiX + numW + (mob ? 6 : 10), aiY - (mob ? 8 : 12));
+
+  // Label
+  ctx.font = 'bold ' + (mob ? 12 : 16) + 'px system-ui';
+  ctx.fillStyle = '#FB3B24';
+  ctx.fillText('AI Rankings', aiX + numW + (mob ? 6 : 10), aiY + (mob ? 2 : 2));
+
+  // --- TRADITIONAL BACKLINKS (bottom/left below) ---
+  var blX = mob ? w * 0.06 : w * 0.04;
+  var blY = mob ? splitY + (h * 0.18) : h * 0.72;
+
+  ctx.font = 'bold ' + (mob ? 42 : 64) + 'px system-ui';
+  ctx.fillStyle = '#444';
+  ctx.fillText(currentBl.toFixed(3), blX, blY);
+
+  var numW2 = ctx.measureText(currentBl.toFixed(3)).width;
+  ctx.font = 'bold ' + (mob ? 16 : 22) + 'px system-ui';
+  ctx.fillStyle = '#555';
+  ctx.fillText('↓', blX + numW2 + (mob ? 6 : 10), blY - (mob ? 8 : 12));
+
+  ctx.font = 'bold ' + (mob ? 12 : 16) + 'px system-ui';
+  ctx.fillStyle = '#555';
+  ctx.fillText('Traditional', blX + numW2 + (mob ? 6 : 10), blY - (mob ? 4 : 6));
+  ctx.fillText('Backlinks', blX + numW2 + (mob ? 6 : 10), blY + (mob ? 10 : 12));
+
+  // --- DIVERGENCE CHART (right side / bottom on mobile) ---
+  var cLeft = chartX;
+  var cTop = chartCenterY - chartH / 2;
+  var cW = chartW;
+  var cH = chartH;
+  var padL = 4, padR = 4, padT = 8, padB = 14;
+  var plotW = cW - padL - padR;
+  var plotH = cH - padT - padB;
+
+  // Y range
+  var yMin = 0.2, yMax = 0.75;
+
+  // Grid lines
+  for (var yv = 0.3; yv <= 0.7; yv += 0.1) {
+    var gy2 = cTop + padT + plotH - ((yv - yMin) / (yMax - yMin)) * plotH;
+    ctx.beginPath();
+    ctx.moveTo(cLeft + padL, gy2);
+    ctx.lineTo(cLeft + padL + plotW, gy2);
+    ctx.strokeStyle = '#1A1A1A';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  }
+
+  // Draw lines with reveal
+  var pointCount = Math.floor(chartReveal * aiData.length);
+  var partialT = (chartReveal * aiData.length) - pointCount;
+
+  function getXY(data, idx) {
+    var x = cLeft + padL + (idx / (data.length - 1)) * plotW;
+    var y = cTop + padT + plotH - ((data[idx] - yMin) / (yMax - yMin)) * plotH;
+    return { x: x, y: y };
+  }
+
+  // AI line (red)
+  if (pointCount > 0) {
+    ctx.beginPath();
+    for (var j = 0; j <= Math.min(pointCount, aiData.length - 1); j++) {
+      var pt = getXY(aiData, j);
+      if (j === 0) ctx.moveTo(pt.x, pt.y);
+      else ctx.lineTo(pt.x, pt.y);
+    }
+    // Partial segment
+    if (pointCount < aiData.length - 1 && partialT > 0) {
+      var curr = getXY(aiData, pointCount);
+      var next = getXY(aiData, pointCount + 1);
+      ctx.lineTo(curr.x + (next.x - curr.x) * partialT, curr.y + (next.y - curr.y) * partialT);
+    }
+    ctx.strokeStyle = '#FB3B24';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Area fill
+    ctx.lineTo(cLeft + padL + (Math.min(pointCount, aiData.length - 1) / (aiData.length - 1)) * plotW, cTop + padT + plotH);
+    ctx.lineTo(cLeft + padL, cTop + padT + plotH);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(251,59,36,0.06)';
+    ctx.fill();
+  }
+
+  // Backlinks line (gray)
+  if (pointCount > 0) {
+    ctx.beginPath();
+    for (var j = 0; j <= Math.min(pointCount, blData.length - 1); j++) {
+      var pt = getXY(blData, j);
+      if (j === 0) ctx.moveTo(pt.x, pt.y);
+      else ctx.lineTo(pt.x, pt.y);
+    }
+    if (pointCount < blData.length - 1 && partialT > 0) {
+      var curr = getXY(blData, pointCount);
+      var next = getXY(blData, pointCount + 1);
+      ctx.lineTo(curr.x + (next.x - curr.x) * partialT, curr.y + (next.y - curr.y) * partialT);
+    }
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // Crossover point indicator
+  if (chartReveal > 0.4) {
+    // Crossover is around index 5-6
+    var crossPt = getXY(aiData, 5);
+    ctx.beginPath();
+    ctx.arc(crossPt.x, crossPt.y + 4, 3, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(251,59,36,0.3)';
+    ctx.fill();
+
+    // Pulsing ring
+    var pulseR = 6 + Math.sin(time * 3) * 2;
+    ctx.beginPath();
+    ctx.arc(crossPt.x, crossPt.y + 4, pulseR, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(251,59,36,0.15)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Label
+    if (!mob) {
+      ctx.font = 'bold 7px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(251,59,36,0.4)';
+      ctx.fillText('CROSSOVER', crossPt.x, crossPt.y - 10);
+    }
+  }
+
+  // End dots
+  if (chartReveal >= 1) {
+    var aiEnd = getXY(aiData, aiData.length - 1);
+    var blEnd = getXY(blData, blData.length - 1);
+
+    ctx.beginPath();
+    ctx.arc(aiEnd.x, aiEnd.y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#FB3B24';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(blEnd.x, blEnd.y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#444';
+    ctx.fill();
+  }
+
+  // X labels
+  ctx.font = (mob ? 6 : 7) + 'px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#333';
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  for (var m = 0; m < 12; m += (mob ? 3 : 2)) {
+    var mx = cLeft + padL + (m / 11) * plotW;
+    ctx.fillText(months[m], mx, cTop + cH - 2);
+  }
+
+  requestAnimationFrame(draw);
+}
+
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
