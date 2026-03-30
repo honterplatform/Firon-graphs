@@ -85,13 +85,6 @@ function draw() {
     ctx.strokeStyle = '#1A1A1A';
     ctx.lineWidth = 1;
     ctx.stroke();
-  } else {
-    ctx.beginPath();
-    ctx.moveTo(w * 0.05, splitY + 6);
-    ctx.lineTo(w * 0.95, splitY + 6);
-    ctx.strokeStyle = '#1A1A1A';
-    ctx.lineWidth = 1;
-    ctx.stroke();
   }
 
   // --- AI RANKINGS (top/left) ---
@@ -116,7 +109,7 @@ function draw() {
 
   // --- TRADITIONAL BACKLINKS (bottom/left below) ---
   var blX = mob ? w * 0.06 : w * 0.04;
-  var blY = mob ? splitY + (h * 0.18) : h * 0.72;
+  var blY = mob ? splitY + (h * 0.12) : h * 0.72;
 
   ctx.font = 'bold ' + (mob ? 42 : 64) + 'px system-ui';
   ctx.fillStyle = '#444';
