@@ -8,247 +8,295 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 100%; height: 100%; overflow: hidden; }
   body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
-  .card {
-    background: #0F0F0F;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  .query-bar {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: #141414;
-    border: 1px solid #1A1A1A;
-    border-radius: 6px;
-    padding: 6px 10px;
-    margin-bottom: 8px;
-    flex-shrink: 0;
-  }
-  .query-icon {
-    font-size: 10px;
-    color: #444;
-    flex-shrink: 0;
-  }
-  .query-text {
-    font-size: 10px;
-    color: #666;
-    flex: 1;
-  }
-  .query-badge {
-    font-size: 7px;
-    font-weight: 700;
-    color: #555;
-    background: #1A1A1A;
-    padding: 2px 6px;
-    border-radius: 3px;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-  }
-  .response-area {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-height: 0;
-    position: relative;
-  }
-  .ai-label {
-    font-size: 8px;
-    font-weight: 700;
-    color: #444;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    margin-bottom: 2px;
-    flex-shrink: 0;
-  }
-  .result {
-    background: #141414;
-    border: 1px solid #1A1A1A;
-    border-radius: 5px;
-    padding: 8px 10px;
-    flex-shrink: 0;
-    transition: opacity 0.5s ease, border-color 0.5s ease;
-  }
-  .result.cited { border-color: rgba(251,59,36,0.2); }
-  .result.skipped { border-color: rgba(60,60,60,0.2); opacity: 0.4; }
-  .result.ghost {
-    border: 1px dashed #1A1A1A;
-    background: transparent;
-  }
-  .r-top {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 4px;
-  }
-  .r-favicon {
-    width: 14px; height: 14px;
-    border-radius: 3px;
-    background: #1A1A1A;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 7px;
-    font-weight: 800;
-    flex-shrink: 0;
-  }
-  .r-favicon.active { background: rgba(251,59,36,0.12); color: #FB3B24; }
-  .r-favicon.gray { color: #444; }
-  .r-domain {
-    font-size: 8px;
-    color: #555;
-  }
-  .r-tag {
-    font-size: 6px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    padding: 1px 5px;
-    border-radius: 2px;
-    margin-left: auto;
-  }
-  .r-tag.cited { background: rgba(251,59,36,0.1); color: #FB3B24; }
-  .r-tag.skipped { background: rgba(60,60,60,0.15); color: #444; }
-  .r-title {
-    font-size: 11px;
-    font-weight: 600;
-    margin-bottom: 2px;
-    line-height: 1.3;
-  }
-  .result.cited .r-title { color: #ccc; }
-  .result.skipped .r-title { color: #444; }
-  .result.ghost .r-title { color: #333; }
-  .r-snippet {
-    font-size: 8px;
-    color: #444;
-    line-height: 1.4;
-  }
-  .result.cited .r-snippet { color: #666; }
-  .ghost-label {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    padding: 6px;
-    font-size: 9px;
-    font-weight: 600;
-    color: #333;
-  }
-  .ghost-label .x {
-    color: #662222;
-    font-size: 11px;
-    font-weight: 800;
-  }
-  .state-indicator {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 6px;
-    flex-shrink: 0;
-  }
-  .state-dot {
-    width: 5px; height: 5px;
-    border-radius: 50%;
-    background: #222;
-    transition: background 0.4s ease;
-  }
-  .state-dot.active { background: #FB3B24; }
-  @media (max-width: 480px) {
-    .query-text { font-size: 9px; }
-    .r-title { font-size: 10px; }
-    .r-snippet { font-size: 7px; }
-    .result { padding: 6px 8px; }
-  }
+  .card { background: #0F0F0F; width: 100%; height: 100%; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; }
 </style>
 </head>
 <body>
-<div class="card">
-  <div class="query-bar">
-    <div class="query-icon">✦</div>
-    <div class="query-text">"Best premium candles for home fragrance 2026"</div>
-    <div class="query-badge">AI Search</div>
-  </div>
-  <div class="ai-label">AI-Generated Answer</div>
-  <div class="response-area" id="response"></div>
-  <div class="state-indicator">
-    <div class="state-dot active" id="dot0"></div>
-    <div class="state-dot" id="dot1"></div>
-  </div>
-</div>
+<div class="card"><canvas id="c"></canvas></div>
 <script>
-var responseEl = document.getElementById('response');
-var isOptimized = false;
+var c = document.getElementById('c');
+var ctx = c.getContext('2d');
+var dpr = window.devicePixelRatio || 1;
+var time = 0;
 
-var withoutYou = [
-  { type: 'cited', favicon: 'C', faviconClass: 'gray', domain: 'competitor-a.com', title: 'Luxury Soy Candles — Hand-Poured Collection', snippet: 'Our premium soy candles are crafted with 100% natural wax and essential oils for a clean, long-lasting burn...', tag: 'Cited' },
-  { type: 'cited', favicon: 'B', faviconClass: 'gray', domain: 'competitor-b.com', title: 'Artisan Home Fragrance — Best Sellers 2026', snippet: 'Discover our curated selection of artisan candles, diffusers, and room sprays designed for modern homes...', tag: 'Cited' },
-  { type: 'ghost', favicon: '?', faviconClass: 'gray', domain: 'your-brand.com', title: 'Your Brand — Not Found', snippet: 'Data not structured for AI retrieval. No schema, no entity authority, no citation.', tag: 'Skipped' },
-  { type: 'cited', favicon: 'D', faviconClass: 'gray', domain: 'competitor-c.com', title: 'Top 10 Home Candle Brands — Expert Review', snippet: 'We tested 50+ candle brands across scent throw, burn time, and ingredient quality...', tag: 'Cited' },
+function resize() {
+  var r = c.parentElement.getBoundingClientRect();
+  c.width = r.width * dpr;
+  c.height = r.height * dpr;
+  c.style.width = r.width + 'px';
+  c.style.height = r.height + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height };
+}
+
+var sources = [
+  { name: 'Competitor A', cited: true, yours: false },
+  { name: 'Competitor B', cited: true, yours: false },
+  { name: 'Your Brand',   cited: false, yours: true },
+  { name: 'Competitor C', cited: true, yours: false },
+  { name: 'Competitor D', cited: true, yours: false },
 ];
 
-var withYou = [
-  { type: 'cited', favicon: 'Y', faviconClass: 'active', domain: 'your-brand.com', title: 'Your Brand — Premium Hand-Poured Candles', snippet: 'Award-winning soy candles with 100% natural ingredients. #1 rated for scent throw and clean burn...', tag: 'Cited' },
-  { type: 'cited', favicon: 'C', faviconClass: 'gray', domain: 'competitor-a.com', title: 'Luxury Soy Candles — Hand-Poured Collection', snippet: 'Our premium soy candles are crafted with 100% natural wax and essential oils for a clean, long-lasting burn...', tag: 'Cited' },
-  { type: 'skipped', favicon: 'B', faviconClass: 'gray', domain: 'competitor-b.com', title: 'Artisan Home Fragrance — Best Sellers 2026', snippet: 'Discover our curated selection of artisan candles, diffusers, and room sprays...', tag: 'Dropped' },
-  { type: 'cited', favicon: 'D', faviconClass: 'gray', domain: 'competitor-c.com', title: 'Top 10 Home Candle Brands — Expert Review', snippet: 'We tested 50+ candle brands across scent throw, burn time, and ingredient quality...', tag: 'Cited' },
-];
+// 3 citation slots
+var slots = [];
+var scanQueue = [];
+var scanIdx = 0;
+var scanPhase = 'idle'; // idle, scanning, result
+var scanTimer = 0;
+var currentSource = null;
+var scanX = 0;
+var resultTimer = 0;
+var cycleTimer = 0;
+var cycleCount = 0;
+var yourBrandSkipped = false;
 
-function renderState(results) {
-  responseEl.innerHTML = '';
-  results.forEach(function(r, i) {
-    var el = document.createElement('div');
-    el.className = 'result ' + r.type;
-    el.style.opacity = '0';
-    el.style.transform = 'translateY(6px)';
-    el.style.transition = 'opacity 0.4s ease, transform 0.4s ease, border-color 0.5s ease';
+function resetCycle() {
+  slots = [];
+  scanQueue = sources.slice();
+  // Every other cycle, your brand gets cited
+  if (cycleCount % 2 === 1) {
+    scanQueue[2] = { name: 'Your Brand', cited: true, yours: true };
+    scanQueue[1] = { name: 'Competitor B', cited: false, yours: false };
+  } else {
+    scanQueue[2] = { name: 'Your Brand', cited: false, yours: true };
+    scanQueue[1] = { name: 'Competitor B', cited: true, yours: false };
+  }
+  scanIdx = 0;
+  scanPhase = 'idle';
+  scanTimer = 0;
+  yourBrandSkipped = false;
+}
 
-    if (r.type === 'ghost') {
-      el.innerHTML =
-        '<div class="r-top">' +
-          '<div class="r-favicon gray">' + r.favicon + '</div>' +
-          '<div class="r-domain">' + r.domain + '</div>' +
-          '<div class="r-tag skipped">' + r.tag + '</div>' +
-        '</div>' +
-        '<div class="ghost-label"><span class="x">✕</span> ' + r.snippet + '</div>';
+resetCycle();
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function draw() {
+  var d = resize();
+  var w = d.w, h = d.h;
+  var mob = w <= 480;
+  time += 0.016;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Subtle grid
+  ctx.strokeStyle = 'rgba(251,59,36,0.025)';
+  ctx.lineWidth = 0.5;
+  var gs = mob ? 20 : 28;
+  for (var gx = 0; gx < w; gx += gs) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); ctx.stroke(); }
+  for (var gy = 0; gy < h; gy += gs) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke(); }
+
+  // Header
+  ctx.font = 'bold ' + (mob ? 11 : 13) + 'px system-ui';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#ccc';
+  ctx.fillText('AI Citation Engine', mob ? 8 : 12, mob ? 16 : 20);
+  ctx.font = (mob ? 7 : 8) + 'px system-ui';
+  ctx.fillStyle = '#444';
+  ctx.fillText('Evaluating sources...', mob ? 8 : 12, mob ? 28 : 34);
+
+  // Layout
+  var slotAreaX = mob ? 8 : 12;
+  var slotAreaY = mob ? 38 : 46;
+  var slotW = mob ? w - 16 : w - 24;
+  var slotH = mob ? 28 : 34;
+  var slotGap = mob ? 4 : 6;
+
+  // State machine
+  scanTimer += 0.016;
+
+  if (scanPhase === 'idle') {
+    if (scanIdx < scanQueue.length) {
+      scanPhase = 'scanning';
+      scanTimer = 0;
+      currentSource = scanQueue[scanIdx];
+      scanX = -0.1;
     } else {
-      el.innerHTML =
-        '<div class="r-top">' +
-          '<div class="r-favicon ' + r.faviconClass + '">' + r.favicon + '</div>' +
-          '<div class="r-domain">' + r.domain + '</div>' +
-          '<div class="r-tag ' + (r.type === 'cited' ? 'cited' : 'skipped') + '">' + r.tag + '</div>' +
-        '</div>' +
-        '<div class="r-title">' + r.title + '</div>' +
-        '<div class="r-snippet">' + r.snippet + '</div>';
+      // Cycle complete, wait then restart
+      cycleTimer += 0.016;
+      if (cycleTimer > 2.5) {
+        cycleTimer = 0;
+        cycleCount++;
+        resetCycle();
+      }
+    }
+  }
+
+  if (scanPhase === 'scanning') {
+    scanX += 0.025;
+    if (scanX >= 1.1) {
+      scanPhase = 'result';
+      scanTimer = 0;
+      resultTimer = 0;
+    }
+  }
+
+  if (scanPhase === 'result') {
+    resultTimer += 0.016;
+    if (resultTimer > 0.8) {
+      if (currentSource.cited) {
+        slots.push({ name: currentSource.name, yours: currentSource.yours, alpha: 1, flash: 1 });
+      } else {
+        if (currentSource.yours) yourBrandSkipped = true;
+      }
+      scanIdx++;
+      scanPhase = 'idle';
+      scanTimer = 0;
+    }
+  }
+
+  // Draw existing slots (cited sources)
+  slots.forEach(function(slot, i) {
+    var sy = slotAreaY + i * (slotH + slotGap);
+    slot.flash = Math.max(0, slot.flash - 0.03);
+
+    // Slot background
+    roundRect(slotAreaX, sy, slotW, slotH, 4);
+    ctx.fillStyle = slot.yours ? 'rgba(251,59,36,0.08)' : '#141414';
+    ctx.fill();
+    ctx.strokeStyle = slot.yours ? 'rgba(251,59,36,0.35)' : '#1A1A1A';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Flash effect
+    if (slot.flash > 0) {
+      roundRect(slotAreaX, sy, slotW, slotH, 4);
+      ctx.fillStyle = 'rgba(251,59,36,' + (slot.flash * 0.15) + ')';
+      ctx.fill();
     }
 
-    responseEl.appendChild(el);
+    // Rank number
+    ctx.font = 'bold ' + (mob ? 10 : 12) + 'px system-ui';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = slot.yours ? '#FB3B24' : '#444';
+    ctx.fillText('#' + (i + 1), slotAreaX + 8, sy + slotH / 2 + 4);
 
-    setTimeout(function() {
-      el.style.opacity = '1';
-      el.style.transform = 'translateY(0)';
-    }, 100 + i * 120);
+    // Name
+    ctx.font = 'bold ' + (mob ? 10 : 12) + 'px system-ui';
+    ctx.fillStyle = slot.yours ? '#FB3B24' : '#888';
+    ctx.fillText(slot.name, slotAreaX + (mob ? 30 : 38), sy + slotH / 2 + 4);
+
+    // Cited badge
+    ctx.font = 'bold ' + (mob ? 7 : 8) + 'px system-ui';
+    ctx.textAlign = 'right';
+    ctx.fillStyle = slot.yours ? '#FB3B24' : '#333';
+    ctx.fillText('CITED ✓', slotAreaX + slotW - 8, sy + slotH / 2 + 3);
+    ctx.textAlign = 'left';
   });
+
+  // Draw currently scanning source
+  if (scanPhase === 'scanning' || scanPhase === 'result') {
+    var activeSy = slotAreaY + slots.length * (slotH + slotGap);
+
+    // Scanning card
+    roundRect(slotAreaX, activeSy, slotW, slotH, 4);
+    ctx.fillStyle = '#111';
+    ctx.fill();
+    ctx.strokeStyle = currentSource.yours && !currentSource.cited ? 'rgba(100,34,34,0.4)' : 'rgba(251,59,36,0.15)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Source name
+    ctx.font = (mob ? 10 : 12) + 'px system-ui';
+    ctx.fillStyle = currentSource.yours ? (currentSource.cited ? '#FB3B24' : '#662222') : '#555';
+    ctx.fillText(currentSource.name, slotAreaX + (mob ? 10 : 14), activeSy + slotH / 2 + 4);
+
+    // Scanning line
+    if (scanPhase === 'scanning') {
+      var lineX = slotAreaX + scanX * slotW;
+      ctx.beginPath();
+      ctx.moveTo(lineX, activeSy);
+      ctx.lineTo(lineX, activeSy + slotH);
+      ctx.strokeStyle = '#FB3B24';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.6;
+      ctx.setLineDash([]);
+      ctx.stroke();
+
+      // Scan glow
+      var grad = ctx.createLinearGradient(lineX - 30, 0, lineX, 0);
+      grad.addColorStop(0, 'rgba(251,59,36,0)');
+      grad.addColorStop(1, 'rgba(251,59,36,0.1)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(Math.max(slotAreaX, lineX - 30), activeSy, 30, slotH);
+      ctx.globalAlpha = 1;
+
+      // Scanning label
+      ctx.font = 'bold ' + (mob ? 7 : 8) + 'px system-ui';
+      ctx.textAlign = 'right';
+      ctx.fillStyle = 'rgba(251,59,36,0.5)';
+      ctx.fillText('SCANNING...', slotAreaX + slotW - 8, activeSy + slotH / 2 + 3);
+      ctx.textAlign = 'left';
+    }
+
+    // Result verdict
+    if (scanPhase === 'result') {
+      ctx.font = 'bold ' + (mob ? 8 : 10) + 'px system-ui';
+      ctx.textAlign = 'right';
+      if (currentSource.cited) {
+        ctx.fillStyle = '#FB3B24';
+        ctx.fillText('✓ CITE', slotAreaX + slotW - 8, activeSy + slotH / 2 + 4);
+      } else {
+        ctx.fillStyle = '#662222';
+        ctx.fillText('✕ SKIP', slotAreaX + slotW - 8, activeSy + slotH / 2 + 4);
+
+        // Red flash on the card
+        roundRect(slotAreaX, activeSy, slotW, slotH, 4);
+        ctx.fillStyle = 'rgba(100,30,25,' + (0.15 * (1 - resultTimer / 0.8)) + ')';
+        ctx.fill();
+      }
+      ctx.textAlign = 'left';
+    }
+  }
+
+  // "Your Brand — Skipped" ghost notification
+  if (yourBrandSkipped && scanPhase !== 'scanning') {
+    var ghostY = slotAreaY + (slots.length + 1) * (slotH + slotGap) + 8;
+    var ghostAlpha = 0.5 + Math.sin(time * 2.5) * 0.2;
+    ctx.globalAlpha = ghostAlpha;
+    ctx.font = (mob ? 8 : 9) + 'px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#662222';
+    ctx.fillText('Your Brand — Not recommended. Invisible to AI.', w / 2, ghostY);
+    ctx.globalAlpha = 1;
+  }
+
+  // Show "Your Brand — #1" celebration when cited
+  var yourSlot = null;
+  slots.forEach(function(s) { if (s.yours) yourSlot = s; });
+  if (yourSlot && yourSlot.flash > 0.3) {
+    // Subtle particle burst
+    for (var p = 0; p < 6; p++) {
+      var angle = (p / 6) * Math.PI * 2 + time * 2;
+      var dist = (1 - yourSlot.flash) * 40;
+      var px = slotAreaX + slotW / 2 + Math.cos(angle) * dist;
+      var py = slotAreaY + 0 * (slotH + slotGap) + slotH / 2 + Math.sin(angle) * dist;
+      ctx.beginPath();
+      ctx.arc(px, py, 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(251,59,36,' + (yourSlot.flash * 0.5) + ')';
+      ctx.fill();
+    }
+  }
+
+  requestAnimationFrame(draw);
 }
 
-function updateDots() {
-  document.getElementById('dot0').className = 'state-dot' + (!isOptimized ? ' active' : '');
-  document.getElementById('dot1').className = 'state-dot' + (isOptimized ? ' active' : '');
-}
-
-// Initial state
-renderState(withoutYou);
-updateDots();
-
-// Cycle
-setInterval(function() {
-  isOptimized = !isOptimized;
-  renderState(isOptimized ? withYou : withoutYou);
-  updateDots();
-}, 4000);
+requestAnimationFrame(draw);
 </script>
 </body>
 </html>
