@@ -15,20 +15,22 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    padding: 16px;
+    justify-content: center;
   }
   .query {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-bottom: 8px;
+    gap: 8px;
+    margin-bottom: 14px;
     flex-shrink: 0;
   }
   .query-icon {
-    font-size: 10px;
+    font-size: 14px;
     color: #FB3B24;
   }
   .query-text {
-    font-size: 10px;
+    font-size: 14px;
     color: #555;
     font-style: italic;
   }
@@ -36,17 +38,19 @@
     flex: 1;
     position: relative;
     overflow: hidden;
+    display: flex;
+    align-items: center;
   }
   .answer {
-    font-size: 13px;
-    line-height: 2;
+    font-size: 18px;
+    line-height: 2.2;
     color: #666;
     position: relative;
   }
   .citation {
     display: inline;
     font-weight: 700;
-    padding: 1px 6px;
+    padding: 2px 8px;
     border-radius: 3px;
     position: relative;
     transition: opacity 0.3s ease;
@@ -115,13 +119,13 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 8px;
+    margin-top: 14px;
     flex-shrink: 0;
-    padding-top: 6px;
+    padding-top: 8px;
     border-top: 1px solid #1A1A1A;
   }
   .status-text {
-    font-size: 8px;
+    font-size: 10px;
     font-weight: 600;
     color: #333;
     transition: color 0.5s ease;
@@ -140,9 +144,10 @@
   }
   .sdot.active { background: #FB3B24; }
   @media (max-width: 480px) {
-    .answer { font-size: 11px; line-height: 1.9; }
-    .query-text { font-size: 9px; }
-    .citation { padding: 1px 4px; font-size: 11px; }
+    .card { padding: 12px; }
+    .answer { font-size: 14px; line-height: 2; }
+    .query-text { font-size: 12px; }
+    .citation { padding: 2px 6px; }
   }
 </style>
 </head>
