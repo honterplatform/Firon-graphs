@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Infrastructure Sprint</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; color: #fff; }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .terminal-bar {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background: #111;
+    border-bottom: 1px solid #1A1A1A;
+    flex-shrink: 0;
+    gap: 6px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot.r { background: #FB3B24; }
+  .dot.y { background: #444; }
+  .dot.g { background: #333; }
+  .terminal-title {
+    flex: 1;
+    text-align: center;
+    font-size: 10px;
+    color: #444;
+    letter-spacing: 0.5px;
+  }
+  .progress-area {
+    padding: 8px 12px;
+    border-bottom: 1px solid #1A1A1A;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .prog-label {
+    font-size: 9px;
+    color: #555;
+    flex-shrink: 0;
+  }
+  .prog-bar-bg {
+    flex: 1;
+    height: 3px;
+    background: #1A1A1A;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .prog-bar {
+    height: 100%;
+    background: #FB3B24;
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.5s ease;
+  }
+  .prog-pct {
+    font-size: 9px;
+    color: #FB3B24;
+    font-weight: 700;
+    width: 28px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .feed {
+    flex: 1;
+    overflow: hidden;
+    padding: 8px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .line {
+    padding: 2px 12px;
+    font-size: 11px;
+    line-height: 1.7;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    flex-shrink: 0;
+  }
+  .line.visible { opacity: 1; transform: translateY(0); }
+  .line .ts { color: #333; }
+  .line .scan { color: #555; }
+  .line .issue { color: #662222; }
+  .line .fix { color: #FB3B24; }
+  .line .ok { color: #444; }
+  .line .key { color: #888; }
+  .line .arrow { color: #333; }
+  .stats-bar {
+    padding: 6px 12px;
+    border-top: 1px solid #1A1A1A;
+    display: flex;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+  .stat {
+    font-size: 9px;
+    color: #444;
+  }
+  .stat span { color: #FB3B24; font-weight: 700; }
+  .stat span.gray { color: #555; }
+  @media (max-width: 480px) {
+    .line { font-size: 9px; padding: 2px 8px; }
+    .terminal-title { font-size: 9px; }
+    .stats-bar { gap: 8px; }
+    .stat { font-size: 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="terminal-bar">
+    <div class="dot r"></div>
+    <div class="dot y"></div>
+    <div class="dot g"></div>
+    <div class="terminal-title">firon-audit — infrastructure sprint</div>
+  </div>
+  <div class="progress-area">
+    <div class="prog-label">Sprint</div>
+    <div class="prog-bar-bg"><div class="prog-bar" id="progBar"></div></div>
+    <div class="prog-pct" id="progPct">0%</div>
+  </div>
+  <div class="feed" id="feed"></div>
+  <div class="stats-bar">
+    <div class="stat">Scanned: <span id="scanned">0</span></div>
+    <div class="stat">Issues: <span class="gray" id="issues">0</span></div>
+    <div class="stat">Fixed: <span id="fixed">0</span></div>
+    <div class="stat">Deployed: <span id="deployed">0</span></div>
+  </div>
+</div>
+<script>
+var feedEl = document.getElementById('feed');
+var progBar = document.getElementById('progBar');
+var progPct = document.getElementById('progPct');
+var scannedEl = document.getElementById('scanned');
+var issuesEl = document.getElementById('issues');
+var fixedEl = document.getElementById('fixed');
+var deployedEl = document.getElementById('deployed');
+
+var scanned = 0, issues = 0, fixed = 0, deployed = 0;
+var maxLines = 14;
+var lines = [];
+var stepIdx = 0;
+
+var steps = [
+  { type: 'scan', text: '<span class="ts">$</span> <span class="scan">scanning</span> <span class="key">utm_parameters</span><span class="scan">...</span>' },
+  { type: 'issue', text: '<span class="ts">!</span> <span class="issue">utm_source: null</span> <span class="arrow">→</span> <span class="fix">patched (meta_capi)</span>' },
+  { type: 'scan', text: '<span class="ts">$</span> <span class="scan">scanning</span> <span class="key">pixel_events</span><span class="scan">...</span>' },
+  { type: 'issue', text: '<span class="ts">!</span> <span class="issue">pixel: duplicate Purchase event</span> <span class="arrow">→</span> <span class="fix">removed</span>' },
+  { type: 'ok', text: '<span class="ts">✓</span> <span class="ok">pixel_pageview: clean</span>' },
+  { type: 'scan', text: '<span class="ts">$</span> <span class="scan">scanning</span> <span class="key">schema_markup</span><span class="scan">...</span>' },
+  { type: 'issue', text: '<span class="ts">!</span> <span class="issue">schema: Product — missing</span> <span class="arrow">→</span> <span class="fix">deployed</span>' },
+  { type: 'issue', text: '<span class="ts">!</span> <span class="issue">schema: Organization — incomplete</span> <span class="arrow">→</span> <span class="fix">fixed</span>' },
+  { type: 'ok', text: '<span class="ts">✓</span> <span class="ok">schema_breadcrumb: valid</span>' },
+  { type: 'scan', text: '<span class="ts">$</span> <span class="scan">scanning</span> <span class="key">cross_domain_tracking</span><span class="scan">...</span>' },
+  { type: 'issue', text: '<span class="ts">!</span> <span class="issue">linker: broken on /checkout</span> <span class="arrow">→</span> <span class="fix">reconnected</span>' },
+  { type: 'scan', text: '<span class="ts">$</span> <span class="scan">scanning</span> <span class="key">hidden_form_fields</span><span class="scan">...</span>' },
+  { type: 'issue', text: '<span class="ts">!</span> <span class="issue">gclid field: not persisting</span> <span class="arrow">→</span> <span class="fix">patched</span>' },
+  { type: 'ok', text: '<span class="ts">✓</span> <span class="ok">fbclid_passthrough: active</span>' },
+  { type: 'scan', text: '<span class="ts">$</span> <span class="scan">scanning</span> <span class="key">server_side_events</span><span class="scan">...</span>' },
+  { type: 'issue', text: '<span class="ts">!</span> <span class="issue">CAPI: event_id mismatch</span> <span class="arrow">→</span> <span class="fix">synced</span>' },
+  { type: 'issue', text: '<span class="ts">!</span> <span class="issue">GA4 MP: missing user_id</span> <span class="arrow">→</span> <span class="fix">mapped</span>' },
+  { type: 'scan', text: '<span class="ts">$</span> <span class="scan">scanning</span> <span class="key">offline_conversions</span><span class="scan">...</span>' },
+  { type: 'issue', text: '<span class="ts">!</span> <span class="issue">CRM import: 48h delay</span> <span class="arrow">→</span> <span class="fix">real-time webhook</span>' },
+  { type: 'ok', text: '<span class="ts">✓</span> <span class="ok">offline_event_set: configured</span>' },
+  { type: 'scan', text: '<span class="ts">$</span> <span class="scan">scanning</span> <span class="key">consent_mode</span><span class="scan">...</span>' },
+  { type: 'issue', text: '<span class="ts">!</span> <span class="issue">consent: defaulting to denied</span> <span class="arrow">→</span> <span class="fix">v2 deployed</span>' },
+  { type: 'ok', text: '<span class="ts">✓</span> <span class="ok">consent_regions: properly scoped</span>' },
+  { type: 'scan', text: '<span class="ts">$</span> <span class="scan">scanning</span> <span class="key">data_layer</span><span class="scan">...</span>' },
+  { type: 'issue', text: '<span class="ts">!</span> <span class="issue">dataLayer: race condition on SPA</span> <span class="arrow">→</span> <span class="fix">fixed</span>' },
+  { type: 'ok', text: '<span class="ts">✓</span> <span class="ok">ecommerce_events: spec-compliant</span>' },
+  { type: 'scan', text: '<span class="ts">$</span> <span class="scan">scanning</span> <span class="key">identity_resolution</span><span class="scan">...</span>' },
+  { type: 'issue', text: '<span class="ts">!</span> <span class="issue">identity: 34% collisions</span> <span class="arrow">→</span> <span class="fix">deduplicated</span>' },
+  { type: 'ok', text: '<span class="ts">✓</span> <span class="ok">user_stitching: active</span>' },
+  { type: 'done', text: '<span class="fix">■ Sprint complete — all systems operational</span>' },
+];
+
+function addLine(step) {
+  var el = document.createElement('div');
+  el.className = 'line';
+  el.innerHTML = step.text;
+  feedEl.appendChild(el);
+  lines.push(el);
+
+  // Remove excess
+  while (lines.length > maxLines) {
+    var old = lines.shift();
+    old.style.opacity = '0';
+    setTimeout(function(o) { if (o.parentNode) o.parentNode.removeChild(o); }, 300, old);
+  }
+
+  requestAnimationFrame(function() {
+    el.classList.add('visible');
+  });
+
+  // Update counters
+  if (step.type === 'scan') scanned++;
+  if (step.type === 'issue') { issues++; fixed++; }
+  if (step.type === 'ok') scanned++;
+  if (step.type === 'issue' && step.text.indexOf('deployed') > -1) deployed++;
+  if (step.type === 'issue' && step.text.indexOf('webhook') > -1) deployed++;
+  if (step.type === 'issue' && step.text.indexOf('v2 deployed') > -1) deployed++;
+
+  scannedEl.textContent = scanned;
+  issuesEl.textContent = issues;
+  fixedEl.textContent = fixed;
+  deployedEl.textContent = deployed;
+
+  var pct = Math.round((stepIdx / steps.length) * 100);
+  progBar.style.width = pct + '%';
+  progPct.textContent = pct + '%';
+}
+
+function nextStep() {
+  if (stepIdx >= steps.length) {
+    // Reset after pause
+    setTimeout(function() {
+      feedEl.innerHTML = '';
+      lines = [];
+      scanned = 0; issues = 0; fixed = 0; deployed = 0;
+      stepIdx = 0;
+      runStep();
+    }, 4000);
+    return;
+  }
+
+  var step = steps[stepIdx];
+  addLine(step);
+  stepIdx++;
+
+  var delay = step.type === 'scan' ? 600 : step.type === 'issue' ? 800 : step.type === 'done' ? 2000 : 500;
+  setTimeout(nextStep, delay);
+}
+
+function runStep() {
+  setTimeout(nextStep, 500);
+}
+
+runStep();
+</script>
+</body>
+</html>
