@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Consequence</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  .card {
+    background: #0F0F0F;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .query-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+  .query-icon {
+    font-size: 10px;
+    color: #444;
+    flex-shrink: 0;
+  }
+  .query-text {
+    font-size: 10px;
+    color: #666;
+    flex: 1;
+  }
+  .query-badge {
+    font-size: 7px;
+    font-weight: 700;
+    color: #555;
+    background: #1A1A1A;
+    padding: 2px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .response-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 0;
+    position: relative;
+  }
+  .ai-label {
+    font-size: 8px;
+    font-weight: 700;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 2px;
+    flex-shrink: 0;
+  }
+  .result {
+    background: #141414;
+    border: 1px solid #1A1A1A;
+    border-radius: 5px;
+    padding: 8px 10px;
+    flex-shrink: 0;
+    transition: opacity 0.5s ease, border-color 0.5s ease;
+  }
+  .result.cited { border-color: rgba(251,59,36,0.2); }
+  .result.skipped { border-color: rgba(60,60,60,0.2); opacity: 0.4; }
+  .result.ghost {
+    border: 1px dashed #1A1A1A;
+    background: transparent;
+  }
+  .r-top {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  .r-favicon {
+    width: 14px; height: 14px;
+    border-radius: 3px;
+    background: #1A1A1A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 7px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .r-favicon.active { background: rgba(251,59,36,0.12); color: #FB3B24; }
+  .r-favicon.gray { color: #444; }
+  .r-domain {
+    font-size: 8px;
+    color: #555;
+  }
+  .r-tag {
+    font-size: 6px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 1px 5px;
+    border-radius: 2px;
+    margin-left: auto;
+  }
+  .r-tag.cited { background: rgba(251,59,36,0.1); color: #FB3B24; }
+  .r-tag.skipped { background: rgba(60,60,60,0.15); color: #444; }
+  .r-title {
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 2px;
+    line-height: 1.3;
+  }
+  .result.cited .r-title { color: #ccc; }
+  .result.skipped .r-title { color: #444; }
+  .result.ghost .r-title { color: #333; }
+  .r-snippet {
+    font-size: 8px;
+    color: #444;
+    line-height: 1.4;
+  }
+  .result.cited .r-snippet { color: #666; }
+  .ghost-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px;
+    font-size: 9px;
+    font-weight: 600;
+    color: #333;
+  }
+  .ghost-label .x {
+    color: #662222;
+    font-size: 11px;
+    font-weight: 800;
+  }
+  .state-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+  .state-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #222;
+    transition: background 0.4s ease;
+  }
+  .state-dot.active { background: #FB3B24; }
+  @media (max-width: 480px) {
+    .query-text { font-size: 9px; }
+    .r-title { font-size: 10px; }
+    .r-snippet { font-size: 7px; }
+    .result { padding: 6px 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="query-bar">
+    <div class="query-icon">✦</div>
+    <div class="query-text">"Best premium candles for home fragrance 2026"</div>
+    <div class="query-badge">AI Search</div>
+  </div>
+  <div class="ai-label">AI-Generated Answer</div>
+  <div class="response-area" id="response"></div>
+  <div class="state-indicator">
+    <div class="state-dot active" id="dot0"></div>
+    <div class="state-dot" id="dot1"></div>
+  </div>
+</div>
+<script>
+var responseEl = document.getElementById('response');
+var isOptimized = false;
+
+var withoutYou = [
+  { type: 'cited', favicon: 'C', faviconClass: 'gray', domain: 'competitor-a.com', title: 'Luxury Soy Candles — Hand-Poured Collection', snippet: 'Our premium soy candles are crafted with 100% natural wax and essential oils for a clean, long-lasting burn...', tag: 'Cited' },
+  { type: 'cited', favicon: 'B', faviconClass: 'gray', domain: 'competitor-b.com', title: 'Artisan Home Fragrance — Best Sellers 2026', snippet: 'Discover our curated selection of artisan candles, diffusers, and room sprays designed for modern homes...', tag: 'Cited' },
+  { type: 'ghost', favicon: '?', faviconClass: 'gray', domain: 'your-brand.com', title: 'Your Brand — Not Found', snippet: 'Data not structured for AI retrieval. No schema, no entity authority, no citation.', tag: 'Skipped' },
+  { type: 'cited', favicon: 'D', faviconClass: 'gray', domain: 'competitor-c.com', title: 'Top 10 Home Candle Brands — Expert Review', snippet: 'We tested 50+ candle brands across scent throw, burn time, and ingredient quality...', tag: 'Cited' },
+];
+
+var withYou = [
+  { type: 'cited', favicon: 'Y', faviconClass: 'active', domain: 'your-brand.com', title: 'Your Brand — Premium Hand-Poured Candles', snippet: 'Award-winning soy candles with 100% natural ingredients. #1 rated for scent throw and clean burn...', tag: 'Cited' },
+  { type: 'cited', favicon: 'C', faviconClass: 'gray', domain: 'competitor-a.com', title: 'Luxury Soy Candles — Hand-Poured Collection', snippet: 'Our premium soy candles are crafted with 100% natural wax and essential oils for a clean, long-lasting burn...', tag: 'Cited' },
+  { type: 'skipped', favicon: 'B', faviconClass: 'gray', domain: 'competitor-b.com', title: 'Artisan Home Fragrance — Best Sellers 2026', snippet: 'Discover our curated selection of artisan candles, diffusers, and room sprays...', tag: 'Dropped' },
+  { type: 'cited', favicon: 'D', faviconClass: 'gray', domain: 'competitor-c.com', title: 'Top 10 Home Candle Brands — Expert Review', snippet: 'We tested 50+ candle brands across scent throw, burn time, and ingredient quality...', tag: 'Cited' },
+];
+
+function renderState(results) {
+  responseEl.innerHTML = '';
+  results.forEach(function(r, i) {
+    var el = document.createElement('div');
+    el.className = 'result ' + r.type;
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(6px)';
+    el.style.transition = 'opacity 0.4s ease, transform 0.4s ease, border-color 0.5s ease';
+
+    if (r.type === 'ghost') {
+      el.innerHTML =
+        '<div class="r-top">' +
+          '<div class="r-favicon gray">' + r.favicon + '</div>' +
+          '<div class="r-domain">' + r.domain + '</div>' +
+          '<div class="r-tag skipped">' + r.tag + '</div>' +
+        '</div>' +
+        '<div class="ghost-label"><span class="x">✕</span> ' + r.snippet + '</div>';
+    } else {
+      el.innerHTML =
+        '<div class="r-top">' +
+          '<div class="r-favicon ' + r.faviconClass + '">' + r.favicon + '</div>' +
+          '<div class="r-domain">' + r.domain + '</div>' +
+          '<div class="r-tag ' + (r.type === 'cited' ? 'cited' : 'skipped') + '">' + r.tag + '</div>' +
+        '</div>' +
+        '<div class="r-title">' + r.title + '</div>' +
+        '<div class="r-snippet">' + r.snippet + '</div>';
+    }
+
+    responseEl.appendChild(el);
+
+    setTimeout(function() {
+      el.style.opacity = '1';
+      el.style.transform = 'translateY(0)';
+    }, 100 + i * 120);
+  });
+}
+
+function updateDots() {
+  document.getElementById('dot0').className = 'state-dot' + (!isOptimized ? ' active' : '');
+  document.getElementById('dot1').className = 'state-dot' + (isOptimized ? ' active' : '');
+}
+
+// Initial state
+renderState(withoutYou);
+updateDots();
+
+// Cycle
+setInterval(function() {
+  isOptimized = !isOptimized;
+  renderState(isOptimized ? withYou : withoutYou);
+  updateDots();
+}, 4000);
+</script>
+</body>
+</html>
