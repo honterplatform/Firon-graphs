@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Source Volatility</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  .card { background: #0F0F0F; width: 100%; height: 100%; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<div class="card"><canvas id="c"></canvas></div>
+<script>
+var c = document.getElementById('c');
+var ctx = c.getContext('2d');
+var dpr = window.devicePixelRatio || 1;
+var time = 0;
+var targetPct = 45.5;
+var currentPct = 0;
+
+function resize() {
+  var r = c.parentElement.getBoundingClientRect();
+  c.width = r.width * dpr;
+  c.height = r.height * dpr;
+  c.style.width = r.width + 'px';
+  c.style.height = r.height + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height };
+}
+
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+function draw() {
+  var d = resize();
+  var w = d.w, h = d.h;
+  var mob = w <= 480;
+  time += 0.016;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Subtle red grid
+  ctx.strokeStyle = 'rgba(251,59,36,0.03)';
+  ctx.lineWidth = 0.5;
+  var gs = mob ? 20 : 28;
+  for (var gx = 0; gx < w; gx += gs) {
+    ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); ctx.stroke();
+  }
+  for (var gy = 0; gy < h; gy += gs) {
+    ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke();
+  }
+
+  // Animate percentage
+  var animT = Math.min(time / 2.5, 1);
+  currentPct = targetPct * easeOutCubic(animT);
+
+  // Arc layout
+  var cx = w * 0.5;
+  var cy = mob ? h * 0.42 : h * 0.46;
+  var radius = Math.min(mob ? w * 0.32 : w * 0.28, h * 0.34);
+  var lineWidth = mob ? 6 : 8;
+  var startAngle = -Math.PI * 0.75;
+  var endAngle = Math.PI * 0.75;
+  var totalArc = endAngle - startAngle;
+
+  // Background arc (track)
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, startAngle, endAngle);
+  ctx.strokeStyle = '#1A1A1A';
+  ctx.lineWidth = lineWidth;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Filled arc (percentage)
+  var fillAngle = startAngle + (currentPct / 100) * totalArc;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, startAngle, fillAngle);
+  ctx.strokeStyle = '#FB3B24';
+  ctx.lineWidth = lineWidth;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Glow on filled arc
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, startAngle, fillAngle);
+  ctx.strokeStyle = 'rgba(251,59,36,0.15)';
+  ctx.lineWidth = lineWidth + 12;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // End dot with pulse
+  var dotX = cx + Math.cos(fillAngle) * radius;
+  var dotY = cy + Math.sin(fillAngle) * radius;
+  var pulseR = (mob ? 4 : 5) + Math.sin(time * 3) * 1.5;
+  ctx.beginPath();
+  ctx.arc(dotX, dotY, pulseR + 4, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(251,59,36,0.1)';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(dotX, dotY, mob ? 4 : 5, 0, Math.PI * 2);
+  ctx.fillStyle = '#FB3B24';
+  ctx.fill();
+
+  // Inner decorative rings
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius * 0.7, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.02)';
+  ctx.lineWidth = 0.5;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius * 0.45, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.02)';
+  ctx.lineWidth = 0.5;
+  ctx.stroke();
+
+  // Big percentage number
+  ctx.font = 'bold ' + (mob ? 52 : 72) + 'px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#fff';
+  ctx.fillText(currentPct.toFixed(1) + '%', cx, cy + (mob ? 8 : 12));
+
+  // Label below number
+  ctx.font = (mob ? 9 : 11) + 'px system-ui';
+  ctx.fillStyle = '#555';
+  ctx.fillText('of cited sources replaced', cx, cy + (mob ? 26 : 34));
+
+  // Tick marks around arc
+  for (var tick = 0; tick <= 10; tick++) {
+    var tickAngle = startAngle + (tick / 10) * totalArc;
+    var innerR = radius - lineWidth / 2 - 6;
+    var outerR = radius - lineWidth / 2 - 2;
+    var tx1 = cx + Math.cos(tickAngle) * innerR;
+    var ty1 = cy + Math.sin(tickAngle) * innerR;
+    var tx2 = cx + Math.cos(tickAngle) * outerR;
+    var ty2 = cy + Math.sin(tickAngle) * outerR;
+    ctx.beginPath();
+    ctx.moveTo(tx1, ty1);
+    ctx.lineTo(tx2, ty2);
+    var tickPct = (tick / 10) * 100;
+    ctx.strokeStyle = tickPct <= currentPct ? 'rgba(251,59,36,0.3)' : '#1A1A1A';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  requestAnimationFrame(draw);
+}
+
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
