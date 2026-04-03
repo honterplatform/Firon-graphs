@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Invisibility Tax</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+
+  .container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <canvas id="canvas"></canvas>
+</div>
+<script>
+var canvas = document.getElementById('canvas');
+var ctx = canvas.getContext('2d');
+
+// Polyfill roundRect for older browsers
+if (!ctx.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, radii) {
+    var r = typeof radii === 'number' ? [radii,radii,radii,radii] : Array.isArray(radii) ? radii : [0,0,0,0];
+    while (r.length < 4) r.push(r[r.length-1] || 0);
+    this.moveTo(x + r[0], y);
+    this.lineTo(x + w - r[1], y);
+    this.arcTo(x + w, y, x + w, y + r[1], r[1]);
+    this.lineTo(x + w, y + h - r[2]);
+    this.arcTo(x + w, y + h, x + w - r[2], y + h, r[2]);
+    this.lineTo(x + r[3], y + h);
+    this.arcTo(x, y + h, x, y + h - r[3], r[3]);
+    this.lineTo(x, y + r[0]);
+    this.arcTo(x, y, x + r[0], y, r[0]);
+    this.closePath();
+  };
+}
+var dpr = window.devicePixelRatio || 1;
+var W, H;
+
+function resize() {
+  W = canvas.clientWidth;
+  H = canvas.clientHeight;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+resize();
+window.addEventListener('resize', resize);
+
+// Colors
+var RED = '#FB3B24';
+var RED_DIM = 'rgba(251,59,36,0.3)';
+var GREY = '#333';
+var GREY_DIM = 'rgba(255,255,255,0.06)';
+var WHITE_DIM = 'rgba(255,255,255,0.5)';
+var BG = '#0A0A0A';
+
+// --- Particles ---
+var particles = [];
+var MAX_PARTICLES = 120;
+
+function Particle() {
+  this.reset(true);
+}
+
+Particle.prototype.reset = function(randomY) {
+  // Start at top of funnel
+  this.x = 0;
+  this.y = randomY ? Math.random() * 0.15 : 0;
+  this.progress = this.y; // 0 to 1 through the funnel
+  this.speed = 0.002 + Math.random() * 0.003;
+  this.size = 2 + Math.random() * 3;
+  this.alpha = 0.6 + Math.random() * 0.4;
+  this.diverted = false;
+  this.divertProgress = 0;
+  this.divertDir = 0;
+  this.dead = false;
+  this.color = RED;
+  // Dollar particles
+  this.isDollar = Math.random() < 0.3;
+};
+
+// Funnel geometry (relative to center)
+function getFunnel() {
+  var cx = W * 0.42;
+  var topY = H * 0.08;
+  var neckY = H * 0.52;
+  var bottomY = H * 0.88;
+  var topW = W * 0.32;
+  var neckW = W * 0.06;
+  var bucketW = W * 0.08;
+
+  // Divert point
+  var divertY = H * 0.40;
+  var divertX = cx + neckW * 0.5;
+
+  // Competitor bucket (right side)
+  var compX = W * 0.78;
+  var compY = H * 0.65;
+  var compW = W * 0.14;
+  var compH = H * 0.18;
+
+  // Your bucket (bottom of funnel)
+  var yourX = cx;
+  var yourY = bottomY;
+  var yourW = bucketW;
+  var yourH = H * 0.08;
+
+  return {
+    cx: cx, topY: topY, neckY: neckY, bottomY: bottomY,
+    topW: topW, neckW: neckW,
+    divertY: divertY, divertX: divertX,
+    compX: compX, compY: compY, compW: compW, compH: compH,
+    yourX: yourX, yourY: yourY, yourW: yourW, yourH: yourH
+  };
+}
+
+function getFunnelWidthAtY(f, y) {
+  if (y <= f.topY) return f.topW;
+  if (y >= f.neckY) return f.neckW;
+  var t = (y - f.topY) / (f.neckY - f.topY);
+  // Ease the taper
+  t = t * t;
+  return f.topW + (f.neckW - f.topW) * t;
+}
+
+// Draw funnel shape
+function drawFunnel(f) {
+  // Funnel body (trapezoid top + narrow neck)
+  ctx.beginPath();
+  ctx.moveTo(f.cx - f.topW / 2, f.topY);
+  ctx.lineTo(f.cx + f.topW / 2, f.topY);
+  // Right side curves to neck
+  ctx.quadraticCurveTo(
+    f.cx + f.topW * 0.3, f.neckY * 0.7,
+    f.cx + f.neckW / 2, f.neckY
+  );
+  // Neck down
+  ctx.lineTo(f.cx + f.neckW / 2, f.bottomY);
+  ctx.lineTo(f.cx - f.neckW / 2, f.bottomY);
+  ctx.lineTo(f.cx - f.neckW / 2, f.neckY);
+  // Left side curves back up
+  ctx.quadraticCurveTo(
+    f.cx - f.topW * 0.3, f.neckY * 0.7,
+    f.cx - f.topW / 2, f.topY
+  );
+  ctx.closePath();
+
+  // Fill with subtle gradient
+  var grad = ctx.createLinearGradient(0, f.topY, 0, f.bottomY);
+  grad.addColorStop(0, 'rgba(255,255,255,0.04)');
+  grad.addColorStop(0.5, 'rgba(255,255,255,0.02)');
+  grad.addColorStop(1, 'rgba(255,255,255,0.01)');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Stroke
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
+// Draw the divert arm (robot arm / pipe)
+function drawDivertPipe(f, time) {
+  var startX = f.cx + getFunnelWidthAtY(f, f.divertY) * 0.35;
+  var startY = f.divertY;
+  var endX = f.compX - f.compW / 2;
+  var endY = f.compY;
+  var midX = (startX + endX) * 0.55;
+  var midY = startY - H * 0.04;
+
+  // Pipe glow
+  ctx.beginPath();
+  ctx.moveTo(startX, startY);
+  ctx.quadraticCurveTo(midX, midY, endX, endY);
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 18;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Pipe outline
+  ctx.beginPath();
+  ctx.moveTo(startX, startY);
+  ctx.quadraticCurveTo(midX, midY, endX, endY);
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Pulsing glow at junction
+  var pulseAlpha = 0.15 + Math.sin(time * 3) * 0.1;
+  ctx.beginPath();
+  ctx.arc(startX, startY, 8, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(251,59,36,' + pulseAlpha + ')';
+  ctx.fill();
+
+  // Robot icon at junction
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '600 ' + Math.round(W * 0.022) + 'px system-ui';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('⚡', startX, startY - 16);
+
+  // Label
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.font = '700 ' + Math.max(9, Math.round(W * 0.017)) + 'px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText('AI INTERCEPTION', (startX + endX) / 2, midY - 14);
+
+  return { startX: startX, startY: startY, midX: midX, midY: midY, endX: endX, endY: endY };
+}
+
+// Draw buckets
+function drawBuckets(f, time) {
+  // --- Competitor bucket (right, large, filling up) ---
+  var fillLevel = 0.4 + Math.sin(time * 0.5) * 0.1;
+
+  // Bucket shape
+  ctx.beginPath();
+  ctx.roundRect(f.compX - f.compW / 2, f.compY, f.compW, f.compH, 6);
+  ctx.fillStyle = 'rgba(255,255,255,0.03)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Fill level
+  var fillH = f.compH * fillLevel;
+  ctx.beginPath();
+  ctx.roundRect(f.compX - f.compW / 2 + 2, f.compY + f.compH - fillH, f.compW - 4, fillH - 2, [0, 0, 4, 4]);
+  var fillGrad = ctx.createLinearGradient(0, f.compY + f.compH - fillH, 0, f.compY + f.compH);
+  fillGrad.addColorStop(0, 'rgba(255,255,255,0.08)');
+  fillGrad.addColorStop(1, 'rgba(255,255,255,0.04)');
+  ctx.fillStyle = fillGrad;
+  ctx.fill();
+
+  // Label
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.font = '700 ' + Math.max(9, Math.round(W * 0.016)) + 'px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText('COMPETITOR', f.compX, f.compY - 10);
+
+  // Revenue amount
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.font = '600 ' + Math.max(8, Math.round(W * 0.014)) + 'px system-ui';
+  ctx.fillText('Gaining your revenue', f.compX, f.compY + f.compH + 18);
+
+  // --- Your bucket (bottom, small trickle) ---
+  var yourBucketH = H * 0.10;
+  var yourBucketW = W * 0.10;
+  var yourBucketX = f.cx;
+  var yourBucketY = f.bottomY + 8;
+  var yourFill = 0.12 + Math.sin(time * 0.8) * 0.04;
+
+  ctx.beginPath();
+  ctx.roundRect(yourBucketX - yourBucketW / 2, yourBucketY, yourBucketW, yourBucketH, 6);
+  ctx.fillStyle = 'rgba(251,59,36,0.03)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(251,59,36,0.15)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Tiny fill
+  var yFillH = yourBucketH * yourFill;
+  ctx.beginPath();
+  ctx.roundRect(yourBucketX - yourBucketW / 2 + 2, yourBucketY + yourBucketH - yFillH, yourBucketW - 4, yFillH - 2, [0, 0, 4, 4]);
+  var yGrad = ctx.createLinearGradient(0, yourBucketY + yourBucketH - yFillH, 0, yourBucketY + yourBucketH);
+  yGrad.addColorStop(0, RED_DIM);
+  yGrad.addColorStop(1, 'rgba(251,59,36,0.1)');
+  ctx.fillStyle = yGrad;
+  ctx.fill();
+
+  // Label
+  ctx.fillStyle = RED_DIM;
+  ctx.font = '700 ' + Math.max(9, Math.round(W * 0.016)) + 'px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText('YOUR BRAND', yourBucketX, yourBucketY - 10);
+
+  // Trickle label
+  ctx.fillStyle = 'rgba(251,59,36,0.2)';
+  ctx.font = '600 ' + Math.max(8, Math.round(W * 0.013)) + 'px system-ui';
+  ctx.fillText('Trickle', yourBucketX, yourBucketY + yourBucketH + 16);
+
+  return { yourBucketX: yourBucketX, yourBucketY: yourBucketY };
+}
+
+// Draw ad spend label at top
+function drawTopLabel(f, time) {
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '700 ' + Math.max(11, Math.round(W * 0.02)) + 'px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText('AD SPEND & SEO INVESTMENT', f.cx, f.topY - 18);
+
+  // Dollar signs raining in
+  var dollarAlpha = 0.15 + Math.sin(time * 4) * 0.08;
+  ctx.fillStyle = 'rgba(255,255,255,' + dollarAlpha + ')';
+  ctx.font = Math.round(W * 0.025) + 'px system-ui';
+  for (var i = 0; i < 5; i++) {
+    var dx = f.cx - f.topW * 0.35 + (f.topW * 0.7) * (i / 4);
+    var dy = f.topY - 2 + Math.sin(time * 3 + i * 1.5) * 4;
+    ctx.fillText('$', dx, dy);
+  }
+}
+
+// Update and draw particles
+function updateParticles(f, pipe, time) {
+  // Spawn new particles
+  while (particles.length < MAX_PARTICLES) {
+    particles.push(new Particle());
+  }
+
+  for (var i = 0; i < particles.length; i++) {
+    var p = particles[i];
+    if (p.dead) { p.reset(false); continue; }
+
+    p.progress += p.speed;
+
+    if (!p.diverted) {
+      // Normal funnel flow
+      var y = f.topY + p.progress * (f.bottomY - f.topY);
+      var funnelW = getFunnelWidthAtY(f, y);
+      // Wobble within funnel width
+      var wobble = Math.sin(p.progress * 12 + p.size * 5) * 0.3;
+      p.x = f.cx + wobble * funnelW * 0.3;
+      p.y = y;
+
+      // Check if at divert point — ~70% get diverted
+      if (y >= f.divertY - 5 && y <= f.divertY + 15 && Math.random() < 0.025) {
+        p.diverted = true;
+        p.divertProgress = 0;
+        p.divertDir = 1;
+        p.color = 'rgba(255,255,255,0.4)';
+      }
+
+      // Reached bottom
+      if (p.progress >= 1) {
+        p.dead = true;
+      }
+    } else {
+      // Diverted along pipe
+      p.divertProgress += 0.008 + Math.random() * 0.005;
+      var t = p.divertProgress;
+      if (t >= 1) { p.dead = true; continue; }
+
+      // Quadratic bezier along pipe
+      var t2 = t;
+      var sx = pipe.startX, sy = pipe.startY;
+      var mx = pipe.midX, my = pipe.midY;
+      var ex = pipe.endX, ey = pipe.endY;
+      p.x = (1-t2)*(1-t2)*sx + 2*(1-t2)*t2*mx + t2*t2*ex;
+      p.y = (1-t2)*(1-t2)*sy + 2*(1-t2)*t2*my + t2*t2*ey;
+    }
+
+    // Draw particle
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    if (p.isDollar && !p.diverted) {
+      ctx.fillStyle = 'rgba(251,59,36,' + (p.alpha * 0.7) + ')';
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,' + (p.alpha * 0.9) + ')';
+      ctx.font = '600 ' + Math.round(p.size * 2.5) + 'px system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('$', p.x, p.y);
+    } else if (p.diverted) {
+      ctx.fillStyle = 'rgba(255,255,255,' + (p.alpha * 0.35) + ')';
+      ctx.fill();
+      if (p.isDollar) {
+        ctx.fillStyle = 'rgba(255,255,255,' + (p.alpha * 0.5) + ')';
+        ctx.font = '600 ' + Math.round(p.size * 2.2) + 'px system-ui';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('$', p.x, p.y);
+      }
+    } else {
+      ctx.fillStyle = 'rgba(251,59,36,' + (p.alpha * 0.5) + ')';
+      ctx.fill();
+    }
+  }
+}
+
+// Stat counters
+function drawStats(f, time) {
+  var leaked = Math.floor(68 + Math.sin(time * 0.3) * 4);
+  var kept = 100 - leaked;
+
+  // Leaked stat near competitor
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.font = '800 ' + Math.max(18, Math.round(W * 0.04)) + 'px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText(leaked + '%', f.compX, f.compY + f.compH * 0.5);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.font = '500 ' + Math.max(8, Math.round(W * 0.013)) + 'px system-ui';
+  ctx.fillText('intercepted', f.compX, f.compY + f.compH * 0.5 + 16);
+
+  // Kept stat near your bucket
+  ctx.fillStyle = RED;
+  ctx.font = '800 ' + Math.max(14, Math.round(W * 0.028)) + 'px system-ui';
+  ctx.textAlign = 'center';
+  var yourBucketY = f.bottomY + 8;
+  var yourBucketH = H * 0.10;
+  ctx.fillText(kept + '%', f.cx, yourBucketY + yourBucketH * 0.55);
+}
+
+// Main animation loop
+var startTime = Date.now();
+
+function draw() {
+  var time = (Date.now() - startTime) / 1000;
+  ctx.clearRect(0, 0, W, H);
+
+  var f = getFunnel();
+
+  drawTopLabel(f, time);
+  drawFunnel(f);
+  var pipe = drawDivertPipe(f, time);
+  drawBuckets(f, time);
+  updateParticles(f, pipe, time);
+  drawStats(f, time);
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+</body>
+</html>
