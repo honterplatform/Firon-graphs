@@ -11,136 +11,141 @@
     background: #0F0F0F;
     font-family: system-ui, -apple-system, sans-serif;
     color: #fff;
+    /* Scale type to viewport so the layout adapts to short iframes */
+    font-size: clamp(9px, 1.6vh, 13px);
   }
 
   .stage {
     width: 100%;
     height: 100%;
     display: grid;
-    grid-template-columns: 1.4fr 1fr;
-    gap: 16px;
-    padding: 16px;
+    grid-template-columns: 1.5fr 1fr;
+    gap: clamp(6px, 1vh, 12px);
+    padding: clamp(6px, 1.2vh, 12px);
   }
 
-  /* --- Tool panel --- */
-  .tool {
+  .panel {
     background: #141414;
     border: 1px solid #222;
-    border-radius: 12px;
-    padding: 16px;
+    border-radius: 10px;
+    padding: clamp(8px, 1.4vh, 14px);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: clamp(6px, 1vh, 10px);
     position: relative;
     overflow: hidden;
+    min-height: 0;
+    min-width: 0;
   }
 
+  /* --- Tool header --- */
   .tool-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-bottom: 10px;
+    padding-bottom: clamp(4px, 0.8vh, 8px);
     border-bottom: 1px solid #1E1E1E;
+    flex-shrink: 0;
   }
-  .tool-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+  .tool-title { display: flex; align-items: center; gap: 6px; min-width: 0; }
   .tool-icon {
-    width: 22px; height: 22px;
+    width: 1.6em; height: 1.6em;
     background: rgba(251,59,36,0.12);
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
     color: #FB3B24;
-    font-size: 13px;
+    font-size: 0.85em;
+    flex-shrink: 0;
   }
   .tool-name {
-    font-size: 12px;
+    font-size: 0.92em;
     font-weight: 700;
     color: rgba(255,255,255,0.85);
-    letter-spacing: 0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .tool-name span {
     color: #555;
     font-weight: 500;
-    margin-left: 6px;
+    margin-left: 4px;
   }
   .api-badge {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    font-size: 9px;
+    gap: 4px;
+    font-size: 0.65em;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.6px;
+    letter-spacing: 0.5px;
     color: #FB3B24;
     background: rgba(251,59,36,0.08);
     border: 1px solid rgba(251,59,36,0.2);
-    padding: 4px 8px;
-    border-radius: 4px;
+    padding: 3px 6px;
+    border-radius: 3px;
+    flex-shrink: 0;
   }
   .api-dot {
-    width: 5px; height: 5px;
+    width: 4px; height: 4px;
     border-radius: 50%;
     background: #FB3B24;
     animation: blink 1.4s ease-in-out infinite;
   }
   @keyframes blink { 0%,100% {opacity:1;} 50% {opacity:0.3;} }
 
+  /* --- Input row --- */
   .input-row {
     display: flex;
-    gap: 8px;
+    gap: 6px;
+    flex-shrink: 0;
   }
   .input-field {
     flex: 1;
+    min-width: 0;
     background: #0D0D0D;
     border: 1px solid #222;
-    border-radius: 8px;
-    padding: 10px 12px;
-    font-size: 13px;
+    border-radius: 6px;
+    padding: clamp(5px, 0.9vh, 9px) 10px;
+    font-size: 0.92em;
     color: rgba(255,255,255,0.85);
     font-family: ui-monospace, monospace;
-    position: relative;
-    min-height: 38px;
     display: flex;
     align-items: center;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
   }
   .input-field.focused {
     border-color: rgba(251,59,36,0.4);
-    box-shadow: 0 0 0 3px rgba(251,59,36,0.06);
+    box-shadow: 0 0 0 2px rgba(251,59,36,0.06);
   }
   .input-text { white-space: nowrap; overflow: hidden; }
   .input-cursor {
     display: inline-block;
     width: 1.5px;
-    height: 14px;
+    height: 1em;
     background: #FB3B24;
     margin-left: 1px;
     vertical-align: middle;
     animation: blink 1s step-end infinite;
   }
-  .input-placeholder { color: #444; }
 
   .scan-btn {
     background: #FB3B24;
     color: #fff;
     border: none;
-    border-radius: 8px;
-    padding: 0 16px;
-    font-size: 12px;
+    border-radius: 6px;
+    padding: 0 12px;
+    font-size: 0.82em;
     font-weight: 700;
     letter-spacing: 0.3px;
     text-transform: uppercase;
     cursor: pointer;
-    min-width: 80px;
-    transition: transform 0.1s ease, box-shadow 0.2s ease;
+    flex-shrink: 0;
+    transition: transform 0.1s, box-shadow 0.2s, background 0.2s, color 0.2s;
   }
   .scan-btn.pressed {
     transform: scale(0.95);
-    box-shadow: 0 0 16px rgba(251,59,36,0.4);
+    box-shadow: 0 0 12px rgba(251,59,36,0.4);
   }
   .scan-btn.loading {
     background: #1A1A1A;
@@ -148,23 +153,35 @@
     cursor: wait;
   }
 
+  /* --- Processing strip (replaces input-row visually when active to save space) --- */
   .processing {
     background: #0D0D0D;
     border: 1px solid #1E1E1E;
-    border-radius: 8px;
-    padding: 12px;
-    font-size: 11px;
-    color: #555;
+    border-radius: 6px;
+    padding: clamp(5px, 0.8vh, 8px) 10px;
+    font-size: 0.78em;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+    flex-shrink: 0;
+    height: 0;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    overflow: hidden;
+    transition: height 0.25s, opacity 0.2s, padding 0.25s, border-color 0.25s;
+    border-color: transparent;
+    padding-top: 0;
+    padding-bottom: 0;
   }
-  .processing.active { opacity: 1; }
+  .processing.active {
+    height: auto;
+    opacity: 1;
+    padding-top: clamp(5px, 0.8vh, 8px);
+    padding-bottom: clamp(5px, 0.8vh, 8px);
+    border-color: #1E1E1E;
+  }
   .shimmer {
     flex: 1;
-    height: 8px;
+    height: 5px;
     background: linear-gradient(90deg,
       transparent 0%,
       rgba(251,59,36,0.15) 30%,
@@ -173,7 +190,7 @@
       transparent 100%
     );
     background-size: 200% 100%;
-    border-radius: 4px;
+    border-radius: 3px;
     animation: shimmerMove 1.4s linear infinite;
   }
   @keyframes shimmerMove {
@@ -182,64 +199,81 @@
   }
   .proc-step {
     font-family: ui-monospace, monospace;
-    color: rgba(255,255,255,0.5);
-    font-size: 10px;
-    min-width: 130px;
+    color: rgba(255,255,255,0.55);
+    font-size: 0.85em;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
+  /* --- Results --- */
   .results {
     flex: 1;
+    min-height: 0;
     background: #0D0D0D;
     border: 1px solid #1E1E1E;
-    border-radius: 8px;
-    padding: 14px;
+    border-radius: 6px;
+    padding: clamp(8px, 1.2vh, 12px);
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: clamp(4px, 0.8vh, 8px);
     opacity: 0.3;
-    transition: opacity 0.4s ease;
+    transition: opacity 0.4s;
+    overflow: hidden;
   }
   .results.active { opacity: 1; }
   .results-header {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    padding-bottom: 8px;
+    padding-bottom: clamp(4px, 0.6vh, 6px);
     border-bottom: 1px solid #1A1A1A;
+    flex-shrink: 0;
   }
   .results-label {
-    font-size: 9px;
+    font-size: 0.7em;
     font-weight: 700;
     color: #555;
     text-transform: uppercase;
     letter-spacing: 0.6px;
   }
   .score {
-    font-size: 22px;
+    font-size: 1.55em;
     font-weight: 800;
     color: #FB3B24;
     font-variant-numeric: tabular-nums;
+    line-height: 1;
   }
-  .score-suffix { font-size: 11px; color: #555; font-weight: 600; }
+  .score-suffix { font-size: 0.75em; color: #555; font-weight: 600; }
 
+  .metrics {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: clamp(2px, 0.5vh, 6px);
+  }
   .metric-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 11px;
+    gap: 8px;
+    font-size: 0.82em;
     opacity: 0;
-    transform: translateY(4px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    transform: translateY(3px);
+    transition: opacity 0.3s, transform 0.3s;
   }
   .metric-row.show { opacity: 1; transform: translateY(0); }
   .metric-name {
     color: rgba(255,255,255,0.7);
     flex: 1;
     font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .metric-bar {
-    flex: 1;
-    height: 4px;
+    flex: 1.2;
+    height: 3px;
     background: #1A1A1A;
     border-radius: 2px;
     overflow: hidden;
@@ -249,35 +283,34 @@
     background: #FB3B24;
     width: 0;
     transition: width 0.6s cubic-bezier(.2,.8,.2,1);
-    border-radius: 2px;
   }
   .metric-value {
     color: rgba(255,255,255,0.5);
     font-family: ui-monospace, monospace;
-    font-size: 10px;
-    min-width: 32px;
+    font-size: 0.85em;
+    min-width: 28px;
     text-align: right;
   }
 
   /* Phantom cursor */
   .cursor {
     position: absolute;
-    width: 14px;
-    height: 18px;
+    width: 12px;
+    height: 16px;
     pointer-events: none;
     z-index: 50;
     opacity: 0;
-    transition: opacity 0.3s ease, transform 0.4s cubic-bezier(.5,.1,.3,1);
+    transition: opacity 0.3s, transform 0.4s cubic-bezier(.5,.1,.3,1);
   }
-  .cursor svg { width: 100%; height: 100%; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6)); }
+  .cursor svg { width: 100%; height: 100%; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.6)); }
   .cursor.show { opacity: 1; }
   .cursor.click::after {
     content: '';
     position: absolute;
-    width: 28px; height: 28px;
+    width: 24px; height: 24px;
     border: 2px solid #FB3B24;
     border-radius: 50%;
-    left: -7px; top: -5px;
+    left: -6px; top: -4px;
     animation: clickRing 0.5s ease-out;
   }
   @keyframes clickRing {
@@ -285,67 +318,57 @@
     100% { opacity: 0; transform: scale(1.4); }
   }
 
-  /* --- Right side: moat --- */
-  .moat-panel {
-    background: #141414;
-    border: 1px solid #222;
-    border-radius: 12px;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    position: relative;
-    overflow: hidden;
-  }
+  /* --- Moat panel --- */
   .moat-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-bottom: 10px;
+    padding-bottom: clamp(4px, 0.8vh, 8px);
     border-bottom: 1px solid #1E1E1E;
+    flex-shrink: 0;
+    gap: 6px;
   }
-  .moat-title-group { display: flex; flex-direction: column; gap: 2px; }
+  .moat-title-group { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
   .moat-title {
-    font-size: 12px;
+    font-size: 0.92em;
     font-weight: 700;
     color: rgba(255,255,255,0.85);
   }
   .moat-sub {
-    font-size: 9px;
+    font-size: 0.65em;
     font-weight: 600;
     color: #555;
     text-transform: uppercase;
-    letter-spacing: 0.6px;
+    letter-spacing: 0.5px;
   }
-  .moat-height {
-    text-align: right;
-  }
+  .moat-height { text-align: right; }
   .moat-h-value {
-    font-size: 22px;
+    font-size: 1.45em;
     font-weight: 800;
     color: #FB3B24;
     font-variant-numeric: tabular-nums;
     line-height: 1;
   }
   .moat-h-label {
-    font-size: 9px;
+    font-size: 0.62em;
     color: #555;
     text-transform: uppercase;
-    letter-spacing: 0.6px;
+    letter-spacing: 0.5px;
     margin-top: 2px;
     font-weight: 600;
   }
 
   .moat-area {
     flex: 1;
+    min-height: 0;
     position: relative;
     background: linear-gradient(to bottom, transparent 0%, rgba(251,59,36,0.03) 100%);
-    border-radius: 8px;
+    border-radius: 6px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    padding: 8px;
+    padding: 4px;
   }
   .moat-area::before {
     content: '';
@@ -357,81 +380,87 @@
   .moat-bricks {
     display: flex;
     flex-direction: column-reverse;
-    gap: 3px;
+    gap: 2px;
   }
   .brick {
-    height: 20px;
+    height: clamp(11px, 1.6vh, 16px);
     background: linear-gradient(180deg, rgba(251,59,36,0.18) 0%, rgba(251,59,36,0.10) 100%);
     border: 1px solid rgba(251,59,36,0.35);
-    border-radius: 3px;
+    border-radius: 2px;
     display: flex;
     align-items: center;
-    padding: 0 8px;
-    font-size: 9px;
+    padding: 0 6px;
+    font-size: 0.62em;
     font-weight: 700;
     color: rgba(251,59,36,0.9);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.4px;
     transform: translateY(-300px);
     opacity: 0;
-    animation: brickDrop 0.6s cubic-bezier(.45,1.5,.55,1) forwards;
+    animation: brickDrop 0.55s cubic-bezier(.45,1.5,.55,1) forwards;
     position: relative;
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
   }
   .brick::after {
     content: '';
     position: absolute;
-    right: 8px;
-    width: 4px; height: 4px;
+    right: 6px;
+    width: 3px; height: 3px;
     border-radius: 50%;
     background: #FB3B24;
-    box-shadow: 0 0 8px #FB3B24;
+    box-shadow: 0 0 6px #FB3B24;
   }
   @keyframes brickDrop {
     0% { transform: translateY(-300px); opacity: 0; }
-    70% { transform: translateY(4px); opacity: 1; }
+    70% { transform: translateY(3px); opacity: 1; }
     100% { transform: translateY(0); opacity: 1; }
   }
 
   .moat-footer {
     display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    padding-top: 10px;
+    gap: 5px;
+    padding-top: clamp(4px, 0.8vh, 8px);
     border-top: 1px solid #1E1E1E;
+    flex-shrink: 0;
   }
   .stat {
     flex: 1;
     background: #0D0D0D;
     border: 1px solid #1E1E1E;
-    border-radius: 6px;
-    padding: 8px 10px;
+    border-radius: 4px;
+    padding: clamp(4px, 0.7vh, 7px) 6px;
+    min-width: 0;
   }
   .stat-label {
-    font-size: 8px;
+    font-size: 0.58em;
     font-weight: 700;
     color: #555;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 3px;
+    letter-spacing: 0.4px;
+    margin-bottom: 2px;
+    white-space: nowrap;
   }
   .stat-value {
-    font-size: 14px;
+    font-size: 1em;
     font-weight: 800;
     color: rgba(255,255,255,0.9);
     font-variant-numeric: tabular-nums;
+    line-height: 1.1;
   }
   .stat-value.red { color: #FB3B24; }
 
-  @media (max-width: 700px) {
-    .stage { grid-template-columns: 1fr; grid-template-rows: 1.2fr 1fr; }
-    .tool-name { font-size: 11px; }
+  /* Tight viewport: stack vertically */
+  @media (max-aspect-ratio: 1/1) {
+    .stage { grid-template-columns: 1fr; grid-template-rows: 1.6fr 1fr; }
   }
 </style>
 </head>
 <body>
 <div class="stage">
   <!-- Tool panel -->
-  <div class="tool">
+  <div class="panel">
     <div class="tool-header">
       <div class="tool-title">
         <div class="tool-icon">✦</div>
@@ -461,25 +490,22 @@
         <div class="results-label">AI Citation Score</div>
         <div><span class="score" id="scoreVal">0</span><span class="score-suffix">/100</span></div>
       </div>
-      <div class="metric-row" data-idx="0">
-        <div class="metric-name">Schema coverage</div>
-        <div class="metric-bar"><div class="metric-fill" data-target="64"></div></div>
-        <div class="metric-value">64%</div>
-      </div>
-      <div class="metric-row" data-idx="1">
-        <div class="metric-name">Entity recognition</div>
-        <div class="metric-bar"><div class="metric-fill" data-target="42"></div></div>
-        <div class="metric-value">42%</div>
-      </div>
-      <div class="metric-row" data-idx="2">
-        <div class="metric-name">Citation rate</div>
-        <div class="metric-bar"><div class="metric-fill" data-target="28"></div></div>
-        <div class="metric-value">28%</div>
-      </div>
-      <div class="metric-row" data-idx="3">
-        <div class="metric-name">Topic authority</div>
-        <div class="metric-bar"><div class="metric-fill" data-target="71"></div></div>
-        <div class="metric-value">71%</div>
+      <div class="metrics">
+        <div class="metric-row">
+          <div class="metric-name">Schema coverage</div>
+          <div class="metric-bar"><div class="metric-fill" data-target="64"></div></div>
+          <div class="metric-value">64%</div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-name">Entity recognition</div>
+          <div class="metric-bar"><div class="metric-fill" data-target="42"></div></div>
+          <div class="metric-value">42%</div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-name">Citation rate</div>
+          <div class="metric-bar"><div class="metric-fill" data-target="28"></div></div>
+          <div class="metric-value">28%</div>
+        </div>
       </div>
     </div>
 
@@ -492,7 +518,7 @@
   </div>
 
   <!-- Moat panel -->
-  <div class="moat-panel">
+  <div class="panel">
     <div class="moat-header">
       <div class="moat-title-group">
         <div class="moat-title">GEO Moat</div>
@@ -528,7 +554,6 @@
 <script>
 var inputField = document.getElementById('inputField');
 var inputText = document.getElementById('inputText');
-var inputCursor = document.getElementById('inputCursor');
 var scanBtn = document.getElementById('scanBtn');
 var processing = document.getElementById('processing');
 var procStep = document.getElementById('procStep');
@@ -542,11 +567,11 @@ var statSig = document.getElementById('statSig');
 var statBricks = document.getElementById('statBricks');
 
 var QUERIES = [
-  { domain: 'your-saas.com', score: 84, brick: 'Schema indexed' },
-  { domain: 'boutique-brand.io', score: 67, brick: 'User dwell signal' },
-  { domain: 'ecommerce-store.com', score: 91, brick: 'Citation backlink' },
-  { domain: 'agency-firm.co', score: 73, brick: 'Entity claim' },
-  { domain: 'fintech-app.com', score: 88, brick: 'Engagement event' }
+  { domain: 'your-saas.com', score: 84 },
+  { domain: 'boutique-brand.io', score: 67 },
+  { domain: 'ecommerce-store.com', score: 91 },
+  { domain: 'agency-firm.co', score: 73 },
+  { domain: 'fintech-app.com', score: 88 }
 ];
 
 var BRICK_LABELS = [
@@ -568,7 +593,7 @@ var interCount = 0;
 var sigCount = 0;
 var moatPct = 0;
 
-var tween = function(from, to, dur, cb, done) {
+function tween(from, to, dur, cb, done) {
   var start = Date.now();
   function step() {
     var t = Math.min(1, (Date.now() - start) / dur);
@@ -578,15 +603,15 @@ var tween = function(from, to, dur, cb, done) {
     else if (done) done();
   }
   requestAnimationFrame(step);
-};
+}
 
-var sleep = function(ms) {
+function sleep(ms) {
   return new Promise(function(r) { setTimeout(r, ms); });
-};
+}
 
 function moveCursorTo(targetEl, opts) {
   opts = opts || {};
-  var stage = inputField.parentNode.parentNode; // .tool
+  var stage = inputField.parentNode.parentNode;
   var stageRect = stage.getBoundingClientRect();
   var targetRect = targetEl.getBoundingClientRect();
   var x = targetRect.left - stageRect.left + (opts.offsetX || targetRect.width * 0.3);
@@ -599,7 +624,7 @@ async function typeInto(text) {
   inputField.classList.add('focused');
   for (var i = 0; i <= text.length; i++) {
     inputText.textContent = text.substring(0, i);
-    await sleep(40 + Math.random() * 60);
+    await sleep(40 + Math.random() * 50);
   }
 }
 
@@ -608,8 +633,8 @@ function addBrick(label) {
   b.className = 'brick';
   b.textContent = label;
   bricks.appendChild(b);
-  // Limit visible bricks to ~10
-  if (bricks.children.length > 10) {
+  // Cap visible bricks; oldest fade out
+  while (bricks.children.length > 8) {
     bricks.removeChild(bricks.firstChild);
   }
 }
@@ -618,7 +643,7 @@ async function runCycle() {
   var q = QUERIES[queryIdx % QUERIES.length];
   queryIdx++;
 
-  // 1. Reset state
+  // Reset state
   inputText.textContent = '';
   inputField.classList.remove('focused');
   scanBtn.classList.remove('pressed', 'loading');
@@ -629,36 +654,34 @@ async function runCycle() {
   document.querySelectorAll('.metric-fill').forEach(function(f) { f.style.width = '0'; });
   scoreVal.textContent = '0';
 
-  await sleep(400);
-
-  // 2. Cursor appears, moves to input
-  cursor.classList.add('show');
-  moveCursorTo(inputField, { offsetX: 30, offsetY: 18 });
-  await sleep(700);
-
-  // 3. Click input, type domain
-  cursor.classList.add('click');
-  await sleep(150);
-  cursor.classList.remove('click');
-  await typeInto(q.domain);
   await sleep(300);
 
-  // 4. Move cursor to button, click
-  moveCursorTo(scanBtn, { offsetX: 40, offsetY: 18 });
+  // Cursor → input
+  cursor.classList.add('show');
+  moveCursorTo(inputField, { offsetX: 30, offsetY: 16 });
   await sleep(550);
+
+  cursor.classList.add('click');
+  await sleep(140);
+  cursor.classList.remove('click');
+  await typeInto(q.domain);
+  await sleep(220);
+
+  // Cursor → button
+  moveCursorTo(scanBtn, { offsetX: 35, offsetY: 16 });
+  await sleep(450);
   cursor.classList.add('click');
   scanBtn.classList.add('pressed');
-  await sleep(200);
+  await sleep(180);
   scanBtn.classList.remove('pressed');
   cursor.classList.remove('click');
   cursor.classList.remove('show');
 
-  // 5. Loading state
+  // Loading
   scanBtn.classList.add('loading');
   scanBtn.textContent = 'Scanning…';
   processing.classList.add('active');
 
-  // Cycle through proc steps
   var steps = [
     'Sending to Claude API…',
     'Analyzing schema…',
@@ -667,21 +690,19 @@ async function runCycle() {
   ];
   for (var s = 0; s < steps.length; s++) {
     procStep.textContent = steps[s];
-    await sleep(450);
+    await sleep(380);
   }
 
-  // 6. Show results
+  // Results
   processing.classList.remove('active');
   scanBtn.classList.remove('loading');
   scanBtn.textContent = 'Done';
   results.classList.add('active');
 
-  // Animate score counter
-  tween(0, q.score, 900, function(v) {
+  tween(0, q.score, 800, function(v) {
     scoreVal.textContent = Math.round(v);
   });
 
-  // Stagger metric rows
   var metrics = document.querySelectorAll('.metric-row');
   for (var i = 0; i < metrics.length; i++) {
     setTimeout((function(idx) {
@@ -690,19 +711,16 @@ async function runCycle() {
         var fill = metrics[idx].querySelector('.metric-fill');
         fill.style.width = fill.dataset.target + '%';
       };
-    })(i), 200 + i * 180);
+    })(i), 150 + i * 160);
   }
 
-  await sleep(1300);
+  await sleep(1100);
 
-  // 7. Drop a brick into the moat + tick stats
-  var brickLabel = BRICK_LABELS[brickCount % BRICK_LABELS.length];
-  addBrick(brickLabel);
+  // Brick + stats
+  addBrick(BRICK_LABELS[brickCount % BRICK_LABELS.length]);
   brickCount++;
   interCount += 1;
   sigCount += Math.floor(3 + Math.random() * 4);
-
-  // Each brick adds ~7-9% to moat up to 99%
   moatPct = Math.min(99, moatPct + 7 + Math.floor(Math.random() * 3));
 
   tween(parseInt(statInter.textContent), interCount, 600, function(v) {
@@ -719,13 +737,11 @@ async function runCycle() {
   });
 
   scanBtn.textContent = 'Scan';
-  await sleep(1400);
+  await sleep(1200);
 
-  // Loop
   runCycle();
 }
 
-// Reset cursor position offscreen, then start
 cursor.style.transform = 'translate(-50px, -50px)';
 runCycle();
 </script>
