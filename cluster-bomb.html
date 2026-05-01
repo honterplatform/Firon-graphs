@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cluster Bomb</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #0A0A0A; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  .container { width: 100%; height: 100%; position: relative; }
+  canvas { width: 100%; height: 100%; display: block; }
+
+  .hud {
+    position: absolute;
+    pointer-events: none;
+  }
+  .hud-tl { top: 14px; left: 16px; }
+  .hud-tr { top: 14px; right: 16px; text-align: right; }
+  .hud-bl { bottom: 14px; left: 16px; }
+
+  .label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: #444;
+    margin-bottom: 4px;
+  }
+  .value {
+    font-size: 18px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.85);
+    font-variant-numeric: tabular-nums;
+  }
+  .value.red { color: #FB3B24; }
+  .value.small { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #555;
+    transition: all 0.4s ease;
+  }
+  .status-pill.armed {
+    color: #FB3B24;
+    background: rgba(251,59,36,0.08);
+    border-color: rgba(251,59,36,0.25);
+  }
+  .status-pill.locked {
+    color: #FB3B24;
+    background: rgba(251,59,36,0.12);
+    border-color: rgba(251,59,36,0.4);
+  }
+  .pill-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulseDot 1.2s ease-in-out infinite;
+  }
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <canvas id="canvas"></canvas>
+
+  <div class="hud hud-tl">
+    <div class="label">Knowledge Graph</div>
+    <div class="status-pill" id="statusPill">
+      <span class="pill-dot"></span>
+      <span id="statusText">Scanning</span>
+    </div>
+  </div>
+
+  <div class="hud hud-tr">
+    <div class="label">Assets Deployed</div>
+    <div class="value red"><span id="assetCount">0</span><span style="opacity:0.5;font-weight:600;">/15</span></div>
+  </div>
+
+  <div class="hud hud-bl">
+    <div class="label">Topic Saturation</div>
+    <div class="value"><span id="satValue">0</span>%</div>
+  </div>
+</div>
+<script>
+var canvas = document.getElementById('canvas');
+var ctx = canvas.getContext('2d');
+var dpr = window.devicePixelRatio || 1;
+var W, H, CX, CY;
+
+function resize() {
+  W = canvas.clientWidth;
+  H = canvas.clientHeight;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  CX = W / 2;
+  CY = H / 2;
+  layoutNodes();
+}
+
+var RED = '#FB3B24';
+
+// 15 content asset types
+var ASSET_TYPES = [
+  'Pillar', 'FAQ', 'Glossary', 'How-to', 'Compare',
+  'Use Case', 'Templates', 'Stats', 'Best Of', 'Alternatives',
+  'Reviews', 'Pricing', 'Definitions', 'Buying Guide', 'Case Study'
+];
+
+var nodes = [];
+
+function layoutNodes() {
+  nodes = [];
+  // Center node
+  nodes.push({
+    x: CX, y: CY,
+    targetX: CX, targetY: CY,
+    label: 'Your Brand',
+    isCore: true,
+    radius: Math.min(W, H) * 0.045,
+    spawnTime: 0,
+    placed: true
+  });
+
+  // 15 satellite nodes in two concentric rings (organic, jittered)
+  var ringCounts = [6, 9];
+  var ringRadii = [
+    Math.min(W, H) * 0.22,
+    Math.min(W, H) * 0.36
+  ];
+  var idx = 0;
+  for (var r = 0; r < ringCounts.length; r++) {
+    var count = ringCounts[r];
+    var rad = ringRadii[r];
+    var phase = r * 0.3;
+    for (var i = 0; i < count; i++) {
+      var angle = (i / count) * Math.PI * 2 + phase;
+      // Slight jitter for organic feel
+      var rj = rad * (0.9 + Math.sin(i * 1.3 + r) * 0.1);
+      var aj = angle + Math.sin(i * 2.7) * 0.06;
+      var tx = CX + Math.cos(aj) * rj;
+      var ty = CY + Math.sin(aj) * rj;
+      nodes.push({
+        x: CX, y: CY,
+        targetX: tx, targetY: ty,
+        label: ASSET_TYPES[idx % ASSET_TYPES.length],
+        isCore: false,
+        radius: Math.min(W, H) * 0.022,
+        spawnTime: 0,
+        placed: false,
+        ringIdx: r,
+        angle: aj,
+        ringRadius: rj,
+        flightDuration: 0.6 + Math.random() * 0.3
+      });
+      idx++;
+    }
+  }
+}
+
+resize();
+window.addEventListener('resize', resize);
+
+// Phases
+var PHASE_IDLE = 0;       // central node alone, "scanning"
+var PHASE_DEPLOY = 1;     // nodes fire outward
+var PHASE_LINK = 2;       // edges draw between nodes
+var PHASE_SATURATE = 3;   // entire cluster glows, AI lock
+var PHASE_RESET = 4;
+
+var phase = PHASE_IDLE;
+var phaseStart = 0;
+
+var startTime = Date.now();
+function now() { return (Date.now() - startTime) / 1000; }
+
+// Edges (computed once nodes placed)
+var edges = [];
+function computeEdges() {
+  edges = [];
+  // Center connects to ALL satellites
+  for (var i = 1; i < nodes.length; i++) {
+    edges.push({ a: 0, b: i, type: 'core', drawProgress: 0 });
+  }
+  // Inter-node connections (each node links to 2-3 nearby)
+  for (var i = 1; i < nodes.length; i++) {
+    var distances = [];
+    for (var j = 1; j < nodes.length; j++) {
+      if (i === j) continue;
+      var dx = nodes[i].targetX - nodes[j].targetX;
+      var dy = nodes[i].targetY - nodes[j].targetY;
+      distances.push({ idx: j, d: Math.sqrt(dx * dx + dy * dy) });
+    }
+    distances.sort(function(a, b) { return a.d - b.d; });
+    var connectCount = 2 + (i % 2);
+    for (var k = 0; k < connectCount && k < distances.length; k++) {
+      var b = distances[k].idx;
+      // Avoid duplicate edges
+      var exists = edges.some(function(e) {
+        return (e.a === i && e.b === b) || (e.a === b && e.b === i);
+      });
+      if (!exists) {
+        edges.push({ a: i, b: b, type: 'inter', drawProgress: 0 });
+      }
+    }
+  }
+}
+
+function setPhase(p) {
+  phase = p;
+  phaseStart = now();
+}
+
+function drawBgGrid() {
+  // Subtle dot grid implying knowledge graph terrain
+  var spacing = Math.min(W, H) * 0.05;
+  ctx.fillStyle = 'rgba(255,255,255,0.03)';
+  for (var x = spacing / 2; x < W; x += spacing) {
+    for (var y = spacing / 2; y < H; y += spacing) {
+      ctx.beginPath();
+      ctx.arc(x, y, 0.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+function drawSaturationField(t) {
+  // Radial saturation that grows with phase
+  if (phase < PHASE_LINK) return;
+  var elapsed = t - phaseStart;
+  var sat;
+  if (phase === PHASE_LINK) {
+    sat = Math.min(1, elapsed / 1.5) * 0.35;
+  } else if (phase === PHASE_SATURATE) {
+    sat = 0.35 + Math.min(1, elapsed / 1.5) * 0.4;
+  } else {
+    sat = 0.75;
+  }
+
+  var maxR = Math.min(W, H) * 0.5;
+  var grad = ctx.createRadialGradient(CX, CY, 0, CX, CY, maxR);
+  grad.addColorStop(0, 'rgba(251,59,36,' + (sat * 0.18) + ')');
+  grad.addColorStop(0.5, 'rgba(251,59,36,' + (sat * 0.08) + ')');
+  grad.addColorStop(1, 'rgba(251,59,36,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Authority ring at saturation
+  if (phase >= PHASE_SATURATE) {
+    var ringElapsed = t - phaseStart;
+    var ringR = Math.min(W, H) * 0.42;
+    var ringAlpha = Math.min(1, ringElapsed / 0.8) * (0.4 + Math.sin(t * 2) * 0.15);
+    ctx.beginPath();
+    ctx.arc(CX, CY, ringR, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(251,59,36,' + ringAlpha + ')';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 6]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+
+function easeOutBack(t) {
+  var c1 = 1.70158;
+  var c3 = c1 + 1;
+  return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+}
+
+function easeOutCubic(t) {
+  return 1 - Math.pow(1 - t, 3);
+}
+
+function updateNodes(t) {
+  // Deploy phase: fire nodes outward in staggered waves
+  if (phase === PHASE_DEPLOY) {
+    var elapsed = t - phaseStart;
+    for (var i = 1; i < nodes.length; i++) {
+      var n = nodes[i];
+      // Stagger: ring 0 first, then ring 1, slight jitter per node
+      var delay = (n.ringIdx * 0.4) + (i * 0.04);
+      var localT = (elapsed - delay) / n.flightDuration;
+      if (localT >= 1) {
+        n.x = n.targetX;
+        n.y = n.targetY;
+        n.placed = true;
+        if (!n.spawnTime) n.spawnTime = t;
+      } else if (localT > 0) {
+        var eased = easeOutBack(Math.min(1, localT));
+        n.x = CX + (n.targetX - CX) * eased;
+        n.y = CY + (n.targetY - CY) * eased;
+        n.placed = false;
+        if (!n.spawnTime) n.spawnTime = t;
+      }
+    }
+
+    // Move to LINK when all placed
+    var allPlaced = nodes.slice(1).every(function(n) { return n.placed; });
+    if (allPlaced) setPhase(PHASE_LINK);
+  }
+}
+
+function drawEdges(t) {
+  if (phase < PHASE_LINK) return;
+  var elapsed = t - phaseStart;
+
+  for (var i = 0; i < edges.length; i++) {
+    var e = edges[i];
+    // Stagger edge draw
+    var delay = i * 0.025;
+    var localT;
+    if (phase === PHASE_LINK) {
+      localT = (elapsed - delay) / 0.4;
+    } else {
+      localT = 1;
+    }
+    e.drawProgress = Math.max(0, Math.min(1, localT));
+    if (e.drawProgress <= 0) continue;
+
+    var a = nodes[e.a];
+    var b = nodes[e.b];
+    var x2 = a.x + (b.x - a.x) * e.drawProgress;
+    var y2 = a.y + (b.y - a.y) * e.drawProgress;
+
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(x2, y2);
+
+    if (e.type === 'core') {
+      ctx.strokeStyle = phase >= PHASE_SATURATE
+        ? 'rgba(251,59,36,0.5)'
+        : 'rgba(251,59,36,0.35)';
+      ctx.lineWidth = 1.2;
+    } else {
+      ctx.strokeStyle = phase >= PHASE_SATURATE
+        ? 'rgba(251,59,36,0.25)'
+        : 'rgba(255,255,255,0.12)';
+      ctx.lineWidth = 0.8;
+    }
+    ctx.stroke();
+
+    // Pulse along edge during saturate
+    if (phase >= PHASE_SATURATE && e.type === 'core') {
+      var pulseT = ((t * 0.6 + i * 0.15) % 1);
+      var px = a.x + (b.x - a.x) * pulseT;
+      var py = a.y + (b.y - a.y) * pulseT;
+      ctx.beginPath();
+      ctx.arc(px, py, 1.8, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(251,59,36,0.8)';
+      ctx.fill();
+    }
+  }
+}
+
+function drawNode(n, t) {
+  var fontSize = Math.max(8, Math.round(Math.min(W, H) * 0.018));
+
+  if (n.isCore) {
+    // Pulsing core
+    var pulse = 1 + Math.sin(t * 2) * 0.06;
+    var glowR = n.radius * 2.5 * pulse;
+    var grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, glowR);
+    grad.addColorStop(0, 'rgba(251,59,36,0.5)');
+    grad.addColorStop(1, 'rgba(251,59,36,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, glowR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Core circle
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
+    ctx.fillStyle = '#FB3B24';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Inner dot
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, n.radius * 0.4, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+
+    // Label below
+    ctx.fillStyle = '#fff';
+    ctx.font = '700 ' + (fontSize + 1) + 'px system-ui';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('YOUR BRAND', n.x, n.y + n.radius + 8);
+    return;
+  }
+
+  // Satellite node
+  var sinceSpawn = n.spawnTime ? (t - n.spawnTime) : 0;
+  var spawnAlpha = Math.min(1, sinceSpawn / 0.4);
+  var glowing = phase >= PHASE_SATURATE;
+
+  // Outer glow when saturated
+  if (glowing) {
+    var glowR = n.radius * 2.4;
+    var glowGrad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, glowR);
+    glowGrad.addColorStop(0, 'rgba(251,59,36,0.4)');
+    glowGrad.addColorStop(1, 'rgba(251,59,36,0)');
+    ctx.fillStyle = glowGrad;
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, glowR, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Node
+  ctx.globalAlpha = spawnAlpha;
+  ctx.beginPath();
+  ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
+  if (glowing) {
+    ctx.fillStyle = 'rgba(251,59,36,0.9)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  } else {
+    ctx.fillStyle = '#161616';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(251,59,36,0.6)';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, n.radius * 0.35, 0, Math.PI * 2);
+    ctx.fillStyle = '#FB3B24';
+    ctx.fill();
+  }
+
+  // Label
+  if (n.placed) {
+    var labelAlpha = Math.min(1, (sinceSpawn - 0.2) / 0.4);
+    if (labelAlpha > 0) {
+      ctx.globalAlpha = labelAlpha;
+      ctx.fillStyle = glowing ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.55)';
+      ctx.font = '600 ' + fontSize + 'px system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(n.label, n.x, n.y + n.radius + 5);
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+function updateHUD(t) {
+  var statusEl = document.getElementById('statusText');
+  var pillEl = document.getElementById('statusPill');
+  var assetEl = document.getElementById('assetCount');
+  var satEl = document.getElementById('satValue');
+
+  // Asset count
+  var deployed = 0;
+  for (var i = 1; i < nodes.length; i++) {
+    if (nodes[i].placed) deployed++;
+  }
+  assetEl.textContent = deployed;
+
+  // Saturation
+  var sat = 0;
+  if (phase === PHASE_IDLE) sat = 0;
+  else if (phase === PHASE_DEPLOY) sat = (deployed / 15) * 30;
+  else if (phase === PHASE_LINK) {
+    var elapsed = t - phaseStart;
+    sat = 30 + Math.min(1, elapsed / 1.5) * 50;
+  } else if (phase === PHASE_SATURATE) {
+    var elapsed2 = t - phaseStart;
+    sat = 80 + Math.min(1, elapsed2 / 1.2) * 19;
+  } else {
+    sat = 99;
+  }
+  satEl.textContent = Math.round(sat);
+
+  // Status
+  if (phase === PHASE_IDLE) {
+    statusEl.textContent = 'Scanning gaps';
+    pillEl.className = 'status-pill';
+  } else if (phase === PHASE_DEPLOY) {
+    statusEl.textContent = 'Deploying cluster';
+    pillEl.className = 'status-pill armed';
+  } else if (phase === PHASE_LINK) {
+    statusEl.textContent = 'Interlinking';
+    pillEl.className = 'status-pill armed';
+  } else {
+    statusEl.textContent = 'Authority locked';
+    pillEl.className = 'status-pill locked';
+  }
+}
+
+function tick() {
+  var t = now();
+  ctx.clearRect(0, 0, W, H);
+
+  drawBgGrid();
+  drawSaturationField(t);
+
+  updateNodes(t);
+  drawEdges(t);
+
+  // Draw nodes (satellites first, core on top)
+  for (var i = 1; i < nodes.length; i++) drawNode(nodes[i], t);
+  drawNode(nodes[0], t);
+
+  // Phase transitions
+  var elapsed = t - phaseStart;
+  if (phase === PHASE_IDLE && elapsed > 1.4) {
+    setPhase(PHASE_DEPLOY);
+  } else if (phase === PHASE_LINK && elapsed > 1.8) {
+    setPhase(PHASE_SATURATE);
+  } else if (phase === PHASE_SATURATE && elapsed > 3.0) {
+    setPhase(PHASE_RESET);
+  } else if (phase === PHASE_RESET) {
+    // Fade out and reset
+    if (elapsed > 1.2) {
+      // Reset
+      for (var i = 1; i < nodes.length; i++) {
+        nodes[i].x = CX;
+        nodes[i].y = CY;
+        nodes[i].placed = false;
+        nodes[i].spawnTime = 0;
+      }
+      for (var i = 0; i < edges.length; i++) edges[i].drawProgress = 0;
+      setPhase(PHASE_IDLE);
+    } else {
+      // Quick fade by overlaying
+      ctx.fillStyle = 'rgba(10,10,10,' + Math.min(0.95, elapsed / 1.0) + ')';
+      ctx.fillRect(0, 0, W, H);
+    }
+  }
+
+  updateHUD(t);
+  requestAnimationFrame(tick);
+}
+
+computeEdges();
+tick();
+</script>
+</body>
+</html>
