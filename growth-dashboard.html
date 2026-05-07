@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engineering 8-Figure Growth</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0F0F0F;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+    font-size: clamp(9px, 1.5vh, 13px);
+  }
+
+  .stage {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 1vh, 10px);
+    padding: clamp(8px, 1.4vh, 14px);
+  }
+
+  /* --- Header bar --- */
+  .header {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(7px, 1vh, 11px) clamp(10px, 1.5vh, 14px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .h-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .h-icon {
+    width: 1.7em; height: 1.7em;
+    border-radius: 5px;
+    background: rgba(251,59,36,0.1);
+    color: #FB3B24;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85em;
+    flex-shrink: 0;
+  }
+  .h-title-group { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .h-title {
+    font-size: 0.95em;
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .h-sub {
+    font-size: 0.65em;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  .h-meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .date-chip {
+    font-size: 0.7em;
+    font-weight: 600;
+    color: rgba(255,255,255,0.55);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 4px 9px;
+    border-radius: 4px;
+    font-family: ui-monospace, monospace;
+    white-space: nowrap;
+  }
+  .live-pill {
+    font-size: 0.62em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #4BC882;
+    background: rgba(75,200,130,0.08);
+    border: 1px solid rgba(75,200,130,0.25);
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .live-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #4BC882;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* --- KPI row --- */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(6px, 1vh, 10px);
+    flex-shrink: 0;
+  }
+  .kpi {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(8px, 1.2vh, 12px) clamp(10px, 1.4vh, 14px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(2px, 0.4vh, 4px);
+    min-width: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi.hero {
+    background: linear-gradient(135deg, #141414 0%, rgba(251,59,36,0.06) 100%);
+    border-color: rgba(251,59,36,0.3);
+  }
+  .kpi-label {
+    font-size: 0.6em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .kpi-value {
+    font-size: clamp(16px, 3.2vh, 26px);
+    font-weight: 800;
+    color: rgba(255,255,255,0.95);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .kpi.hero .kpi-value { color: #FB3B24; }
+  .kpi-delta {
+    font-size: 0.7em;
+    font-weight: 700;
+    color: #4BC882;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+  }
+  .kpi-delta::before {
+    content: '↑';
+    font-size: 0.9em;
+  }
+  .kpi-delta.flat { color: #888; }
+  .kpi-delta.flat::before { content: '·'; }
+
+  .kpi-spark {
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 50%;
+    height: 30%;
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  /* --- Charts row --- */
+  .charts {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: clamp(6px, 1vh, 10px);
+  }
+  .chart-card {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(8px, 1.2vh, 12px) clamp(10px, 1.4vh, 14px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(5px, 0.8vh, 8px);
+    min-width: 0;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-shrink: 0;
+  }
+  .chart-title {
+    font-size: 0.78em;
+    font-weight: 700;
+    color: rgba(255,255,255,0.8);
+  }
+  .chart-meta {
+    font-size: 0.6em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .chart-svg {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+  }
+
+  /* Annotations on the line chart */
+  .annot-line {
+    stroke: rgba(251,59,36,0.4);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+    fill: none;
+  }
+  .annot-label {
+    fill: rgba(251,59,36,0.85);
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .axis-label {
+    fill: #555;
+    font-size: 8.5px;
+    font-weight: 600;
+    font-family: ui-monospace, monospace;
+  }
+  .axis-tick {
+    stroke: rgba(255,255,255,0.06);
+    stroke-width: 1;
+  }
+  .area-fill {
+    fill: url(#areaGrad);
+  }
+  .line-stroke {
+    fill: none;
+    stroke: #FB3B24;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 6px rgba(251,59,36,0.4));
+  }
+
+  /* Footer */
+  .footer {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(6px, 0.9vh, 9px) clamp(10px, 1.5vh, 14px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    font-size: 0.68em;
+    color: rgba(255,255,255,0.4);
+    font-family: ui-monospace, monospace;
+  }
+  .footer .ftag {
+    color: #555;
+    font-weight: 600;
+  }
+  .footer-right {
+    display: flex;
+    gap: 12px;
+    color: #555;
+  }
+  .footer-right span b {
+    color: rgba(255,255,255,0.7);
+    font-weight: 700;
+    margin-left: 4px;
+  }
+
+  /* Bar chart */
+  .bar-row {
+    display: flex;
+    align-items: flex-end;
+    gap: clamp(4px, 0.8vh, 8px);
+    flex: 1;
+    min-height: 0;
+    padding-bottom: clamp(14px, 2vh, 20px);
+    position: relative;
+  }
+  .bar-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    justify-content: flex-end;
+    position: relative;
+    min-width: 0;
+  }
+  .bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+  }
+  .bar {
+    flex: 1;
+    background: rgba(255,255,255,0.15);
+    border-radius: 2px 2px 0 0;
+    height: 0;
+    transition: height 0.9s cubic-bezier(.2,.8,.2,1);
+    max-width: 16px;
+    min-width: 6px;
+  }
+  .bar.brand {
+    background: linear-gradient(180deg, #FB3B24 0%, rgba(251,59,36,0.4) 100%);
+    box-shadow: 0 0 8px rgba(251,59,36,0.3);
+  }
+  .bar-q-label {
+    position: absolute;
+    bottom: 0;
+    font-size: 0.6em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .bar-legend {
+    display: flex;
+    gap: 12px;
+    font-size: 0.6em;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot {
+    width: 7px; height: 7px;
+    border-radius: 2px;
+  }
+  .legend-dot.last { background: rgba(255,255,255,0.2); }
+  .legend-dot.this { background: #FB3B24; }
+
+  /* Stack on narrow */
+  @media (max-aspect-ratio: 1/1) {
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .charts { grid-template-columns: 1fr; grid-template-rows: 1.4fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <!-- Header -->
+  <div class="header">
+    <div class="h-left">
+      <div class="h-icon">▲</div>
+      <div class="h-title-group">
+        <div class="h-title">Maison Flâneur · Organic Performance</div>
+        <div class="h-sub">Looker Studio · auto-refresh</div>
+      </div>
+    </div>
+    <div class="h-meta">
+      <div class="date-chip">FY24 vs FY25</div>
+      <div class="live-pill"><span class="live-dot"></span>Live</div>
+    </div>
+  </div>
+
+  <!-- KPI row -->
+  <div class="kpi-row">
+    <div class="kpi hero">
+      <div class="kpi-label">Organic revenue</div>
+      <div class="kpi-value" data-final="£967K" data-tween="967">£0</div>
+      <div class="kpi-delta">144% YoY</div>
+      <svg class="kpi-spark" viewBox="0 0 60 20" preserveAspectRatio="none">
+        <path d="M0 18 L8 17 L16 16 L24 14 L32 10 L40 6 L50 3 L60 1"
+              fill="none" stroke="#FB3B24" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Trade revenue</div>
+      <div class="kpi-value" data-final="+155%" data-tween="155" data-prefix="+" data-suffix="%">+0%</div>
+      <div class="kpi-delta">YoY uplift</div>
+      <svg class="kpi-spark" viewBox="0 0 60 20" preserveAspectRatio="none">
+        <path d="M0 17 L10 16 L20 15 L30 13 L40 9 L50 5 L60 2"
+              fill="none" stroke="#4BC882" stroke-width="1.2" stroke-linecap="round" opacity="0.8"/>
+      </svg>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Catalog unlocked</div>
+      <div class="kpi-value" data-final="100%" data-tween="100" data-suffix="%">0%</div>
+      <div class="kpi-delta">SKU coverage</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">AI citation rate</div>
+      <div class="kpi-value" data-final="73%" data-tween="73" data-suffix="%">0%</div>
+      <div class="kpi-delta">+58 pts</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts">
+    <!-- Big line chart: Organic revenue 12mo -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Organic Revenue · 12-month rolling</div>
+        <div class="chart-meta">£ thousands</div>
+      </div>
+      <svg class="chart-svg" id="lineChart" preserveAspectRatio="none"></svg>
+    </div>
+
+    <!-- Bar chart: Trade revenue by quarter -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Trade Revenue · by quarter</div>
+        <div class="chart-meta">£K</div>
+      </div>
+      <div class="bar-row" id="barRow">
+        <div class="bar-group">
+          <div class="bars">
+            <div class="bar" data-h="20"></div>
+            <div class="bar brand" data-h="48"></div>
+          </div>
+          <div class="bar-q-label">Q1</div>
+        </div>
+        <div class="bar-group">
+          <div class="bars">
+            <div class="bar" data-h="28"></div>
+            <div class="bar brand" data-h="62"></div>
+          </div>
+          <div class="bar-q-label">Q2</div>
+        </div>
+        <div class="bar-group">
+          <div class="bars">
+            <div class="bar" data-h="34"></div>
+            <div class="bar brand" data-h="78"></div>
+          </div>
+          <div class="bar-q-label">Q3</div>
+        </div>
+        <div class="bar-group">
+          <div class="bars">
+            <div class="bar" data-h="42"></div>
+            <div class="bar brand" data-h="95"></div>
+          </div>
+          <div class="bar-q-label">Q4</div>
+        </div>
+      </div>
+      <div class="bar-legend">
+        <div class="legend-item"><div class="legend-dot last"></div>FY24</div>
+        <div class="legend-item"><div class="legend-dot this"></div>FY25</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span><span class="ftag">// data source:</span> Looker Studio · view: organic_perf</span>
+    <div class="footer-right">
+      <span>Refreshed<b>just now</b></span>
+      <span>Period<b>FY24 → FY25</b></span>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- Line chart: Organic Revenue (12 months) ---
+// Pre-deployment baseline (months 0-4): low/flat with mild dip
+// Deployment marker at month 4
+// Post-deployment (months 4-11): hockey stick growth
+
+var monthData = [
+  // value (£k), label
+  { v: 38, m: 'Jun' },
+  { v: 42, m: 'Jul' },
+  { v: 36, m: 'Aug' },
+  { v: 39, m: 'Sep' },
+  { v: 44, m: 'Oct' }, // deployment
+  { v: 58, m: 'Nov' },
+  { v: 71, m: 'Dec' },
+  { v: 84, m: 'Jan' },
+  { v: 102, m: 'Feb' },
+  { v: 118, m: 'Mar' },
+  { v: 137, m: 'Apr' },
+  { v: 158, m: 'May' }
+];
+
+function buildLineChart() {
+  var svg = document.getElementById('lineChart');
+  if (!svg) return;
+  var rect = svg.getBoundingClientRect();
+  var W = rect.width;
+  var H = rect.height;
+  if (W <= 0 || H <= 0) return;
+
+  // Padding
+  var padL = 28, padR = 12, padT = 12, padB = 22;
+  var innerW = W - padL - padR;
+  var innerH = H - padT - padB;
+
+  var maxV = 170;
+  var minV = 0;
+  var n = monthData.length;
+
+  // Build coordinates
+  var coords = monthData.map(function(d, i) {
+    var x = padL + (i / (n - 1)) * innerW;
+    var y = padT + innerH - ((d.v - minV) / (maxV - minV)) * innerH;
+    return { x: x, y: y, m: d.m, v: d.v };
+  });
+
+  // Build path
+  var pathD = '';
+  coords.forEach(function(c, i) {
+    if (i === 0) pathD += 'M ' + c.x + ' ' + c.y;
+    else {
+      var prev = coords[i - 1];
+      var midX = (prev.x + c.x) / 2;
+      pathD += ' Q ' + midX + ' ' + prev.y + ' ' + midX + ' ' + ((prev.y + c.y) / 2);
+      pathD += ' Q ' + midX + ' ' + c.y + ' ' + c.x + ' ' + c.y;
+    }
+  });
+
+  // Area fill
+  var areaD = pathD + ' L ' + coords[n-1].x + ' ' + (padT + innerH) + ' L ' + coords[0].x + ' ' + (padT + innerH) + ' Z';
+
+  // Y-axis ticks (gridlines)
+  var ticksY = [0, 50, 100, 150];
+  var yAxisLines = ticksY.map(function(t) {
+    var y = padT + innerH - ((t - minV) / (maxV - minV)) * innerH;
+    return '<line class="axis-tick" x1="' + padL + '" x2="' + (padL + innerW) + '" y1="' + y + '" y2="' + y + '"/>' +
+           '<text class="axis-label" x="' + (padL - 4) + '" y="' + (y + 3) + '" text-anchor="end">£' + t + 'k</text>';
+  }).join('');
+
+  // X-axis labels (every 2nd month for spacing)
+  var xLabels = coords.map(function(c, i) {
+    if (i % 2 !== 0 && i !== n - 1) return '';
+    return '<text class="axis-label" x="' + c.x + '" y="' + (H - 6) + '" text-anchor="middle">' + c.m + '</text>';
+  }).join('');
+
+  // Deployment marker (at month 4 → Oct)
+  var depX = coords[4].x;
+  var deployMarker =
+    '<line class="annot-line" x1="' + depX + '" x2="' + depX + '" y1="' + padT + '" y2="' + (padT + innerH) + '"/>' +
+    '<text class="annot-label" x="' + (depX + 4) + '" y="' + (padT + 10) + '">Firon · deployed</text>';
+
+  // End point dot + callout
+  var endC = coords[n - 1];
+  var endDot =
+    '<circle cx="' + endC.x + '" cy="' + endC.y + '" r="3.5" fill="#FB3B24" stroke="#0F0F0F" stroke-width="2"/>' +
+    '<circle cx="' + endC.x + '" cy="' + endC.y + '" r="6" fill="none" stroke="#FB3B24" stroke-width="1" opacity="0.4">' +
+    '<animate attributeName="r" values="5;9;5" dur="1.6s" repeatCount="indefinite"/>' +
+    '<animate attributeName="opacity" values="0.5;0;0.5" dur="1.6s" repeatCount="indefinite"/>' +
+    '</circle>';
+
+  svg.innerHTML =
+    '<defs>' +
+    '<linearGradient id="areaGrad" x1="0" x2="0" y1="0" y2="1">' +
+    '<stop offset="0%" stop-color="#FB3B24" stop-opacity="0.25"/>' +
+    '<stop offset="100%" stop-color="#FB3B24" stop-opacity="0"/>' +
+    '</linearGradient>' +
+    '</defs>' +
+    yAxisLines +
+    '<path class="area-fill" d="' + areaD + '" opacity="0"/>' +
+    '<path class="line-stroke" d="' + pathD + '" id="lineStroke"/>' +
+    deployMarker +
+    endDot +
+    xLabels;
+
+  // Animate line draw
+  var line = document.getElementById('lineStroke');
+  var len = line.getTotalLength();
+  line.style.strokeDasharray = len;
+  line.style.strokeDashoffset = len;
+  // Trigger animation
+  setTimeout(function() {
+    line.style.transition = 'stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1)';
+    line.style.strokeDashoffset = 0;
+    var area = svg.querySelector('.area-fill');
+    if (area) {
+      area.style.transition = 'opacity 1.4s ease';
+      area.style.opacity = 1;
+    }
+  }, 200);
+}
+
+// --- KPI tween ---
+function tweenKPIs() {
+  var kpis = document.querySelectorAll('.kpi-value');
+  kpis.forEach(function(el) {
+    var target = parseFloat(el.dataset.tween) || 0;
+    var prefix = el.dataset.prefix || '';
+    var suffix = el.dataset.suffix || '';
+    var isCurrency = el.dataset.final && el.dataset.final.indexOf('£') === 0;
+    var isK = el.dataset.final && el.dataset.final.indexOf('K') !== -1;
+
+    var start = Date.now();
+    var dur = 1300;
+    function step() {
+      var t = Math.min(1, (Date.now() - start) / dur);
+      var eased = 1 - Math.pow(1 - t, 3);
+      var v = target * eased;
+      var display;
+      if (isCurrency) {
+        display = '£' + Math.round(v) + 'K';
+      } else {
+        display = prefix + Math.round(v) + suffix;
+      }
+      el.textContent = display;
+      if (t < 1) requestAnimationFrame(step);
+      else el.textContent = el.dataset.final;
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+// --- Bar chart animate ---
+function animateBars() {
+  var bars = document.querySelectorAll('.bar');
+  bars.forEach(function(b, i) {
+    setTimeout(function() {
+      b.style.height = b.dataset.h + '%';
+    }, 300 + i * 80);
+  });
+}
+
+function resetBars() {
+  document.querySelectorAll('.bar').forEach(function(b) {
+    b.style.height = '0%';
+  });
+}
+
+function resetKPIs() {
+  document.querySelectorAll('.kpi-value').forEach(function(el) {
+    var prefix = el.dataset.prefix || '';
+    var suffix = el.dataset.suffix || '';
+    var isCurrency = el.dataset.final && el.dataset.final.indexOf('£') === 0;
+    if (isCurrency) el.textContent = '£0';
+    else el.textContent = prefix + '0' + suffix;
+  });
+}
+
+function runCycle() {
+  resetKPIs();
+  resetBars();
+  // Clear chart svg so it can re-render
+  var svg = document.getElementById('lineChart');
+  if (svg) svg.innerHTML = '';
+
+  setTimeout(function() {
+    buildLineChart();
+    tweenKPIs();
+    animateBars();
+  }, 200);
+
+  // Loop every ~9s
+  setTimeout(runCycle, 9000);
+}
+
+// Build initially after layout settles
+window.addEventListener('load', function() {
+  setTimeout(runCycle, 100);
+});
+window.addEventListener('resize', function() {
+  // Rebuild line chart on resize
+  setTimeout(buildLineChart, 50);
+});
+</script>
+</body>
+</html>
