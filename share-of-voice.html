@@ -3,160 +3,536 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Share Of Voice</title>
+<title>AI Share of Voice</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 100%; height: 100%; overflow: hidden; }
   body {
-    background: #0A0A0A;
+    background: #0F0F0F;
     font-family: system-ui, -apple-system, sans-serif;
     color: #fff;
+    font-size: clamp(9px, 1.5vh, 13px);
   }
-  .card {
-    background: #0F0F0F;
+
+  .stage {
     width: 100%;
     height: 100%;
-  }
-  .title {
-    font-size: 15px;
-    font-weight: 700;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #ccc;
-  }
-  .info-icon {
-    width: 18px; height: 18px;
-    background: #444;
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    color: #999;
-  }
-  .chart-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 40px;
-  }
-  canvas { display: block; }
-  .legend {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: clamp(6px, 1vh, 10px);
+    padding: clamp(8px, 1.4vh, 14px);
   }
-  .legend-item {
+
+  /* --- Header --- */
+  .header {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(7px, 1vh, 11px) clamp(10px, 1.5vh, 14px);
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 10px;
-    font-size: 14px;
-    opacity: 0;
-    transform: translateX(10px);
-    transition: opacity 0.4s ease, transform 0.4s ease;
-  }
-  .legend-item.visible {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  .legend-color {
-    width: 13px; height: 13px;
-    border-radius: 3px;
     flex-shrink: 0;
   }
-  @media (max-width: 480px) {
-    .chart-container {
-      flex-direction: column;
-      gap: 20px;
+  .h-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .h-icon {
+    width: 1.7em; height: 1.7em;
+    border-radius: 5px;
+    background: rgba(251,59,36,0.1);
+    color: #FB3B24;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85em;
+    flex-shrink: 0;
+  }
+  .h-title-group { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .h-title {
+    font-size: 0.95em;
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .h-sub {
+    font-size: 0.65em;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .h-meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .query-chip {
+    font-size: 0.7em;
+    font-weight: 600;
+    color: rgba(255,255,255,0.55);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 4px 9px;
+    border-radius: 4px;
+    font-family: ui-monospace, monospace;
+    white-space: nowrap;
+  }
+  .query-chip span { color: rgba(255,255,255,0.85); }
+  .live-pill {
+    font-size: 0.62em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #4BC882;
+    background: rgba(75,200,130,0.08);
+    border: 1px solid rgba(75,200,130,0.25);
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .live-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #4BC882;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* --- Table --- */
+  .table-wrap {
+    flex: 1;
+    min-height: 0;
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .table-head {
+    display: grid;
+    grid-template-columns: 0.4fr 1.6fr 0.7fr 0.7fr 0.7fr 0.7fr 1.6fr 1fr;
+    padding: clamp(6px, 1vh, 10px) clamp(10px, 1.4vh, 14px);
+    border-bottom: 1px solid #1E1E1E;
+    background: #101010;
+    flex-shrink: 0;
+    align-items: center;
+    gap: clamp(4px, 0.7vh, 7px);
+  }
+  .th {
+    font-size: 0.6em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .th.num, .th.right { text-align: right; }
+  .th-llm {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    justify-content: center;
+  }
+  .llm-mark {
+    width: 1em; height: 1em;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65em;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .llm-mark.gpt { background: rgba(75,200,130,0.18); color: #4BC882; }
+  .llm-mark.pplx { background: rgba(85,170,210,0.18); color: #55AAD2; }
+  .llm-mark.cl { background: rgba(220,140,80,0.18); color: #DC8C50; }
+  .llm-mark.gem { background: rgba(180,120,220,0.18); color: #B478DC; }
+
+  .table-body {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 0.4fr 1.6fr 0.7fr 0.7fr 0.7fr 0.7fr 1.6fr 1fr;
+    padding: clamp(6px, 0.9vh, 9px) clamp(10px, 1.4vh, 14px);
+    border-bottom: 1px solid #1A1A1A;
+    align-items: center;
+    gap: clamp(4px, 0.7vh, 7px);
+    flex: 1;
+    min-height: 0;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.4s, transform 0.4s, background 0.4s, border-color 0.4s;
+    position: relative;
+  }
+  .row.show { opacity: 1; transform: translateY(0); }
+  .row:last-child { border-bottom: none; }
+  .row.you {
+    background: linear-gradient(90deg, rgba(251,59,36,0.07) 0%, rgba(251,59,36,0.02) 100%);
+    border-color: rgba(251,59,36,0.18);
+    border-left: 3px solid #FB3B24;
+    padding-left: calc(clamp(10px, 1.4vh, 14px) - 3px);
+  }
+
+  .cell-rank {
+    font-size: 0.85em;
+    font-weight: 700;
+    color: #555;
+    font-variant-numeric: tabular-nums;
+  }
+  .row.you .cell-rank { color: #FB3B24; }
+
+  .cell-brand {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+  }
+  .brand-mark {
+    width: 1.5em; height: 1.5em;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75em;
+    font-weight: 800;
+    color: rgba(255,255,255,0.6);
+    flex-shrink: 0;
+  }
+  .row.you .brand-mark {
+    background: rgba(251,59,36,0.15);
+    border-color: rgba(251,59,36,0.4);
+    color: #FB3B24;
+  }
+  .brand-name {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: rgba(255,255,255,0.8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+  .row.you .brand-name {
+    color: #FB3B24;
+    font-weight: 700;
+  }
+  .you-tag {
+    font-size: 0.55em;
+    font-weight: 800;
+    color: #FB3B24;
+    background: rgba(251,59,36,0.15);
+    padding: 2px 5px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+
+  .cell-pct {
+    font-size: 0.82em;
+    font-weight: 600;
+    color: rgba(255,255,255,0.7);
+    font-family: ui-monospace, monospace;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    padding: 3px 4px;
+    border-radius: 3px;
+    transition: background 0.4s, color 0.4s;
+  }
+  .cell-pct.heat-1 { background: rgba(251,59,36,0.04); color: rgba(255,255,255,0.55); }
+  .cell-pct.heat-2 { background: rgba(251,59,36,0.10); color: rgba(255,255,255,0.7); }
+  .cell-pct.heat-3 { background: rgba(251,59,36,0.18); color: rgba(255,255,255,0.85); }
+  .cell-pct.heat-4 { background: rgba(251,59,36,0.28); color: #fff; font-weight: 700; }
+
+  .cell-sov {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+  }
+  .sov-bar-track {
+    flex: 1;
+    height: 6px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 3px;
+    overflow: hidden;
+    min-width: 30px;
+  }
+  .sov-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.7) 100%);
+    width: 0;
+    transition: width 0.9s cubic-bezier(.2,.8,.2,1);
+    border-radius: 3px;
+  }
+  .row.you .sov-bar-fill {
+    background: linear-gradient(90deg, #FB3B24 0%, rgba(251,59,36,0.7) 100%);
+    box-shadow: 0 0 6px rgba(251,59,36,0.4);
+  }
+  .sov-num {
+    font-size: 0.82em;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    font-family: ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    min-width: 3em;
+    text-align: right;
+  }
+  .row.you .sov-num { color: #FB3B24; }
+
+  .cell-trend {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: flex-end;
+    min-width: 0;
+  }
+  .trend-spark {
+    width: 32px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+  .trend-val {
+    font-size: 0.7em;
+    font-weight: 700;
+    font-family: ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .trend-val.up { color: #4BC882; }
+  .trend-val.down { color: #FB3B24; }
+  .trend-val.flat { color: #888; }
+
+  /* Footer */
+  .footer {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(6px, 0.9vh, 9px) clamp(10px, 1.5vh, 14px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    font-size: 0.7em;
+    color: #555;
+    font-family: ui-monospace, monospace;
+  }
+  .footer-left { display: flex; gap: 14px; }
+  .footer-left span b {
+    color: rgba(255,255,255,0.7);
+    font-weight: 700;
+    margin-left: 4px;
+  }
+  .footer-right { color: #555; }
+
+  /* Hide some columns on narrow */
+  @media (max-width: 720px) {
+    .table-head, .row {
+      grid-template-columns: 0.4fr 1.6fr 0.7fr 0.7fr 1.6fr 1fr;
     }
-    canvas {
-      width: 160px !important;
-      height: 160px !important;
+    .col-pplx, .col-cl { display: none; }
+  }
+  @media (max-width: 520px) {
+    .table-head, .row {
+      grid-template-columns: 0.4fr 2fr 1.6fr 1fr;
     }
-    .legend { align-items: center; }
-    .legend-item { font-size: 12px; }
+    .col-pplx, .col-cl, .col-gpt, .col-gem { display: none; }
+    .footer-right { display: none; }
   }
 </style>
 </head>
 <body>
-<div class="card">
-  <div class="title">Share Of Voice <span class="info-icon">i</span></div>
-  <div class="chart-container">
-    <canvas id="donut" width="220" height="220"></canvas>
-    <div class="legend" id="legend"></div>
+<div class="stage">
+  <!-- Header -->
+  <div class="header">
+    <div class="h-left">
+      <div class="h-icon">▤</div>
+      <div class="h-title-group">
+        <div class="h-title">AI Share of Voice · Leaderboard</div>
+        <div class="h-sub">Cross-engine audit · 90d window</div>
+      </div>
+    </div>
+    <div class="h-meta">
+      <div class="query-chip">Query: <span>luxury candle brands</span></div>
+      <div class="live-pill"><span class="live-dot"></span>Live</div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <div class="table-head">
+      <div class="th num">#</div>
+      <div class="th">Brand</div>
+      <div class="th col-gpt"><div class="th-llm"><div class="llm-mark gpt">G</div>ChatGPT</div></div>
+      <div class="th col-pplx"><div class="th-llm"><div class="llm-mark pplx">P</div>PPLX</div></div>
+      <div class="th col-cl"><div class="th-llm"><div class="llm-mark cl">C</div>Claude</div></div>
+      <div class="th col-gem"><div class="th-llm"><div class="llm-mark gem">M</div>Gemini</div></div>
+      <div class="th">Share of Voice</div>
+      <div class="th right">30d Δ</div>
+    </div>
+    <div class="table-body" id="tableBody"></div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-left">
+      <span><span style="color:#444">// citations sampled:</span><b id="footTotal">0</b></span>
+      <span><span style="color:#444">// engines:</span><b>4</b></span>
+      <span><span style="color:#444">// queries:</span><b>128</b></span>
+    </div>
+    <div class="footer-right">Refreshed <span style="color:rgba(255,255,255,0.7)">just now</span></div>
   </div>
 </div>
+
 <script>
-const data = [
-  { label: 'target.com', value: 30, color: '#FB3B24' },
-  { label: 'magneticme.com', value: 25, color: '#FF7A6B' },
-  { label: 'primary.com', value: 22, color: '#FFB0A5' },
-  { label: 'stitchfix.com', value: 13, color: '#FDD8D3' },
-  { label: 'kohls.com', value: 10, color: '#555555' },
+var BRANDS = [
+  { name: 'Diptyque',     mark: 'D', gpt: 42, pplx: 38, cl: 51, gem: 36, sov: 28.4, trend: 4.2,  spark: [22, 24, 23, 25, 26, 27, 28, 28] },
+  { name: 'Boy Smells',   mark: 'B', gpt: 28, pplx: 31, cl: 22, gem: 18, sov: 19.2, trend: 1.1,  spark: [18, 19, 18, 19, 19, 20, 19, 19] },
+  { name: 'Le Labo',      mark: 'L', gpt: 22, pplx: 15, cl: 19, gem: 14, sov: 15.8, trend: 0.3,  spark: [16, 16, 15, 16, 16, 15, 16, 16] },
+  { name: 'Byredo',       mark: 'Y', gpt: 12, pplx: 14, cl: 13, gem: 10, sov: 11.6, trend: -0.8, spark: [13, 13, 12, 12, 11, 12, 11, 11] },
+  { name: 'Your Brand',   mark: '✦', gpt: 8,  pplx: 12, cl: 6,  gem: 4,  sov: 8.2,  trend: -2.1, spark: [11, 11, 10, 10, 9, 9, 8, 8], you: true },
+  { name: 'Otherland',    mark: 'O', gpt: 6,  pplx: 4,  cl: 8,  gem: 12, sov: 7.1,  trend: 1.8,  spark: [5, 6, 6, 6, 7, 7, 7, 7] },
+  { name: 'Jo Malone',    mark: 'J', gpt: 5,  pplx: 5,  cl: 6,  gem: 6,  sov: 5.4,  trend: 0.0,  spark: [5, 5, 5, 5, 5, 5, 5, 5] },
+  { name: 'Marquee & Co', mark: 'M', gpt: 4,  pplx: 3,  cl: 4,  gem: 6,  sov: 4.3,  trend: 0.4,  spark: [4, 4, 4, 4, 4, 4, 4, 4] }
 ];
 
-const canvas = document.getElementById('donut');
-const ctx = canvas.getContext('2d');
-const dpr = window.devicePixelRatio || 1;
-canvas.width = 220 * dpr;
-canvas.height = 220 * dpr;
-canvas.style.width = '220px';
-canvas.style.height = '220px';
-ctx.scale(dpr, dpr);
+var maxSov = 30;
 
-const cx = 110, cy = 110, outerR = 100, innerR = 62;
-const total = data.reduce((s, d) => s + d.value, 0);
-
-const legendEl = document.getElementById('legend');
-data.forEach(d => {
-  const item = document.createElement('div');
-  item.className = 'legend-item';
-  item.innerHTML = `<div class="legend-color" style="background:${d.color}"></div>${d.label}`;
-  legendEl.appendChild(item);
-});
-
-function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
-
-const duration = 1500;
-let start = null;
-
-function draw(timestamp) {
-  if (!start) start = timestamp;
-  const elapsed = timestamp - start;
-  const progress = Math.min(elapsed / duration, 1);
-  const easedProgress = easeOutCubic(progress);
-  const maxAngle = easedProgress * Math.PI * 2;
-
-  ctx.clearRect(0, 0, 220, 220);
-
-  let currentAngle = -Math.PI / 2;
-  for (const d of data) {
-    const sliceAngle = (d.value / total) * Math.PI * 2;
-    const drawAngle = Math.min(sliceAngle, Math.max(0, maxAngle - (currentAngle + Math.PI / 2)));
-    if (drawAngle > 0) {
-      ctx.beginPath();
-      ctx.arc(cx, cy, outerR, currentAngle, currentAngle + drawAngle);
-      ctx.arc(cx, cy, innerR, currentAngle + drawAngle, currentAngle, true);
-      ctx.closePath();
-      ctx.fillStyle = d.color;
-      ctx.fill();
-    }
-    currentAngle += sliceAngle;
-  }
-
-  if (progress < 1) {
-    requestAnimationFrame(draw);
-  } else {
-    const items = document.querySelectorAll('.legend-item');
-    items.forEach((item, i) => {
-      setTimeout(() => item.classList.add('visible'), i * 120);
-    });
-  }
+function heatClass(v) {
+  if (v >= 30) return 'heat-4';
+  if (v >= 18) return 'heat-3';
+  if (v >= 10) return 'heat-2';
+  return 'heat-1';
 }
 
-requestAnimationFrame(draw);
+function trendClass(v) {
+  if (v > 0.2) return 'up';
+  if (v < -0.2) return 'down';
+  return 'flat';
+}
+
+function trendArrow(v) {
+  if (v > 0.2) return '↑';
+  if (v < -0.2) return '↓';
+  return '→';
+}
+
+function trendStr(v) {
+  var arrow = trendArrow(v);
+  var num = (v > 0 ? '+' : '') + v.toFixed(1) + 'pt';
+  return arrow + ' ' + num;
+}
+
+function buildSpark(values, isYou) {
+  var W = 32, H = 14;
+  var min = Math.min.apply(null, values);
+  var max = Math.max.apply(null, values);
+  var range = Math.max(0.5, max - min);
+  var points = values.map(function(v, i) {
+    var x = (i / (values.length - 1)) * W;
+    var y = H - ((v - min) / range) * (H - 4) - 2;
+    return x + ',' + y;
+  }).join(' ');
+  var color = isYou ? '#FB3B24' : (values[values.length-1] > values[0] ? '#4BC882' : '#888');
+  return '<svg class="trend-spark" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
+    '<polyline points="' + points + '" fill="none" stroke="' + color + '" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '</svg>';
+}
+
+function renderTable() {
+  var tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  BRANDS.forEach(function(b, i) {
+    var row = document.createElement('div');
+    row.className = 'row' + (b.you ? ' you' : '');
+    row.innerHTML =
+      '<div class="cell-rank">' + (i + 1) + '</div>' +
+      '<div class="cell-brand">' +
+        '<div class="brand-mark">' + b.mark + '</div>' +
+        '<div class="brand-name">' + b.name + '</div>' +
+        (b.you ? '<div class="you-tag">You</div>' : '') +
+      '</div>' +
+      '<div class="cell-pct col-gpt ' + heatClass(b.gpt) + '">' + b.gpt + '%</div>' +
+      '<div class="cell-pct col-pplx ' + heatClass(b.pplx) + '">' + b.pplx + '%</div>' +
+      '<div class="cell-pct col-cl ' + heatClass(b.cl) + '">' + b.cl + '%</div>' +
+      '<div class="cell-pct col-gem ' + heatClass(b.gem) + '">' + b.gem + '%</div>' +
+      '<div class="cell-sov">' +
+        '<div class="sov-bar-track"><div class="sov-bar-fill" data-w="' + ((b.sov / maxSov) * 100).toFixed(1) + '"></div></div>' +
+        '<div class="sov-num">' + b.sov.toFixed(1) + '%</div>' +
+      '</div>' +
+      '<div class="cell-trend">' +
+        buildSpark(b.spark, b.you) +
+        '<div class="trend-val ' + trendClass(b.trend) + '">' + trendStr(b.trend) + '</div>' +
+      '</div>';
+    tbody.appendChild(row);
+  });
+}
+
+function tweenFooterTotal() {
+  var el = document.getElementById('footTotal');
+  var target = 12847;
+  var start = Date.now();
+  var dur = 1400;
+  function step() {
+    var t = Math.min(1, (Date.now() - start) / dur);
+    var v = Math.round(target * (1 - Math.pow(1 - t, 3)));
+    el.textContent = v.toLocaleString();
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function animateRows() {
+  var rows = document.querySelectorAll('.row');
+  rows.forEach(function(r, i) {
+    setTimeout(function() {
+      r.classList.add('show');
+      var fill = r.querySelector('.sov-bar-fill');
+      if (fill) {
+        setTimeout(function() {
+          fill.style.width = fill.dataset.w + '%';
+        }, 200);
+      }
+    }, 250 + i * 110);
+  });
+}
+
+function resetRows() {
+  var rows = document.querySelectorAll('.row');
+  rows.forEach(function(r) {
+    r.classList.remove('show');
+    var fill = r.querySelector('.sov-bar-fill');
+    if (fill) fill.style.width = '0%';
+  });
+  document.getElementById('footTotal').textContent = '0';
+}
+
+function runCycle() {
+  resetRows();
+  setTimeout(function() {
+    animateRows();
+    tweenFooterTotal();
+  }, 200);
+
+  setTimeout(runCycle, 10000);
+}
+
+renderTable();
+window.addEventListener('load', function() {
+  setTimeout(runCycle, 100);
+});
 </script>
 </body>
 </html>
