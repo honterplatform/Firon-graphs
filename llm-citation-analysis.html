@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM Citation Analysis</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0F0F0F;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+    font-size: clamp(9px, 1.5vh, 13px);
+  }
+
+  .stage {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 1vh, 10px);
+    padding: clamp(8px, 1.4vh, 14px);
+  }
+
+  /* --- Query bar --- */
+  .query-bar {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(7px, 1vh, 11px) clamp(10px, 1.5vh, 14px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .q-icon {
+    width: 1.7em; height: 1.7em;
+    border-radius: 5px;
+    background: rgba(251,59,36,0.1);
+    color: #FB3B24;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85em;
+    flex-shrink: 0;
+  }
+  .q-text {
+    flex: 1;
+    font-size: 0.95em;
+    color: rgba(255,255,255,0.85);
+    font-family: ui-monospace, monospace;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .q-cursor {
+    display: inline-block;
+    width: 1.5px;
+    height: 1em;
+    background: #FB3B24;
+    margin-left: 1px;
+    vertical-align: middle;
+    animation: blink 1s step-end infinite;
+  }
+  .q-badge {
+    font-size: 0.65em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 3px 7px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  @keyframes blink { 0%,100% {opacity:1;} 50% {opacity:0.3;} }
+
+  /* --- Three LLM columns --- */
+  .columns {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(6px, 1vh, 10px);
+  }
+
+  .col {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(8px, 1.2vh, 12px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 0.9vh, 9px);
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .col-header {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding-bottom: clamp(5px, 0.8vh, 8px);
+    border-bottom: 1px solid #1E1E1E;
+    flex-shrink: 0;
+  }
+  .col-mark {
+    width: 1.5em; height: 1.5em;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75em;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .col[data-llm="chatgpt"] .col-mark { background: rgba(75,200,130,0.15); color: #4BC882; }
+  .col[data-llm="perplexity"] .col-mark { background: rgba(85,170,210,0.15); color: #55AAD2; }
+  .col[data-llm="claude"] .col-mark { background: rgba(220,140,80,0.15); color: #DC8C50; }
+
+  .col-name {
+    font-size: 0.92em;
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .col-status {
+    font-size: 0.6em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #555;
+    transition: color 0.3s;
+  }
+  .col.scanning .col-status { color: rgba(255,255,255,0.55); }
+  .col.done.cited .col-status { color: #FB3B24; }
+  .col.done:not(.cited) .col-status { color: #555; }
+
+  .col-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+  }
+
+  .scanning-state {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .col.scanning .scanning-state { opacity: 1; }
+  .scan-shimmer {
+    width: 60%;
+    height: 4px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255,255,255,0.18) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    border-radius: 2px;
+    animation: shimmerMove 1.2s linear infinite;
+  }
+  @keyframes shimmerMove {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  .scan-label {
+    font-size: 0.7em;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+
+  .citation-list {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(3px, 0.5vh, 5px);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .col.done .citation-list { opacity: 1; }
+
+  .cite-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: clamp(4px, 0.7vh, 7px) clamp(6px, 0.9vh, 9px);
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 5px;
+    font-size: 0.85em;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.3s, transform 0.3s, background 0.3s, border-color 0.3s;
+  }
+  .cite-row.show { opacity: 1; transform: translateY(0); }
+  .cite-row.you {
+    background: rgba(251,59,36,0.1);
+    border-color: rgba(251,59,36,0.35);
+  }
+  .cite-rank {
+    width: 1.4em;
+    height: 1.4em;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75em;
+    font-weight: 700;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .cite-row.you .cite-rank {
+    background: rgba(251,59,36,0.25);
+    color: #FB3B24;
+  }
+  .cite-name {
+    color: rgba(255,255,255,0.6);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+  }
+  .cite-row.you .cite-name {
+    color: #FB3B24;
+    font-weight: 700;
+  }
+  .cite-tag {
+    font-size: 0.65em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: rgba(251,59,36,0.85);
+    flex-shrink: 0;
+  }
+
+  .not-cited {
+    text-align: center;
+    padding: clamp(8px, 1.2vh, 14px) 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .col.done:not(.cited) .not-cited { opacity: 1; }
+  .nc-glyph {
+    font-size: 1.4em;
+    color: #333;
+    margin-bottom: 4px;
+  }
+  .nc-text {
+    font-size: 0.7em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  /* --- Footer scoreboard --- */
+  .scoreboard {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(7px, 1vh, 11px) clamp(10px, 1.5vh, 14px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .sb-left { display: flex; flex-direction: column; gap: 1px; }
+  .sb-label {
+    font-size: 0.62em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .sb-value {
+    font-size: 0.95em;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+  }
+  .sb-meter {
+    flex: 1;
+    display: flex;
+    gap: 5px;
+    margin: 0 12px;
+    max-width: 50%;
+  }
+  .sb-tile {
+    flex: 1;
+    height: clamp(6px, 1vh, 9px);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 3px;
+    transition: background 0.5s, border-color 0.5s;
+  }
+  .sb-tile.active {
+    background: rgba(251,59,36,0.4);
+    border-color: rgba(251,59,36,0.7);
+    box-shadow: 0 0 8px rgba(251,59,36,0.4);
+  }
+  .sb-right {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .sb-score {
+    font-size: 1.4em;
+    font-weight: 800;
+    color: #FB3B24;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .sb-score-of {
+    font-size: 0.7em;
+    color: #555;
+    font-weight: 600;
+  }
+
+  /* Stack vertically on narrow viewports */
+  @media (max-aspect-ratio: 5/4) {
+    .columns { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <!-- Query bar -->
+  <div class="query-bar">
+    <div class="q-icon">✦</div>
+    <div class="q-text"><span id="qText"></span><span class="q-cursor"></span></div>
+    <div class="q-badge">LLM Probe</div>
+  </div>
+
+  <!-- Three LLM columns -->
+  <div class="columns">
+    <div class="col" data-llm="chatgpt" id="col-chatgpt">
+      <div class="col-header">
+        <div class="col-mark">G</div>
+        <div class="col-name">ChatGPT</div>
+        <div class="col-status">Idle</div>
+      </div>
+      <div class="col-body">
+        <div class="scanning-state">
+          <div class="scan-shimmer"></div>
+          <div class="scan-label">Probing model</div>
+        </div>
+        <div class="citation-list"></div>
+        <div class="not-cited">
+          <div class="nc-glyph">⊘</div>
+          <div class="nc-text">Your brand not cited</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col" data-llm="perplexity" id="col-perplexity">
+      <div class="col-header">
+        <div class="col-mark">P</div>
+        <div class="col-name">Perplexity</div>
+        <div class="col-status">Idle</div>
+      </div>
+      <div class="col-body">
+        <div class="scanning-state">
+          <div class="scan-shimmer"></div>
+          <div class="scan-label">Probing model</div>
+        </div>
+        <div class="citation-list"></div>
+        <div class="not-cited">
+          <div class="nc-glyph">⊘</div>
+          <div class="nc-text">Your brand not cited</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col" data-llm="claude" id="col-claude">
+      <div class="col-header">
+        <div class="col-mark">C</div>
+        <div class="col-name">Claude</div>
+        <div class="col-status">Idle</div>
+      </div>
+      <div class="col-body">
+        <div class="scanning-state">
+          <div class="scan-shimmer"></div>
+          <div class="scan-label">Probing model</div>
+        </div>
+        <div class="citation-list"></div>
+        <div class="not-cited">
+          <div class="nc-glyph">⊘</div>
+          <div class="nc-text">Your brand not cited</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scoreboard -->
+  <div class="scoreboard">
+    <div class="sb-left">
+      <div class="sb-label">Brand Advocacy</div>
+      <div class="sb-value" id="sbVerdict">Standby</div>
+    </div>
+    <div class="sb-meter">
+      <div class="sb-tile" id="tile-chatgpt"></div>
+      <div class="sb-tile" id="tile-perplexity"></div>
+      <div class="sb-tile" id="tile-claude"></div>
+    </div>
+    <div class="sb-right">
+      <div class="sb-score"><span id="scoreNum">0</span><span class="sb-score-of">/3</span></div>
+      <div class="sb-label">LLMs cite you</div>
+    </div>
+  </div>
+</div>
+
+<script>
+var SCENARIOS = [
+  {
+    query: 'best premium candle brands',
+    chatgpt: ['Diptyque', 'Boy Smells', 'Le Labo', 'Byredo', 'Jo Malone'],
+    perplexity: ['Boy Smells', 'Your Brand', 'Diptyque', 'Le Labo', 'Otherland'],
+    claude: ['Diptyque', 'Le Labo', 'Byredo', 'Jo Malone', 'Boy Smells']
+  },
+  {
+    query: 'top design agencies in NYC',
+    chatgpt: ['Pentagram', 'Your Brand', 'Athletics', 'Mucca', 'Sagmeister'],
+    perplexity: ['Your Brand', 'Pentagram', 'Athletics', 'Mucca', 'Red Antler'],
+    claude: ['Pentagram', 'Athletics', 'Sagmeister', 'Your Brand', 'Mucca']
+  },
+  {
+    query: 'best running shoes for marathons',
+    chatgpt: ['Nike Vaporfly', 'Adidas Adios Pro', 'Saucony Endorphin', 'Hoka Rocket X', 'New Balance SC'],
+    perplexity: ['Adidas Adios', 'Nike Vaporfly', 'Hoka Rocket', 'Saucony Pro', 'Asics Metaspeed'],
+    claude: ['Nike Vaporfly', 'Saucony Endorphin', 'Adidas Adios', 'New Balance SC', 'Hoka Rocket']
+  },
+  {
+    query: 'top SaaS analytics tools 2026',
+    chatgpt: ['Mixpanel', 'Amplitude', 'Heap', 'Your Brand', 'PostHog'],
+    perplexity: ['Amplitude', 'Mixpanel', 'PostHog', 'Heap', 'June'],
+    claude: ['Amplitude', 'Mixpanel', 'Your Brand', 'PostHog', 'Heap']
+  }
+];
+
+var qText = document.getElementById('qText');
+var sbVerdict = document.getElementById('sbVerdict');
+var scoreNum = document.getElementById('scoreNum');
+
+var LLMS = ['chatgpt', 'perplexity', 'claude'];
+
+function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+
+async function typeQuery(text) {
+  qText.textContent = '';
+  for (var i = 0; i <= text.length; i++) {
+    qText.textContent = text.substring(0, i);
+    await sleep(28 + Math.random() * 35);
+  }
+}
+
+function setColState(llm, state) {
+  var el = document.getElementById('col-' + llm);
+  el.classList.remove('scanning', 'done', 'cited');
+  if (state === 'scanning') el.classList.add('scanning');
+  if (state === 'done-cited') el.classList.add('done', 'cited');
+  if (state === 'done-uncited') el.classList.add('done');
+
+  var status = el.querySelector('.col-status');
+  if (state === 'scanning') status.textContent = 'Scanning';
+  else if (state === 'done-cited') status.textContent = 'Cited';
+  else if (state === 'done-uncited') status.textContent = 'Skipped';
+  else status.textContent = 'Idle';
+}
+
+function renderCitations(llm, brands) {
+  var el = document.getElementById('col-' + llm);
+  var list = el.querySelector('.citation-list');
+  list.innerHTML = '';
+  for (var i = 0; i < brands.length; i++) {
+    var name = brands[i];
+    var isYou = name === 'Your Brand';
+    var row = document.createElement('div');
+    row.className = 'cite-row' + (isYou ? ' you' : '');
+    row.innerHTML =
+      '<div class="cite-rank">' + (i + 1) + '</div>' +
+      '<div class="cite-name">' + name + '</div>' +
+      (isYou ? '<div class="cite-tag">You</div>' : '');
+    list.appendChild(row);
+  }
+}
+
+async function revealCitations(llm) {
+  var el = document.getElementById('col-' + llm);
+  var rows = el.querySelectorAll('.cite-row');
+  for (var i = 0; i < rows.length; i++) {
+    rows[i].classList.add('show');
+    await sleep(70);
+  }
+}
+
+function updateScoreboard(scenario) {
+  var cited = LLMS.map(function(llm) {
+    return scenario[llm].indexOf('Your Brand') !== -1;
+  });
+  var count = cited.filter(Boolean).length;
+
+  // Reset tiles
+  LLMS.forEach(function(llm, i) {
+    var tile = document.getElementById('tile-' + llm);
+    if (cited[i]) tile.classList.add('active');
+    else tile.classList.remove('active');
+  });
+
+  // Animate score
+  var current = parseInt(scoreNum.textContent) || 0;
+  var start = Date.now();
+  function step() {
+    var t = Math.min(1, (Date.now() - start) / 500);
+    var v = current + (count - current) * (1 - Math.pow(1 - t, 3));
+    scoreNum.textContent = Math.round(v);
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+
+  // Verdict text
+  var verdict;
+  if (count === 0) verdict = 'AI bypasses your brand';
+  else if (count === 1) verdict = 'Weak presence';
+  else if (count === 2) verdict = 'Partial advocacy';
+  else verdict = 'Full advocacy';
+  sbVerdict.textContent = verdict;
+}
+
+function clearScoreboard() {
+  LLMS.forEach(function(llm) {
+    document.getElementById('tile-' + llm).classList.remove('active');
+  });
+  sbVerdict.textContent = 'Probing…';
+}
+
+var idx = 0;
+
+async function runCycle() {
+  var sc = SCENARIOS[idx % SCENARIOS.length];
+  idx++;
+
+  // Reset
+  LLMS.forEach(function(llm) { setColState(llm, 'idle'); });
+  document.querySelectorAll('.citation-list').forEach(function(l) { l.innerHTML = ''; });
+  clearScoreboard();
+  qText.textContent = '';
+
+  await sleep(300);
+
+  // Type query
+  await typeQuery(sc.query);
+  await sleep(350);
+
+  // All three start scanning
+  LLMS.forEach(function(llm) { setColState(llm, 'scanning'); });
+  await sleep(1300 + Math.random() * 200);
+
+  // Resolve each LLM with slight stagger
+  for (var i = 0; i < LLMS.length; i++) {
+    var llm = LLMS[i];
+    var brands = sc[llm];
+    var cited = brands.indexOf('Your Brand') !== -1;
+    setColState(llm, cited ? 'done-cited' : 'done-uncited');
+    if (cited) {
+      renderCitations(llm, brands);
+      revealCitations(llm);
+    }
+    await sleep(220);
+  }
+
+  // Scoreboard updates after small delay
+  await sleep(400);
+  updateScoreboard(sc);
+
+  await sleep(3200);
+
+  runCycle();
+}
+
+runCycle();
+</script>
+</body>
+</html>
