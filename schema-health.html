@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schema Health Audit</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0F0F0F;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+    font-size: clamp(9px, 1.5vh, 13px);
+  }
+
+  .stage {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 1vh, 10px);
+    padding: clamp(8px, 1.4vh, 14px);
+  }
+
+  /* --- Header --- */
+  .header {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(7px, 1vh, 11px) clamp(10px, 1.5vh, 14px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .h-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .h-icon {
+    width: 1.7em; height: 1.7em;
+    border-radius: 5px;
+    background: rgba(251,59,36,0.1);
+    color: #FB3B24;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85em;
+    flex-shrink: 0;
+  }
+  .h-title-group { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .h-title {
+    font-size: 0.95em;
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+    white-space: nowrap;
+  }
+  .h-sub {
+    font-size: 0.65em;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  .h-right {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .h-rate {
+    font-size: 1.55em;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: #FB3B24;
+    line-height: 1;
+    transition: color 0.5s;
+  }
+  .h-rate.good { color: #4BC882; }
+  .h-rate-label {
+    font-size: 0.62em;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-weight: 700;
+  }
+
+  /* --- Catalog --- */
+  .catalog-wrap {
+    flex: 1;
+    min-height: 0;
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(8px, 1.2vh, 12px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(5px, 0.8vh, 8px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .catalog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .catalog-label {
+    font-size: 0.65em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .audit-status {
+    font-size: 0.65em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #555;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .audit-status .as-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: blink 1.2s ease-in-out infinite;
+  }
+  .audit-status.scanning {
+    color: rgba(255,255,255,0.7);
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.15);
+  }
+  .audit-status.error {
+    color: #FB3B24;
+    background: rgba(251,59,36,0.08);
+    border-color: rgba(251,59,36,0.3);
+  }
+  .audit-status.fixing {
+    color: #E6B43C;
+    background: rgba(230,180,60,0.08);
+    border-color: rgba(230,180,60,0.3);
+  }
+  .audit-status.healthy {
+    color: #4BC882;
+    background: rgba(75,200,130,0.08);
+    border-color: rgba(75,200,130,0.3);
+  }
+  @keyframes blink { 0%,100% {opacity:1;} 50% {opacity:0.3;} }
+
+  .catalog {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: clamp(4px, 0.7vh, 7px);
+    position: relative;
+  }
+
+  .product {
+    background: #0D0D0D;
+    border: 1px solid #1E1E1E;
+    border-radius: 5px;
+    padding: clamp(4px, 0.7vh, 7px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(3px, 0.5vh, 5px);
+    position: relative;
+    min-width: 0;
+    transition: border-color 0.4s, background 0.4s, box-shadow 0.4s;
+    overflow: hidden;
+  }
+  .product .img-block {
+    flex: 1;
+    min-height: 0;
+    border-radius: 3px;
+    background: linear-gradient(135deg, #1A1A1A 0%, #161616 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .product .img-block::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 60%);
+  }
+  .product .sku {
+    font-family: ui-monospace, monospace;
+    font-size: 0.7em;
+    color: rgba(255,255,255,0.4);
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 0;
+  }
+
+  .product .badge {
+    position: absolute;
+    top: clamp(4px, 0.7vh, 7px);
+    right: clamp(4px, 0.7vh, 7px);
+    width: 1.3em;
+    height: 1.3em;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75em;
+    font-weight: 800;
+    color: #fff;
+    z-index: 2;
+    transition: opacity 0.3s, transform 0.3s;
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  .product[data-state="error"] .badge,
+  .product[data-state="warning"] .badge,
+  .product[data-state="healthy"] .badge {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .product[data-state="error"] .badge { background: #FB3B24; }
+  .product[data-state="warning"] .badge { background: #E6B43C; color: #1A1500; }
+  .product[data-state="healthy"] .badge { background: #4BC882; }
+
+  /* Card states */
+  .product[data-state="idle"] {
+    opacity: 0.55;
+  }
+  .product[data-state="scanning"] {
+    border-color: rgba(255,255,255,0.4);
+    box-shadow: 0 0 14px rgba(255,255,255,0.1);
+  }
+  .product[data-state="error"] {
+    border-color: rgba(251,59,36,0.45);
+    background: rgba(251,59,36,0.03);
+  }
+  .product[data-state="error"] .img-block {
+    background: linear-gradient(135deg, rgba(251,59,36,0.12) 0%, rgba(251,59,36,0.04) 100%);
+  }
+  .product[data-state="warning"] {
+    border-color: rgba(230,180,60,0.4);
+  }
+  .product[data-state="healthy"] {
+    border-color: rgba(75,200,130,0.4);
+    background: rgba(75,200,130,0.03);
+  }
+  .product[data-state="healthy"] .img-block {
+    background: linear-gradient(135deg, rgba(75,200,130,0.10) 0%, rgba(75,200,130,0.03) 100%);
+  }
+  .product[data-state="fixing"] {
+    border-color: rgba(230,180,60,0.5);
+    animation: fixPulse 0.8s ease-in-out infinite;
+  }
+  @keyframes fixPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(230,180,60,0); }
+    50% { box-shadow: 0 0 12px 0 rgba(230,180,60,0.3); }
+  }
+
+  /* Error label overlay (small text) */
+  .err-text {
+    position: absolute;
+    top: clamp(4px, 0.7vh, 7px);
+    left: clamp(4px, 0.7vh, 7px);
+    right: 2em;
+    font-size: 0.62em;
+    font-weight: 700;
+    color: rgba(251,59,36,0.95);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    line-height: 1.2;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .product[data-state="error"] .err-text { opacity: 1; }
+
+  /* "Cited" / "Skipped" caption */
+  .caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 2px 6px;
+    font-size: 0.55em;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    text-align: center;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    z-index: 2;
+  }
+  .product[data-state="error"] .caption {
+    background: rgba(251,59,36,0.85);
+    color: #fff;
+    transform: translateY(0);
+  }
+  .product[data-state="healthy"] .caption {
+    background: rgba(75,200,130,0.85);
+    color: #08200F;
+    transform: translateY(0);
+  }
+  .product[data-state="warning"] .caption {
+    background: rgba(230,180,60,0.85);
+    color: #2A1F00;
+    transform: translateY(0);
+  }
+
+  /* Crawler beam */
+  .beam {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255,255,255,0.6) 20%,
+      rgba(255,255,255,0.95) 50%,
+      rgba(255,255,255,0.6) 80%,
+      transparent 100%
+    );
+    box-shadow: 0 0 16px rgba(255,255,255,0.4),
+                0 0 32px rgba(251,59,36,0.3);
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+    top: 0;
+    transition: opacity 0.2s;
+  }
+  .beam.active { opacity: 1; }
+  .beam::before {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    top: -16px;
+    bottom: -16px;
+    background: linear-gradient(180deg,
+      transparent 0%,
+      rgba(255,255,255,0.04) 50%,
+      transparent 100%
+    );
+  }
+
+  /* Footer stats */
+  .footer {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(7px, 1vh, 10px) clamp(10px, 1.5vh, 14px);
+    display: flex;
+    gap: clamp(8px, 1.5vh, 14px);
+    flex-shrink: 0;
+  }
+  .stat-block {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .stat-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .stat-dot.error { background: #FB3B24; }
+  .stat-dot.warn { background: #E6B43C; }
+  .stat-dot.ok { background: #4BC882; }
+  .stat-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+  .stat-num {
+    font-size: 1em;
+    font-weight: 800;
+    color: rgba(255,255,255,0.9);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+  .stat-lbl {
+    font-size: 0.6em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Stack on narrow */
+  @media (max-aspect-ratio: 4/5) {
+    .catalog { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(4, 1fr); }
+  }
+  @media (max-aspect-ratio: 1/1) and (min-aspect-ratio: 4/5) {
+    .catalog { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <!-- Header -->
+  <div class="header">
+    <div class="h-left">
+      <div class="h-icon">⚙</div>
+      <div class="h-title-group">
+        <div class="h-title">Schema Health Audit</div>
+        <div class="h-sub">LLM crawler diagnostics</div>
+      </div>
+    </div>
+    <div class="h-right">
+      <div class="h-rate" id="hRate">0%</div>
+      <div class="h-rate-label">Crawl success</div>
+    </div>
+  </div>
+
+  <!-- Catalog -->
+  <div class="catalog-wrap">
+    <div class="catalog-header">
+      <div class="catalog-label">Product Catalog · 12 SKUs</div>
+      <div class="audit-status" id="auditStatus">
+        <span class="as-dot"></span>
+        <span id="asText">Initializing</span>
+      </div>
+    </div>
+    <div class="catalog" id="catalog">
+      <div class="beam" id="beam"></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="stat-block">
+      <div class="stat-dot error"></div>
+      <div class="stat-text">
+        <div class="stat-num" id="errCount">0</div>
+        <div class="stat-lbl">Errors</div>
+      </div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-dot warn"></div>
+      <div class="stat-text">
+        <div class="stat-num" id="warnCount">0</div>
+        <div class="stat-lbl">Warnings</div>
+      </div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-dot ok"></div>
+      <div class="stat-text">
+        <div class="stat-num" id="okCount">0</div>
+        <div class="stat-lbl">Healthy</div>
+      </div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-dot" style="background:rgba(255,255,255,0.5)"></div>
+      <div class="stat-text">
+        <div class="stat-num" id="citedCount">0<span style="opacity:0.4;font-weight:600;font-size:0.85em;">/12</span></div>
+        <div class="stat-lbl">AI-Cited</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var SKUS = [
+  'SKU-A4F2', 'SKU-B891', 'SKU-C247', 'SKU-D156',
+  'SKU-E933', 'SKU-F420', 'SKU-G715', 'SKU-H362',
+  'SKU-J108', 'SKU-K577', 'SKU-L834', 'SKU-M291'
+];
+
+var ERRORS = [
+  'No @type Product',
+  'Invalid Offer.price',
+  'Empty image attr',
+  'No BreadcrumbList',
+  'Missing brand',
+  'Malformed Review',
+  'Broken JSON-LD',
+  'No availability',
+  'Invalid SKU format'
+];
+
+// Initial state: 8 errors, 3 warnings, 1 healthy
+var BEFORE = [
+  { state: 'error', err: 'No @type Product' },
+  { state: 'error', err: 'Invalid Offer.price' },
+  { state: 'warning', err: '' },
+  { state: 'error', err: 'Empty image attr' },
+  { state: 'healthy', err: '' },
+  { state: 'error', err: 'Missing brand' },
+  { state: 'error', err: 'No BreadcrumbList' },
+  { state: 'warning', err: '' },
+  { state: 'error', err: 'Broken JSON-LD' },
+  { state: 'error', err: 'Malformed Review' },
+  { state: 'warning', err: '' },
+  { state: 'error', err: 'No availability' }
+];
+
+// After fix: 0 errors, 1 warning, 11 healthy
+var AFTER = [
+  { state: 'healthy', err: '' },
+  { state: 'healthy', err: '' },
+  { state: 'healthy', err: '' },
+  { state: 'healthy', err: '' },
+  { state: 'healthy', err: '' },
+  { state: 'healthy', err: '' },
+  { state: 'healthy', err: '' },
+  { state: 'warning', err: '' },
+  { state: 'healthy', err: '' },
+  { state: 'healthy', err: '' },
+  { state: 'healthy', err: '' },
+  { state: 'healthy', err: '' }
+];
+
+// Build catalog
+var catalog = document.getElementById('catalog');
+var beam = document.getElementById('beam');
+var products = [];
+for (var i = 0; i < 12; i++) {
+  var p = document.createElement('div');
+  p.className = 'product';
+  p.dataset.state = 'idle';
+  p.innerHTML =
+    '<div class="img-block"></div>' +
+    '<div class="sku">' + SKUS[i] + '</div>' +
+    '<div class="badge"></div>' +
+    '<div class="err-text"></div>' +
+    '<div class="caption"></div>';
+  catalog.appendChild(p);
+  products.push(p);
+}
+
+var hRate = document.getElementById('hRate');
+var auditStatus = document.getElementById('auditStatus');
+var asText = document.getElementById('asText');
+var errCount = document.getElementById('errCount');
+var warnCount = document.getElementById('warnCount');
+var okCount = document.getElementById('okCount');
+var citedCount = document.getElementById('citedCount');
+
+function setStatus(cls, text) {
+  auditStatus.className = 'audit-status ' + cls;
+  asText.textContent = text;
+}
+
+function setProductState(p, state, err) {
+  p.dataset.state = state;
+  var badge = p.querySelector('.badge');
+  var errText = p.querySelector('.err-text');
+  var caption = p.querySelector('.caption');
+  if (state === 'error') {
+    badge.textContent = '✕';
+    errText.textContent = err || '';
+    caption.textContent = 'Skipped by AI';
+  } else if (state === 'warning') {
+    badge.textContent = '!';
+    errText.textContent = '';
+    caption.textContent = 'Partial';
+  } else if (state === 'healthy') {
+    badge.textContent = '✓';
+    errText.textContent = '';
+    caption.textContent = 'AI Cited';
+  } else {
+    badge.textContent = '';
+    errText.textContent = '';
+    caption.textContent = '';
+  }
+}
+
+function sleep(ms) {
+  return new Promise(function(r) { setTimeout(r, ms); });
+}
+
+function tween(from, to, dur, cb) {
+  var start = Date.now();
+  function step() {
+    var t = Math.min(1, (Date.now() - start) / dur);
+    var v = from + (to - from) * (1 - Math.pow(1 - t, 3));
+    cb(v);
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function countStates(arr) {
+  var e = 0, w = 0, ok = 0;
+  arr.forEach(function(s) {
+    if (s.state === 'error') e++;
+    else if (s.state === 'warning') w++;
+    else if (s.state === 'healthy') ok++;
+  });
+  return { e: e, w: w, ok: ok };
+}
+
+function updateStats(arr) {
+  var c = countStates(arr);
+  var prev = {
+    e: parseInt(errCount.textContent) || 0,
+    w: parseInt(warnCount.textContent) || 0,
+    ok: parseInt(okCount.textContent) || 0
+  };
+  tween(prev.e, c.e, 500, function(v) { errCount.textContent = Math.round(v); });
+  tween(prev.w, c.w, 500, function(v) { warnCount.textContent = Math.round(v); });
+  tween(prev.ok, c.ok, 500, function(v) { okCount.textContent = Math.round(v); });
+
+  var citedPrev = parseInt(citedCount.firstChild.textContent) || 0;
+  tween(citedPrev, c.ok, 600, function(v) {
+    citedCount.firstChild.textContent = Math.round(v);
+  });
+
+  var rate = Math.round((c.ok / 12) * 100);
+  var ratePrev = parseInt(hRate.textContent) || 0;
+  tween(ratePrev, rate, 700, function(v) {
+    hRate.textContent = Math.round(v) + '%';
+  });
+  if (rate >= 80) hRate.classList.add('good');
+  else hRate.classList.remove('good');
+}
+
+async function sweepBeam() {
+  // Beam sweeps top to bottom across the catalog
+  var rect = catalog.getBoundingClientRect();
+  var height = rect.height;
+  beam.classList.add('active');
+  var duration = 2200;
+  var start = Date.now();
+  return new Promise(function(resolve) {
+    function step() {
+      var t = Math.min(1, (Date.now() - start) / duration);
+      var y = t * height;
+      beam.style.top = y + 'px';
+      if (t < 1) requestAnimationFrame(step);
+      else {
+        beam.classList.remove('active');
+        resolve();
+      }
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+async function revealStates(arr) {
+  // Cards reveal as the beam crosses them. We have a 6×2 grid.
+  // Top row: indices 0-5, bottom row: 6-11.
+  // Reveal in two batches to match beam progression.
+  setTimeout(function() {
+    for (var i = 0; i < 6; i++) {
+      var s = arr[i];
+      products[i].dataset.state = 'scanning';
+      (function(idx, st) {
+        setTimeout(function() { setProductState(products[idx], st.state, st.err); }, 80 + idx * 30);
+      })(i, s);
+    }
+  }, 350);
+  setTimeout(function() {
+    for (var i = 6; i < 12; i++) {
+      var s = arr[i];
+      products[i].dataset.state = 'scanning';
+      (function(idx, st) {
+        setTimeout(function() { setProductState(products[idx], st.state, st.err); }, 80 + (idx - 6) * 30);
+      })(i, s);
+    }
+  }, 1300);
+}
+
+async function fixBatch(arr) {
+  // For every error/warning card, animate fixing pulse, then transition to AFTER state
+  var indices = [];
+  arr.forEach(function(s, i) { if (s.state !== 'healthy') indices.push(i); });
+
+  // Mark all as fixing
+  indices.forEach(function(i) {
+    products[i].dataset.state = 'fixing';
+    products[i].querySelector('.err-text').textContent = '';
+    products[i].querySelector('.caption').textContent = '';
+    products[i].querySelector('.badge').textContent = '';
+  });
+
+  await sleep(1100);
+
+  // Transition each to AFTER state with stagger
+  for (var k = 0; k < indices.length; k++) {
+    var i = indices[k];
+    setProductState(products[i], AFTER[i].state, AFTER[i].err);
+    await sleep(60);
+  }
+}
+
+async function runCycle() {
+  // Reset all to idle
+  for (var i = 0; i < 12; i++) {
+    setProductState(products[i], 'idle', '');
+  }
+  errCount.textContent = '0';
+  warnCount.textContent = '0';
+  okCount.textContent = '0';
+  citedCount.firstChild.textContent = '0';
+  hRate.textContent = '0%';
+  hRate.classList.remove('good');
+
+  setStatus('scanning', 'Scanning catalog');
+  await sleep(500);
+
+  // PHASE 1: Initial sweep, reveal BEFORE state
+  revealStates(BEFORE);
+  await sweepBeam();
+  await sleep(150);
+  updateStats(BEFORE);
+  setStatus('error', '8 schema errors found');
+  await sleep(2000);
+
+  // PHASE 2: Deploy fix
+  setStatus('fixing', 'Deploying schema fixes');
+  await fixBatch(BEFORE);
+
+  // PHASE 3: Re-scan, reveal AFTER state
+  setStatus('scanning', 'Re-crawling catalog');
+  await sleep(400);
+
+  // The cards are already in AFTER state; sweep is just visual
+  // Reset cards to "scanning" briefly to show re-scan
+  // Actually let's keep them visible — beam sweeps over already-fixed cards
+  await sweepBeam();
+  await sleep(200);
+  updateStats(AFTER);
+  setStatus('healthy', 'AI-readable · 11 cited');
+  await sleep(3000);
+
+  // Loop
+  runCycle();
+}
+
+runCycle();
+</script>
+</body>
+</html>
