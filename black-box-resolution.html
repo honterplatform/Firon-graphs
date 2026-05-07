@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Black Box Resolution</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0F0F0F;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+    font-size: clamp(9px, 1.5vh, 13px);
+  }
+
+  .stage {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 1vh, 10px);
+    padding: clamp(8px, 1.4vh, 14px);
+  }
+
+  /* --- Header --- */
+  .header {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(7px, 1vh, 11px) clamp(10px, 1.5vh, 14px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .h-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .h-icon {
+    width: 1.7em; height: 1.7em;
+    border-radius: 5px;
+    background: rgba(251,59,36,0.1);
+    color: #FB3B24;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85em;
+    flex-shrink: 0;
+  }
+  .h-title-group { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .h-title {
+    font-size: 0.95em;
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+    white-space: nowrap;
+  }
+  .h-sub {
+    font-size: 0.65em;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  .status-pill {
+    font-size: 0.65em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 9px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #555;
+    transition: all 0.4s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+  .pill-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: blink 1.2s ease-in-out infinite;
+  }
+  .status-pill.mystery { color: rgba(255,255,255,0.55); }
+  .status-pill.scanning {
+    color: #fff;
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.18);
+  }
+  .status-pill.resolved {
+    color: #4BC882;
+    background: rgba(75,200,130,0.08);
+    border-color: rgba(75,200,130,0.3);
+  }
+  @keyframes blink { 0%,100% {opacity:1;} 50% {opacity:0.3;} }
+
+  /* --- Main 3-column layout --- */
+  .main {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1fr 2.4fr 1fr;
+    gap: clamp(6px, 1vh, 10px);
+  }
+
+  .panel {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(8px, 1.2vh, 12px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 1vh, 9px);
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    position: relative;
+  }
+  .panel-label {
+    font-size: 0.62em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    flex-shrink: 0;
+  }
+
+  /* --- Left: traffic source --- */
+  .traffic {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: clamp(6px, 1vh, 9px);
+  }
+  .source {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: clamp(5px, 0.9vh, 8px);
+    background: #0D0D0D;
+    border: 1px solid #1E1E1E;
+    border-radius: 5px;
+    position: relative;
+  }
+  .src-mark {
+    width: 1.5em; height: 1.5em;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7em;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .source[data-llm="chatgpt"] .src-mark { background: rgba(75,200,130,0.15); color: #4BC882; }
+  .source[data-llm="perplexity"] .src-mark { background: rgba(85,170,210,0.15); color: #55AAD2; }
+  .source[data-llm="claude"] .src-mark { background: rgba(220,140,80,0.15); color: #DC8C50; }
+  .src-name {
+    font-size: 0.78em;
+    font-weight: 600;
+    color: rgba(255,255,255,0.7);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .src-pulse {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.4);
+    flex-shrink: 0;
+    animation: pulseDot 1.5s ease-in-out infinite;
+  }
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* --- Center: black box --- */
+  .box-panel {
+    overflow: visible; /* let beam glow extend slightly */
+  }
+  .box-area {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    border: 1.5px dashed rgba(251,59,36,0.4);
+    border-radius: 8px;
+    background: #0A0A0A;
+    transition: border-style 0.6s, border-color 0.6s, background 0.6s, box-shadow 0.6s;
+    overflow: hidden;
+  }
+  .box-area.opened {
+    border-style: solid;
+    border-color: rgba(75,200,130,0.35);
+    background: linear-gradient(180deg, rgba(75,200,130,0.02) 0%, transparent 100%);
+  }
+
+  /* Closed state: question mark + label */
+  .closed-state {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(4px, 0.7vh, 7px);
+    transition: opacity 0.5s;
+  }
+  .box-area.opened .closed-state { opacity: 0; pointer-events: none; }
+  .closed-mark {
+    font-size: clamp(28px, 7vh, 56px);
+    color: rgba(251,59,36,0.4);
+    font-weight: 800;
+    line-height: 1;
+    animation: mysteryFlicker 2.5s ease-in-out infinite;
+  }
+  @keyframes mysteryFlicker {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+  .closed-label {
+    font-size: 0.72em;
+    font-weight: 700;
+    color: rgba(251,59,36,0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  .closed-sub {
+    font-size: 0.6em;
+    font-weight: 600;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* X-ray beam */
+  .beam {
+    position: absolute;
+    left: -10%;
+    right: -10%;
+    height: 3px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255,255,255,0.5) 20%,
+      rgba(255,255,255,1) 50%,
+      rgba(255,255,255,0.5) 80%,
+      transparent 100%
+    );
+    box-shadow: 0 0 18px rgba(255,255,255,0.6),
+                0 0 32px rgba(251,59,36,0.4);
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+    top: 0;
+  }
+  .beam.active { opacity: 1; }
+
+  /* Open state: pipeline stages */
+  .pipeline {
+    position: absolute;
+    inset: 0;
+    padding: clamp(8px, 1.4vh, 14px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(3px, 0.5vh, 5px);
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  .box-area.opened .pipeline { opacity: 1; }
+
+  .pipe-stage {
+    flex: 1;
+    min-height: 0;
+    background: #0D0D0D;
+    border: 1px solid #1E1E1E;
+    border-radius: 5px;
+    padding: clamp(5px, 0.8vh, 8px) clamp(7px, 1vh, 10px);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    opacity: 0;
+    transform: translateX(-12px);
+    transition: opacity 0.4s, transform 0.4s, border-color 0.4s, background 0.4s;
+  }
+  .pipe-stage.show {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .pipe-stage.active {
+    border-color: rgba(75,200,130,0.5);
+    background: rgba(75,200,130,0.04);
+  }
+  .pipe-num {
+    width: 1.5em;
+    height: 1.5em;
+    border-radius: 4px;
+    background: rgba(251,59,36,0.12);
+    color: #FB3B24;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7em;
+    font-weight: 800;
+    flex-shrink: 0;
+    transition: background 0.4s, color 0.4s;
+  }
+  .pipe-stage.active .pipe-num {
+    background: rgba(75,200,130,0.18);
+    color: #4BC882;
+  }
+  .pipe-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .pipe-name {
+    font-size: 0.78em;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pipe-detail {
+    font-size: 0.62em;
+    font-weight: 600;
+    color: #555;
+    font-family: ui-monospace, monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pipe-stage.active .pipe-detail { color: rgba(75,200,130,0.8); }
+  .pipe-check {
+    width: 1.2em;
+    height: 1.2em;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7em;
+    font-weight: 800;
+    flex-shrink: 0;
+    transition: background 0.4s, color 0.4s;
+  }
+  .pipe-stage.active .pipe-check {
+    background: rgba(75,200,130,0.3);
+    color: #4BC882;
+  }
+
+  /* Inter-stage connector */
+  .pipe-connector {
+    position: absolute;
+    left: calc(clamp(5px, 0.8vh, 8px) + 0.75em);
+    width: 2px;
+    background: linear-gradient(180deg, rgba(251,59,36,0.3), rgba(251,59,36,0.1));
+    height: clamp(3px, 0.5vh, 5px);
+    bottom: calc(-1 * clamp(3px, 0.5vh, 5px));
+    transform: translateX(-1px);
+    z-index: 0;
+  }
+
+  /* --- Right: output metrics --- */
+  .metrics-list {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(5px, 0.8vh, 8px);
+    justify-content: center;
+  }
+  .metric {
+    background: #0D0D0D;
+    border: 1px solid #1E1E1E;
+    border-radius: 5px;
+    padding: clamp(5px, 0.8vh, 8px) clamp(7px, 1vh, 10px);
+    transition: border-color 0.4s, background 0.4s;
+    overflow: hidden;
+    position: relative;
+  }
+  .metric.resolved {
+    border-color: rgba(75,200,130,0.35);
+    background: rgba(75,200,130,0.03);
+  }
+  .met-label {
+    font-size: 0.6em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+    white-space: nowrap;
+  }
+  .met-value {
+    font-size: 1.05em;
+    font-weight: 800;
+    color: rgba(255,255,255,0.4);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+    transition: color 0.4s;
+    font-family: ui-monospace, monospace;
+  }
+  .metric.resolved .met-value { color: #4BC882; }
+  .metric.resolved .met-value.brand { color: #FB3B24; }
+
+  /* --- Footer (architecture status) --- */
+  .footer {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(6px, 1vh, 10px) clamp(10px, 1.5vh, 14px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .footer-left {
+    font-size: 0.7em;
+    color: rgba(255,255,255,0.5);
+    font-family: ui-monospace, monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+  .footer-progress {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .progress-tile {
+    width: clamp(10px, 1.5vh, 14px);
+    height: clamp(5px, 0.8vh, 7px);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 2px;
+    transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+  }
+  .progress-tile.active {
+    background: rgba(75,200,130,0.4);
+    border-color: rgba(75,200,130,0.6);
+    box-shadow: 0 0 6px rgba(75,200,130,0.3);
+  }
+
+  /* Stack on narrow */
+  @media (max-aspect-ratio: 1/1) {
+    .main {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 2fr auto;
+    }
+    .traffic { flex-direction: row; }
+    .source { flex: 1; }
+    .metrics-list { flex-direction: row; }
+    .metric { flex: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <!-- Header -->
+  <div class="header">
+    <div class="h-left">
+      <div class="h-icon">◫</div>
+      <div class="h-title-group">
+        <div class="h-title">Black Box Resolution</div>
+        <div class="h-sub">AI traffic → unit economics</div>
+      </div>
+    </div>
+    <div class="status-pill mystery" id="statusPill">
+      <span class="pill-dot"></span>
+      <span id="statusText">Mystery</span>
+    </div>
+  </div>
+
+  <!-- Main 3-column -->
+  <div class="main">
+    <!-- Left: AI traffic sources -->
+    <div class="panel">
+      <div class="panel-label">AI Search Traffic</div>
+      <div class="traffic">
+        <div class="source" data-llm="chatgpt">
+          <div class="src-mark">G</div>
+          <div class="src-name">ChatGPT</div>
+          <div class="src-pulse"></div>
+        </div>
+        <div class="source" data-llm="perplexity">
+          <div class="src-mark">P</div>
+          <div class="src-name">Perplexity</div>
+          <div class="src-pulse"></div>
+        </div>
+        <div class="source" data-llm="claude">
+          <div class="src-mark">C</div>
+          <div class="src-name">Claude</div>
+          <div class="src-pulse"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center: Black box -->
+    <div class="panel box-panel">
+      <div class="panel-label">BI Architecture</div>
+      <div class="box-area" id="boxArea">
+        <div class="closed-state">
+          <div class="closed-mark">?</div>
+          <div class="closed-label">Attribution unknown</div>
+          <div class="closed-sub">No pipeline · No LTV signal</div>
+        </div>
+        <div class="beam" id="beam"></div>
+        <div class="pipeline" id="pipeline">
+          <div class="pipe-stage" data-idx="0">
+            <div class="pipe-num">1</div>
+            <div class="pipe-text">
+              <div class="pipe-name">Source detection</div>
+              <div class="pipe-detail">utm + referrer + LLM ID</div>
+            </div>
+            <div class="pipe-check">✓</div>
+          </div>
+          <div class="pipe-stage" data-idx="1">
+            <div class="pipe-num">2</div>
+            <div class="pipe-text">
+              <div class="pipe-name">Session capture</div>
+              <div class="pipe-detail">dwell · pageviews · intent</div>
+            </div>
+            <div class="pipe-check">✓</div>
+          </div>
+          <div class="pipe-stage" data-idx="2">
+            <div class="pipe-num">3</div>
+            <div class="pipe-text">
+              <div class="pipe-name">Conversion event</div>
+              <div class="pipe-detail">cart · signup · revenue</div>
+            </div>
+            <div class="pipe-check">✓</div>
+          </div>
+          <div class="pipe-stage" data-idx="3">
+            <div class="pipe-num">4</div>
+            <div class="pipe-text">
+              <div class="pipe-name">Cohort & LTV</div>
+              <div class="pipe-detail">retention · payback · LTV</div>
+            </div>
+            <div class="pipe-check">✓</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: output metrics -->
+    <div class="panel">
+      <div class="panel-label">Unit Economics</div>
+      <div class="metrics-list">
+        <div class="metric" data-key="ltv">
+          <div class="met-label">AI traffic LTV</div>
+          <div class="met-value brand" data-final="$890">—</div>
+        </div>
+        <div class="metric" data-key="cac">
+          <div class="met-label">CAC</div>
+          <div class="met-value" data-final="$48">—</div>
+        </div>
+        <div class="metric" data-key="payback">
+          <div class="met-label">Payback</div>
+          <div class="met-value" data-final="1.8mo">—</div>
+        </div>
+        <div class="metric" data-key="retention">
+          <div class="met-label">90d retention</div>
+          <div class="met-value" data-final="73%">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-left" id="footerLog">// awaiting BI deployment…</div>
+    <div class="footer-progress" id="footerProgress">
+      <div class="progress-tile"></div>
+      <div class="progress-tile"></div>
+      <div class="progress-tile"></div>
+      <div class="progress-tile"></div>
+      <div class="progress-tile"></div>
+      <div class="progress-tile"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var boxArea = document.getElementById('boxArea');
+var beam = document.getElementById('beam');
+var pipeline = document.getElementById('pipeline');
+var statusPill = document.getElementById('statusPill');
+var statusText = document.getElementById('statusText');
+var footerLog = document.getElementById('footerLog');
+var progressTiles = document.querySelectorAll('.progress-tile');
+var stages = document.querySelectorAll('.pipe-stage');
+var metrics = document.querySelectorAll('.metric');
+
+var LOG_LINES = [
+  '// awaiting BI deployment…',
+  '// scanning AI traffic source…',
+  '// architecture deploying: 4 modules',
+  '// resolving source → conversion path',
+  '// linking cohorts to revenue',
+  '// LTV signal: connected',
+  '// AI traffic → revenue chain locked'
+];
+
+function setStatus(cls, text) {
+  statusPill.className = 'status-pill ' + cls;
+  statusText.textContent = text;
+}
+
+function setLog(idx) {
+  if (idx < LOG_LINES.length) footerLog.textContent = LOG_LINES[idx];
+}
+
+function setProgress(n) {
+  progressTiles.forEach(function(t, i) {
+    if (i < n) t.classList.add('active');
+    else t.classList.remove('active');
+  });
+}
+
+function sleep(ms) {
+  return new Promise(function(r) { setTimeout(r, ms); });
+}
+
+async function sweepBeam() {
+  var rect = boxArea.getBoundingClientRect();
+  var height = rect.height;
+  beam.classList.add('active');
+  var duration = 1200;
+  var start = Date.now();
+  return new Promise(function(resolve) {
+    function step() {
+      var t = Math.min(1, (Date.now() - start) / duration);
+      var y = t * height;
+      beam.style.top = y + 'px';
+      if (t < 1) requestAnimationFrame(step);
+      else {
+        beam.classList.remove('active');
+        resolve();
+      }
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+async function runCycle() {
+  // RESET
+  boxArea.classList.remove('opened');
+  stages.forEach(function(s) {
+    s.classList.remove('show', 'active');
+  });
+  metrics.forEach(function(m) {
+    m.classList.remove('resolved');
+    m.querySelector('.met-value').textContent = '—';
+  });
+  setStatus('mystery', 'Mystery');
+  setLog(0);
+  setProgress(0);
+
+  await sleep(1400);
+
+  // PHASE: scanning
+  setStatus('scanning', 'Scanning');
+  setLog(1);
+  setProgress(1);
+  await sleep(400);
+
+  // X-ray beam
+  await sweepBeam();
+  setProgress(2);
+
+  // PHASE: open box, reveal pipeline
+  boxArea.classList.add('opened');
+  setLog(2);
+  await sleep(350);
+
+  // Reveal stages with stagger
+  for (var i = 0; i < stages.length; i++) {
+    stages[i].classList.add('show');
+    await sleep(200);
+  }
+  setProgress(3);
+  await sleep(300);
+
+  // PHASE: activate stages one by one (data flowing through)
+  setStatus('scanning', 'Resolving');
+  setLog(3);
+  for (var i = 0; i < stages.length; i++) {
+    stages[i].classList.add('active');
+    await sleep(280);
+  }
+  setProgress(4);
+  setLog(4);
+  await sleep(200);
+
+  // PHASE: populate metrics
+  for (var i = 0; i < metrics.length; i++) {
+    var m = metrics[i];
+    var v = m.querySelector('.met-value');
+    m.classList.add('resolved');
+    v.textContent = v.dataset.final;
+    await sleep(220);
+  }
+  setProgress(5);
+  setLog(5);
+
+  await sleep(400);
+  setStatus('resolved', 'Resolved');
+  setProgress(6);
+  setLog(6);
+
+  // Hold final state
+  await sleep(3500);
+
+  // Loop
+  runCycle();
+}
+
+runCycle();
+</script>
+</body>
+</html>
