@@ -144,10 +144,8 @@
   .col-body {
     flex: 1;
     min-height: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
     position: relative;
+    overflow: hidden;
   }
 
   .scanning-state {
@@ -188,13 +186,17 @@
   }
 
   .citation-list {
+    position: absolute;
+    inset: 0;
     display: flex;
     flex-direction: column;
     gap: clamp(3px, 0.5vh, 5px);
     opacity: 0;
     transition: opacity 0.3s;
+    overflow: hidden;
   }
   .col.done .citation-list { opacity: 1; }
+  .cite-row { flex-shrink: 0; }
 
   .cite-row {
     display: flex;
@@ -254,8 +256,13 @@
   }
 
   .not-cited {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     text-align: center;
-    padding: clamp(8px, 1.2vh, 14px) 0;
     opacity: 0;
     transition: opacity 0.3s;
   }
