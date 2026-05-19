@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>90-Day Sprint Roadmap</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0F0F0F;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+    font-size: clamp(9px, 1.5vh, 13px);
+  }
+
+  .stage {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 1vh, 10px);
+    padding: clamp(8px, 1.4vh, 14px);
+  }
+
+  /* --- Header --- */
+  .header {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(7px, 1vh, 11px) clamp(10px, 1.5vh, 14px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .h-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .h-icon {
+    width: 1.7em; height: 1.7em;
+    border-radius: 5px;
+    background: rgba(251,59,36,0.1);
+    color: #FB3B24;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85em;
+    flex-shrink: 0;
+  }
+  .h-title-group { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .h-title {
+    font-size: 0.95em;
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .h-sub {
+    font-size: 0.65em;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .h-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.65em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #FB3B24;
+    background: rgba(251,59,36,0.08);
+    border: 1px solid rgba(251,59,36,0.25);
+    padding: 4px 9px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .h-status-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #FB3B24;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* --- Phase cards row --- */
+  .phases {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1fr;
+    gap: clamp(6px, 1vh, 10px);
+  }
+
+  .phase {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(8px, 1.2vh, 12px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(5px, 0.9vh, 8px);
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+    min-width: 0;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.5s, transform 0.5s, border-color 0.4s;
+  }
+  .phase.show { opacity: 1; transform: translateY(0); }
+
+  .phase.hero {
+    background: linear-gradient(135deg, #141414 0%, rgba(251,59,36,0.06) 100%);
+    border-color: rgba(251,59,36,0.4);
+  }
+  .phase.hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, #FB3B24 0%, rgba(251,59,36,0.4) 100%);
+    box-shadow: 0 0 14px rgba(251,59,36,0.4);
+  }
+
+  /* Phase label (dashed pill — matches deck) */
+  .phase-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.62em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 3px 9px;
+    border-radius: 4px;
+    border: 1px dashed rgba(251,59,36,0.45);
+    background: rgba(251,59,36,0.06);
+    color: rgba(251,59,36,0.9);
+    align-self: flex-start;
+  }
+  .phase.hero .phase-label {
+    border-style: solid;
+    background: rgba(251,59,36,0.18);
+    border-color: rgba(251,59,36,0.6);
+    color: #FB3B24;
+  }
+  .start-badge {
+    font-size: 0.85em;
+    margin-left: 4px;
+  }
+
+  .phase-title {
+    font-size: 0.98em;
+    font-weight: 800;
+    color: rgba(255,255,255,0.92);
+    line-height: 1.15;
+  }
+  .phase.hero .phase-title {
+    color: #fff;
+    font-size: 1.05em;
+  }
+
+  .phase-tag {
+    font-size: 0.62em;
+    font-weight: 700;
+    color: #FB3B24;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-family: ui-monospace, monospace;
+  }
+
+  .phase-desc {
+    font-size: 0.78em;
+    font-weight: 500;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.4;
+  }
+  .phase.hero .phase-desc { color: rgba(255,255,255,0.75); }
+
+  .phase-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-top: 2px;
+  }
+  .phase-list .item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72em;
+    color: rgba(255,255,255,0.55);
+  }
+  .item-dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: #FB3B24;
+    flex-shrink: 0;
+  }
+  .item.checked .item-dot { background: #4BC882; }
+  .item.checked { color: rgba(255,255,255,0.75); }
+  .item-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Progress bar */
+  .phase-progress {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.62em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #555;
+  }
+  .progress-meta .pm-val {
+    color: #FB3B24;
+    font-size: 1.1em;
+    font-family: ui-monospace, monospace;
+  }
+  .progress-track {
+    height: 5px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #FB3B24 0%, rgba(251,59,36,0.6) 100%);
+    width: 0;
+    transition: width 1.2s cubic-bezier(.2,.8,.2,1);
+    box-shadow: 0 0 6px rgba(251,59,36,0.4);
+    border-radius: 3px;
+  }
+
+  .phase-status {
+    font-size: 0.6em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #555;
+    margin-top: auto;
+    flex-shrink: 0;
+  }
+
+  /* --- Timeline footer with curve --- */
+  .timeline {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(7px, 1vh, 11px) clamp(10px, 1.5vh, 14px);
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .timeline-curve {
+    width: 100%;
+    height: clamp(28px, 4vh, 40px);
+    display: block;
+  }
+  .timeline-marks {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+  }
+  .mark {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+  }
+  .mark:first-child { align-items: flex-start; }
+  .mark:last-child { align-items: flex-end; }
+  .mark-tick {
+    width: 1px; height: 5px;
+    background: rgba(255,255,255,0.18);
+  }
+  .mark-label {
+    font-size: 0.62em;
+    font-weight: 700;
+    color: #FB3B24;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-family: ui-monospace, monospace;
+  }
+  .mark-label.dim { color: #555; }
+
+  /* Stack on narrow */
+  @media (max-aspect-ratio: 5/4) {
+    .phases {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1.4fr 1fr 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <!-- Header -->
+  <div class="header">
+    <div class="h-left">
+      <div class="h-icon">▶</div>
+      <div class="h-title-group">
+        <div class="h-title">The 90-Day Sprint Roadmap</div>
+        <div class="h-sub">Phased rollout · 3 stages</div>
+      </div>
+    </div>
+    <div class="h-status">
+      <span class="h-status-dot"></span>
+      Phase 1 · Active
+    </div>
+  </div>
+
+  <!-- Phase cards -->
+  <div class="phases">
+    <!-- Phase 1 (HERO) -->
+    <div class="phase hero" id="phase1">
+      <div class="phase-label">
+        Phase 1
+        <span class="start-badge">★ Start here</span>
+      </div>
+      <div class="phase-title">Identity Architecture Sprint</div>
+      <div class="phase-tag">Days 1 — 30</div>
+      <div class="phase-desc">Code Surgery + Technical Infrastructure. We fix tech debt, clear the path for AI agents, and open the store.</div>
+      <div class="phase-list">
+        <div class="item" data-step="0"><div class="item-dot"></div><div class="item-text">Deep technical audit</div></div>
+        <div class="item" data-step="1"><div class="item-dot"></div><div class="item-text">Schema & metadata deploy</div></div>
+        <div class="item" data-step="2"><div class="item-dot"></div><div class="item-text">Agent-ready store unlocked</div></div>
+      </div>
+      <div class="phase-progress">
+        <div class="progress-meta">
+          <span>Sprint progress</span>
+          <span class="pm-val"><span id="p1pct">0</span>%</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="p1fill"></div></div>
+      </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="phase" id="phase2">
+      <div class="phase-label">Phase 2</div>
+      <div class="phase-title">The Velocity Engine</div>
+      <div class="phase-tag">Days 31 — 60</div>
+      <div class="phase-desc">Mass-deploy "Agent-Ready" descriptions across the full catalog to flood the Hard Data moat.</div>
+      <div class="phase-list">
+        <div class="item"><div class="item-dot"></div><div class="item-text">Catalog-wide metadata</div></div>
+        <div class="item"><div class="item-dot"></div><div class="item-text">Hard Data moat fill</div></div>
+      </div>
+      <div class="phase-status">Queued · starts Day 31</div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="phase" id="phase3">
+      <div class="phase-label">Phase 3</div>
+      <div class="phase-title">Growth & Authority Layer</div>
+      <div class="phase-tag">Days 61 — 90</div>
+      <div class="phase-desc">"Cluster Bombing" content around best-sellers and turning on the Signal Engine (Backlinks & Citations).</div>
+      <div class="phase-list">
+        <div class="item"><div class="item-dot"></div><div class="item-text">Cluster bombing content</div></div>
+        <div class="item"><div class="item-dot"></div><div class="item-text">Signal engine on</div></div>
+      </div>
+      <div class="phase-status">Queued · starts Day 61</div>
+    </div>
+  </div>
+
+  <!-- Timeline curve + day markers -->
+  <div class="timeline">
+    <svg class="timeline-curve" id="curveSVG" preserveAspectRatio="none" viewBox="0 0 100 30">
+      <defs>
+        <linearGradient id="curveFade" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="#FB3B24" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="#FB3B24" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <!-- Rising hockey-stick curve (dashed) -->
+      <path id="curveArea" d="M 0 27 Q 14 28 22 26 Q 38 22 50 16 Q 68 8 88 4 L 100 1 L 100 30 L 0 30 Z"
+            fill="url(#curveFade)" opacity="0"/>
+      <path id="curveLine" d="M 0 27 Q 14 28 22 26 Q 38 22 50 16 Q 68 8 88 4 L 100 1"
+            fill="none" stroke="#FB3B24" stroke-width="1.2" stroke-dasharray="3 2" stroke-linecap="round"
+            vector-effect="non-scaling-stroke"/>
+      <!-- Current position dot (animated along curve) -->
+      <circle id="curveDot" cx="0" cy="27" r="1.8" fill="#FB3B24">
+        <animate attributeName="r" values="1.8;2.8;1.8" dur="1.6s" repeatCount="indefinite"/>
+      </circle>
+    </svg>
+    <div class="timeline-marks">
+      <div class="mark"><div class="mark-tick"></div><div class="mark-label">Day 1</div></div>
+      <div class="mark"><div class="mark-tick"></div><div class="mark-label dim">Day 30</div></div>
+      <div class="mark"><div class="mark-tick"></div><div class="mark-label dim">Day 60</div></div>
+      <div class="mark"><div class="mark-tick"></div><div class="mark-label dim">Day 90</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var phases = [
+  document.getElementById('phase1'),
+  document.getElementById('phase2'),
+  document.getElementById('phase3')
+];
+var p1fill = document.getElementById('p1fill');
+var p1pct = document.getElementById('p1pct');
+var curveLine = document.getElementById('curveLine');
+var curveArea = document.getElementById('curveArea');
+var curveDot = document.getElementById('curveDot');
+var items = document.querySelectorAll('#phase1 .item');
+
+function sleep(ms) {
+  return new Promise(function(r) { setTimeout(r, ms); });
+}
+
+function tween(from, to, dur, cb) {
+  var start = Date.now();
+  function step() {
+    var t = Math.min(1, (Date.now() - start) / dur);
+    var v = from + (to - from) * (1 - Math.pow(1 - t, 3));
+    cb(v);
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+async function runCycle() {
+  // Reset
+  phases.forEach(function(p) { p.classList.remove('show'); });
+  items.forEach(function(i) { i.classList.remove('checked'); });
+  p1fill.style.width = '0%';
+  p1pct.textContent = '0';
+  curveDot.setAttribute('cx', '0');
+  curveDot.setAttribute('cy', '27');
+  curveLine.style.strokeDasharray = '';
+  curveLine.style.strokeDashoffset = '';
+  curveArea.style.opacity = 0;
+
+  await sleep(400);
+
+  // 1. Phases fade in (stagger)
+  phases[0].classList.add('show');
+  await sleep(220);
+  phases[1].classList.add('show');
+  await sleep(180);
+  phases[2].classList.add('show');
+  await sleep(450);
+
+  // 2. Draw curve
+  // Get curve length (approx) - polyline tracking via stroke-dashoffset
+  // Since the path is in a viewBox (0-100), we estimate length
+  var totalLen = curveLine.getTotalLength ? curveLine.getTotalLength() : 110;
+  curveLine.style.strokeDasharray = '0.5 ' + (totalLen + 50); // start invisible
+  // Animate area fade in
+  curveArea.style.transition = 'opacity 1.2s ease';
+  curveArea.style.opacity = 1;
+  // Animate dash to reveal full curve while keeping dotted look
+  await sleep(50);
+  curveLine.style.transition = 'stroke-dasharray 1.4s linear';
+  curveLine.style.strokeDasharray = '3 2';
+
+  // 3. Animate the position dot along the curve
+  // Walk from x=0 to x=30 (Phase 1 end), with curve y position from quadratic approx
+  var dotDur = 1300;
+  var dotStart = Date.now();
+  (function tickDot() {
+    var t = Math.min(1, (Date.now() - dotStart) / dotDur);
+    // Map t (0->1) to curve position from x=0 to x=30
+    var x = t * 30;
+    // Approximate y on the curve: starts at 27, slightly rises to 26 by x=22
+    // Using quadratic: y = 27 - (small dip)
+    var y;
+    if (x < 14) {
+      y = 27 + (x / 14) * 0.5; // slight dip first
+    } else {
+      var lt = (x - 14) / 16;
+      y = 27.5 - lt * 1.5;
+    }
+    curveDot.setAttribute('cx', x);
+    curveDot.setAttribute('cy', y);
+    if (t < 1) requestAnimationFrame(tickDot);
+  })();
+
+  // 4. Tween progress bar and check items along the way
+  tween(0, 40, 1300, function(v) {
+    p1pct.textContent = Math.round(v);
+    p1fill.style.width = v + '%';
+  });
+
+  // Check items as progress grows
+  setTimeout(function() { items[0].classList.add('checked'); }, 400);
+  setTimeout(function() { items[1].classList.add('checked'); }, 900);
+  // item 2 stays unchecked (sprint still in progress at 40%)
+
+  await sleep(2200);
+
+  // 5. Hold final state
+  await sleep(3000);
+
+  runCycle();
+}
+
+window.addEventListener('load', function() {
+  setTimeout(runCycle, 200);
+});
+</script>
+</body>
+</html>
