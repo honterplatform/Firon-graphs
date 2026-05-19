@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transparent Operations</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0F0F0F;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+    font-size: clamp(9px, 1.5vh, 13px);
+  }
+
+  .stage {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 1vh, 10px);
+    padding: clamp(8px, 1.4vh, 14px);
+  }
+
+  /* --- Header --- */
+  .header {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(7px, 1vh, 11px) clamp(10px, 1.5vh, 14px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .h-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .h-icon {
+    width: 1.7em; height: 1.7em;
+    border-radius: 5px;
+    background: rgba(251,59,36,0.1);
+    color: #FB3B24;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85em;
+    flex-shrink: 0;
+  }
+  .h-title-group { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .h-title {
+    font-size: 0.95em;
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+    white-space: nowrap;
+  }
+  .h-sub {
+    font-size: 0.65em;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .live-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.62em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #4BC882;
+    background: rgba(75,200,130,0.08);
+    border: 1px solid rgba(75,200,130,0.3);
+    padding: 4px 9px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .live-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #4BC882;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* --- 3-panel grid --- */
+  .panels {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(6px, 1vh, 10px);
+  }
+
+  .panel {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Panel header */
+  .p-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: clamp(6px, 0.9vh, 9px) clamp(8px, 1.2vh, 12px);
+    border-bottom: 1px solid #1E1E1E;
+    flex-shrink: 0;
+    background: #101010;
+  }
+  .p-h-left { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .p-mark {
+    width: 1.5em; height: 1.5em;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78em;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .panel.looker .p-mark { background: rgba(85,140,230,0.15); color: #5C8CE6; }
+  .panel.notion .p-mark { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.85); }
+  .panel.slack .p-mark { background: rgba(180,90,230,0.15); color: #B45AE6; }
+
+  .p-name {
+    font-size: 0.82em;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .p-sub {
+    font-size: 0.62em;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .p-status {
+    font-size: 0.6em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #4BC882;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .p-status-dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: #4BC882;
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+
+  .p-body {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    padding: clamp(6px, 0.9vh, 10px) clamp(8px, 1.2vh, 12px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(5px, 0.8vh, 8px);
+  }
+
+  /* === LOOKER STUDIO PANEL === */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(4px, 0.7vh, 6px);
+    flex-shrink: 0;
+  }
+  .kpi {
+    background: #0D0D0D;
+    border: 1px solid #1E1E1E;
+    border-radius: 5px;
+    padding: clamp(4px, 0.7vh, 6px) clamp(6px, 0.9vh, 8px);
+    min-width: 0;
+  }
+  .kpi-label {
+    font-size: 0.55em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .kpi-val {
+    font-size: 0.95em;
+    font-weight: 800;
+    color: rgba(255,255,255,0.9);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+    font-family: ui-monospace, monospace;
+    transition: color 0.3s;
+  }
+  .kpi-val.flash { color: #5C8CE6; }
+  .kpi-delta {
+    font-size: 0.58em;
+    font-weight: 700;
+    color: #4BC882;
+    margin-top: 1px;
+  }
+  .looker-chart {
+    flex: 1;
+    min-height: 0;
+    background: #0D0D0D;
+    border: 1px solid #1E1E1E;
+    border-radius: 5px;
+    padding: clamp(4px, 0.7vh, 6px);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .chart-label {
+    font-size: 0.55em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .chart-svg {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+  }
+
+  /* === NOTION PANEL === */
+  .notion-title {
+    font-size: 0.82em;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+  .notion-emoji { font-size: 0.95em; }
+
+  .task-list {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(3px, 0.5vh, 5px);
+    overflow: hidden;
+  }
+  .task {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: clamp(3px, 0.5vh, 5px) clamp(5px, 0.8vh, 7px);
+    background: #0D0D0D;
+    border: 1px solid #1E1E1E;
+    border-radius: 4px;
+    font-size: 0.75em;
+    transition: background 0.4s, border-color 0.4s, color 0.4s;
+    min-width: 0;
+  }
+  .task.done { color: rgba(255,255,255,0.4); }
+  .task.in-progress { border-color: rgba(251,59,36,0.3); }
+  .task-check {
+    width: 1.1em;
+    height: 1.1em;
+    border-radius: 3px;
+    border: 1.5px solid rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7em;
+    color: transparent;
+    flex-shrink: 0;
+    transition: all 0.4s;
+  }
+  .task.done .task-check {
+    background: #4BC882;
+    border-color: #4BC882;
+    color: #08200F;
+  }
+  .task.in-progress .task-check {
+    border-color: #FB3B24;
+    color: transparent;
+    position: relative;
+    background: rgba(251,59,36,0.15);
+  }
+  .task.in-progress .task-check::after {
+    content: '';
+    width: 0.55em;
+    height: 0.55em;
+    border: 1.5px solid #FB3B24;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 1.2s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .task-text {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .task.done .task-text { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.2); }
+  .task-pill {
+    font-size: 0.65em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .task-pill.todo { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); }
+  .task-pill.progress { background: rgba(251,59,36,0.15); color: #FB3B24; }
+  .task-pill.done { background: rgba(75,200,130,0.15); color: #4BC882; }
+
+  /* === SLACK PANEL === */
+  .slack-channel-bar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding-bottom: clamp(4px, 0.7vh, 6px);
+    border-bottom: 1px solid #1E1E1E;
+    flex-shrink: 0;
+  }
+  .chan-hash {
+    color: #555;
+    font-weight: 700;
+    font-size: 0.9em;
+  }
+  .chan-name {
+    font-size: 0.78em;
+    font-weight: 600;
+    color: rgba(255,255,255,0.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .chan-members {
+    font-size: 0.6em;
+    color: #555;
+    margin-left: auto;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .slack-feed {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(4px, 0.7vh, 6px);
+    overflow: hidden;
+    position: relative;
+    justify-content: flex-end;
+  }
+
+  .slack-msg {
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  .slack-msg.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .slack-msg.fading {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  .slack-avatar {
+    width: 1.5em;
+    height: 1.5em;
+    border-radius: 4px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7em;
+    font-weight: 800;
+    color: #fff;
+  }
+  .slack-msg-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .slack-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    line-height: 1;
+  }
+  .slack-name {
+    font-size: 0.72em;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+  }
+  .slack-time {
+    font-size: 0.6em;
+    font-weight: 500;
+    color: #555;
+    font-family: ui-monospace, monospace;
+  }
+  .slack-text {
+    font-size: 0.78em;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.3;
+    word-break: break-word;
+  }
+  .slack-reactions {
+    display: flex;
+    gap: 3px;
+    margin-top: 2px;
+  }
+  .slack-reaction {
+    background: rgba(180,90,230,0.1);
+    border: 1px solid rgba(180,90,230,0.25);
+    border-radius: 8px;
+    padding: 0px 5px;
+    font-size: 0.65em;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.4;
+  }
+  .slack-reaction .count {
+    font-weight: 700;
+    color: #B45AE6;
+    margin-left: 2px;
+    font-family: ui-monospace, monospace;
+  }
+
+  .slack-typing {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.68em;
+    color: #555;
+    padding-left: 2em;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .slack-typing.show { opacity: 1; }
+  .typing-dots {
+    display: inline-flex;
+    gap: 2px;
+  }
+  .typing-dots span {
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: #555;
+    animation: typingBlink 1.2s ease-in-out infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes typingBlink {
+    0%, 60%, 100% { opacity: 0.3; }
+    30% { opacity: 1; }
+  }
+
+  /* Footer status */
+  .footer {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(6px, 0.9vh, 9px) clamp(10px, 1.5vh, 14px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    font-size: 0.7em;
+    color: #555;
+    font-family: ui-monospace, monospace;
+  }
+  .footer-tag { color: rgba(255,255,255,0.7); font-weight: 700; margin-left: 4px; }
+  .footer-right { display: flex; gap: 12px; }
+
+  /* Stack on narrow */
+  @media (max-aspect-ratio: 5/4) {
+    .panels { grid-template-columns: 1fr; grid-template-rows: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <!-- Header -->
+  <div class="header">
+    <div class="h-left">
+      <div class="h-icon">◈</div>
+      <div class="h-title-group">
+        <div class="h-title">Transparent Operations · Total Alignment</div>
+        <div class="h-sub">3 systems · always-on</div>
+      </div>
+    </div>
+    <div class="live-pill"><span class="live-dot"></span>All synced</div>
+  </div>
+
+  <!-- 3 panels -->
+  <div class="panels">
+    <!-- LOOKER STUDIO -->
+    <div class="panel looker">
+      <div class="p-header">
+        <div class="p-h-left">
+          <div class="p-mark">L</div>
+          <div>
+            <div class="p-name">Looker Studio</div>
+            <div class="p-sub">Daily commerce KPIs</div>
+          </div>
+        </div>
+        <div class="p-status"><span class="p-status-dot"></span>Live</div>
+      </div>
+      <div class="p-body">
+        <div class="kpi-grid">
+          <div class="kpi">
+            <div class="kpi-label">Revenue</div>
+            <div class="kpi-val" id="lkRev">£0</div>
+            <div class="kpi-delta">+12.4%</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Sessions</div>
+            <div class="kpi-val" id="lkSess">0</div>
+            <div class="kpi-delta">+8.1%</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Conv. rate</div>
+            <div class="kpi-val" id="lkConv">0%</div>
+            <div class="kpi-delta">+0.4 pt</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">AOV</div>
+            <div class="kpi-val" id="lkAov">£0</div>
+            <div class="kpi-delta">+3.2%</div>
+          </div>
+        </div>
+        <div class="looker-chart">
+          <div class="chart-label">Last 14 days</div>
+          <svg class="chart-svg" id="lookerSvg" preserveAspectRatio="none"></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTION -->
+    <div class="panel notion">
+      <div class="p-header">
+        <div class="p-h-left">
+          <div class="p-mark">N</div>
+          <div>
+            <div class="p-name">Notion</div>
+            <div class="p-sub">Sprint roadmap</div>
+          </div>
+        </div>
+        <div class="p-status"><span class="p-status-dot"></span>Live</div>
+      </div>
+      <div class="p-body">
+        <div class="notion-title"><span class="notion-emoji">📍</span> Phase 1 — Identity Architecture</div>
+        <div class="task-list" id="taskList"></div>
+      </div>
+    </div>
+
+    <!-- SLACK -->
+    <div class="panel slack">
+      <div class="p-header">
+        <div class="p-h-left">
+          <div class="p-mark">S</div>
+          <div>
+            <div class="p-name">Slack</div>
+            <div class="p-sub">Daily sync channel</div>
+          </div>
+        </div>
+        <div class="p-status"><span class="p-status-dot"></span>Live</div>
+      </div>
+      <div class="p-body">
+        <div class="slack-channel-bar">
+          <span class="chan-hash">#</span>
+          <span class="chan-name">firon-maison-flaneur</span>
+          <span class="chan-members">4 active</span>
+        </div>
+        <div class="slack-feed" id="slackFeed"></div>
+        <div class="slack-typing" id="slackTyping">
+          <span class="typing-dots"><span></span><span></span><span></span></span>
+          <span id="slackTypingName">Jordan</span> is typing…
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div><span style="color:#444">// connection:</span><span class="footer-tag">SSO + 2FA</span></div>
+    <div class="footer-right">
+      <div>Sync<span class="footer-tag" id="syncTime">just now</span></div>
+      <div>Channel<span class="footer-tag">#firon-maison-flaneur</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================
+// LOOKER STUDIO ANIMATION
+// ============================
+var lkBase = { rev: 42400, sess: 8420, conv: 3.8, aov: 148 };
+var lkCur = Object.assign({}, lkBase);
+
+function fmtNum(n) {
+  return n.toLocaleString();
+}
+function renderLooker() {
+  document.getElementById('lkRev').textContent = '£' + Math.round(lkCur.rev / 1000) + 'K';
+  document.getElementById('lkSess').textContent = fmtNum(Math.round(lkCur.sess));
+  document.getElementById('lkConv').textContent = lkCur.conv.toFixed(1) + '%';
+  document.getElementById('lkAov').textContent = '£' + Math.round(lkCur.aov);
+}
+
+function tweenTo(key, target, dur, el) {
+  var start = lkCur[key];
+  var startT = Date.now();
+  el.classList.add('flash');
+  function step() {
+    var t = Math.min(1, (Date.now() - startT) / dur);
+    lkCur[key] = start + (target - start) * (1 - Math.pow(1 - t, 3));
+    renderLooker();
+    if (t < 1) requestAnimationFrame(step);
+    else setTimeout(function() { el.classList.remove('flash'); }, 250);
+  }
+  requestAnimationFrame(step);
+}
+
+function refreshLooker() {
+  // Slightly bump each KPI to simulate live updates
+  var revEl = document.getElementById('lkRev');
+  var sessEl = document.getElementById('lkSess');
+  var convEl = document.getElementById('lkConv');
+  var aovEl = document.getElementById('lkAov');
+  tweenTo('rev', lkCur.rev + Math.random() * 800 + 200, 600, revEl);
+  setTimeout(function() {
+    tweenTo('sess', lkCur.sess + Math.floor(Math.random() * 60 + 20), 600, sessEl);
+  }, 200);
+  setTimeout(function() {
+    var delta = (Math.random() * 0.2 - 0.05);
+    tweenTo('conv', Math.max(2.5, Math.min(5.5, lkCur.conv + delta)), 600, convEl);
+  }, 400);
+  setTimeout(function() {
+    var delta = (Math.random() * 8 - 2);
+    tweenTo('aov', Math.max(120, Math.min(180, lkCur.aov + delta)), 600, aovEl);
+  }, 600);
+}
+
+// Looker mini chart
+var chartData = [22, 25, 23, 28, 27, 32, 30, 35, 38, 36, 42, 40, 46, 50];
+function drawLookerChart() {
+  var svg = document.getElementById('lookerSvg');
+  var rect = svg.getBoundingClientRect();
+  var W = rect.width;
+  var H = rect.height;
+  if (W < 2 || H < 2) return;
+  var pad = 2;
+  var max = Math.max.apply(null, chartData);
+  var min = Math.min.apply(null, chartData);
+  var range = Math.max(1, max - min);
+  var coords = chartData.map(function(v, i) {
+    var x = pad + (i / (chartData.length - 1)) * (W - pad * 2);
+    var y = H - pad - ((v - min) / range) * (H - pad * 2);
+    return { x: x, y: y };
+  });
+  var pathD = '';
+  coords.forEach(function(c, i) {
+    if (i === 0) pathD += 'M ' + c.x + ' ' + c.y;
+    else {
+      var prev = coords[i - 1];
+      var midX = (prev.x + c.x) / 2;
+      pathD += ' Q ' + midX + ' ' + prev.y + ' ' + midX + ' ' + ((prev.y + c.y) / 2);
+      pathD += ' Q ' + midX + ' ' + c.y + ' ' + c.x + ' ' + c.y;
+    }
+  });
+  var areaD = pathD + ' L ' + coords[coords.length-1].x + ' ' + (H - pad) +
+              ' L ' + coords[0].x + ' ' + (H - pad) + ' Z';
+  var lastC = coords[coords.length - 1];
+
+  svg.innerHTML =
+    '<defs><linearGradient id="lkArea" x1="0" x2="0" y1="0" y2="1">' +
+    '<stop offset="0%" stop-color="#5C8CE6" stop-opacity="0.3"/>' +
+    '<stop offset="100%" stop-color="#5C8CE6" stop-opacity="0"/>' +
+    '</linearGradient></defs>' +
+    '<path d="' + areaD + '" fill="url(#lkArea)"/>' +
+    '<path d="' + pathD + '" fill="none" stroke="#5C8CE6" stroke-width="1.4" stroke-linecap="round"/>' +
+    '<circle cx="' + lastC.x + '" cy="' + lastC.y + '" r="2.2" fill="#5C8CE6"/>';
+}
+
+function tickLookerChart() {
+  // Shift chart left and add new point
+  chartData.shift();
+  var last = chartData[chartData.length - 1];
+  var next = Math.max(20, Math.min(60, last + (Math.random() * 8 - 2)));
+  chartData.push(next);
+  drawLookerChart();
+}
+
+// ============================
+// NOTION ANIMATION
+// ============================
+var TASKS = [
+  { text: 'Schema audit complete', state: 'done' },
+  { text: 'JSON-LD deployed', state: 'done' },
+  { text: 'Catalog metadata roll-out', state: 'progress' },
+  { text: 'Agent crawler verification', state: 'todo' },
+  { text: 'Phase 2 prep doc', state: 'todo' }
+];
+
+function renderTasks() {
+  var list = document.getElementById('taskList');
+  list.innerHTML = '';
+  TASKS.forEach(function(t) {
+    var div = document.createElement('div');
+    div.className = 'task ' + (t.state === 'progress' ? 'in-progress' : t.state);
+    var pillText = t.state === 'done' ? 'Done' : t.state === 'progress' ? 'In progress' : 'To do';
+    var pillCls = t.state === 'progress' ? 'progress' : t.state;
+    div.innerHTML =
+      '<div class="task-check">✓</div>' +
+      '<div class="task-text">' + t.text + '</div>' +
+      '<div class="task-pill ' + pillCls + '">' + pillText + '</div>';
+    list.appendChild(div);
+  });
+}
+
+function progressTasks() {
+  // Find the in-progress task and complete it
+  var progIdx = TASKS.findIndex(function(t) { return t.state === 'progress'; });
+  if (progIdx !== -1) TASKS[progIdx].state = 'done';
+
+  // Find next todo and promote to in-progress
+  var todoIdx = TASKS.findIndex(function(t) { return t.state === 'todo'; });
+  if (todoIdx !== -1) TASKS[todoIdx].state = 'progress';
+  else {
+    // All done — reset cycle after a hold
+    setTimeout(function() {
+      TASKS[0].state = 'done';
+      TASKS[1].state = 'done';
+      TASKS[2].state = 'progress';
+      TASKS[3].state = 'todo';
+      TASKS[4].state = 'todo';
+      renderTasks();
+    }, 2500);
+    renderTasks();
+    return;
+  }
+  renderTasks();
+}
+
+// ============================
+// SLACK ANIMATION
+// ============================
+var TEAM = [
+  { name: 'Jordan',  initial: 'J', color: '#E2845B' },
+  { name: 'Maya',    initial: 'M', color: '#5DBF6E' },
+  { name: 'Andrés',  initial: 'A', color: '#5C8CE6' },
+  { name: 'Priya',   initial: 'P', color: '#B45AE6' }
+];
+
+var SLACK_MESSAGES = [
+  { who: 0, text: 'Schema audit pushed to staging 🚀', reactions: [{ emoji: '🔥', n: 3 }] },
+  { who: 1, text: 'AI citation rate up 12% week over week.', reactions: [{ emoji: '📈', n: 2 }] },
+  { who: 2, text: 'Catalog metadata rollout at 64% — ETA EOD Friday.' },
+  { who: 3, text: 'Looker board updated — revenue cohort cards live.' },
+  { who: 0, text: 'Cluster bombing brief in Notion, FYI.', reactions: [{ emoji: '👀', n: 4 }] },
+  { who: 1, text: 'Backlinks engine deploying tomorrow AM.' },
+  { who: 2, text: 'Daily standup notes posted in this thread.' },
+  { who: 3, text: 'AI Max campaign brief ready for review.', reactions: [{ emoji: '✅', n: 2 }] }
+];
+
+var slackQueue = SLACK_MESSAGES.slice();
+var slackVisible = [];
+var slackIdx = 0;
+
+function fmtTime() {
+  var d = new Date();
+  var h = d.getHours();
+  var m = d.getMinutes();
+  var ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return h + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+}
+
+function addSlackMessage(msg) {
+  var feed = document.getElementById('slackFeed');
+  var person = TEAM[msg.who];
+  var div = document.createElement('div');
+  div.className = 'slack-msg';
+  var reactionsHTML = '';
+  if (msg.reactions && msg.reactions.length) {
+    reactionsHTML = '<div class="slack-reactions">';
+    msg.reactions.forEach(function(r) {
+      reactionsHTML += '<div class="slack-reaction">' + r.emoji + '<span class="count">' + r.n + '</span></div>';
+    });
+    reactionsHTML += '</div>';
+  }
+  div.innerHTML =
+    '<div class="slack-avatar" style="background:' + person.color + '">' + person.initial + '</div>' +
+    '<div class="slack-msg-body">' +
+      '<div class="slack-meta">' +
+        '<span class="slack-name">' + person.name + '</span>' +
+        '<span class="slack-time">' + fmtTime() + '</span>' +
+      '</div>' +
+      '<div class="slack-text">' + msg.text + '</div>' +
+      reactionsHTML +
+    '</div>';
+  feed.appendChild(div);
+  slackVisible.push(div);
+
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      div.classList.add('show');
+    });
+  });
+
+  // Cap visible at 4-5
+  while (slackVisible.length > 5) {
+    var old = slackVisible.shift();
+    old.classList.add('fading');
+    setTimeout(function() { if (old.parentNode) old.parentNode.removeChild(old); }, 300);
+  }
+}
+
+function showTyping(personIdx) {
+  var t = document.getElementById('slackTyping');
+  document.getElementById('slackTypingName').textContent = TEAM[personIdx].name;
+  t.classList.add('show');
+}
+function hideTyping() {
+  document.getElementById('slackTyping').classList.remove('show');
+}
+
+async function nextSlackMessage() {
+  var msg = SLACK_MESSAGES[slackIdx % SLACK_MESSAGES.length];
+  slackIdx++;
+
+  // Show typing indicator briefly
+  showTyping(msg.who);
+  await new Promise(function(r) { setTimeout(r, 900 + Math.random() * 400); });
+  hideTyping();
+  await new Promise(function(r) { setTimeout(r, 150); });
+
+  addSlackMessage(msg);
+}
+
+// ============================
+// FOOTER SYNC TIME
+// ============================
+var lastSyncSec = 0;
+function updateSyncTime() {
+  lastSyncSec++;
+  var el = document.getElementById('syncTime');
+  if (lastSyncSec < 3) el.textContent = 'just now';
+  else el.textContent = lastSyncSec + 's ago';
+}
+function resetSync() { lastSyncSec = 0; }
+
+// ============================
+// INITIALIZATION & LOOPS
+// ============================
+renderLooker();
+renderTasks();
+window.addEventListener('load', function() {
+  setTimeout(drawLookerChart, 100);
+  setTimeout(function() {
+    // Initial tween-in
+    var rev = document.getElementById('lkRev');
+    var sess = document.getElementById('lkSess');
+    var conv = document.getElementById('lkConv');
+    var aov = document.getElementById('lkAov');
+    lkCur = { rev: 0, sess: 0, conv: 0, aov: 0 };
+    renderLooker();
+    tweenTo('rev', lkBase.rev, 1200, rev);
+    tweenTo('sess', lkBase.sess, 1200, sess);
+    tweenTo('conv', lkBase.conv, 1200, conv);
+    tweenTo('aov', lkBase.aov, 1200, aov);
+  }, 300);
+
+  // Start Slack with one initial message
+  setTimeout(function() { addSlackMessage(SLACK_MESSAGES[0]); slackIdx = 1; }, 800);
+  setTimeout(function() { addSlackMessage(SLACK_MESSAGES[1]); slackIdx = 2; }, 1500);
+
+  // Loops
+  setInterval(refreshLooker, 4500);
+  setInterval(tickLookerChart, 2200);
+  setInterval(progressTasks, 3000);
+  setInterval(nextSlackMessage, 3200);
+  setInterval(updateSyncTime, 1000);
+
+  // Reset sync timer whenever a tool updates (simulated)
+  setInterval(resetSync, 4500);
+});
+window.addEventListener('resize', function() {
+  setTimeout(drawLookerChart, 50);
+});
+</script>
+</body>
+</html>
