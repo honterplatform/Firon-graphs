@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transparent Ops · Comms Stack</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0F0F0F;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+  }
+
+  .card {
+    width: 100%;
+    height: 100%;
+    background: #0F0F0F;
+    padding: clamp(20px, 4vh, 36px) clamp(20px, 3.5vw, 40px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(12px, 2vh, 20px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-label {
+    font-size: clamp(11px, 1.5vh, 14px);
+    font-weight: 700;
+    color: #FB3B24;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+  }
+
+  .tools-row {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(10px, 1.6vw, 18px);
+  }
+
+  .tool {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: clamp(10px, 1.4vh, 14px);
+    padding: clamp(14px, 2.4vh, 22px) clamp(14px, 2vw, 20px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: clamp(10px, 1.6vh, 16px);
+    min-width: 0;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tool-head {
+    display: flex;
+    align-items: center;
+    gap: clamp(8px, 1.2vw, 12px);
+    min-width: 0;
+  }
+  .tool-mark {
+    width: clamp(28px, 4.5vh, 42px);
+    height: clamp(28px, 4.5vh, 42px);
+    border-radius: clamp(6px, 1vh, 10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(14px, 2.4vh, 22px);
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .tool[data-t="looker"] .tool-mark { background: rgba(85,140,230,0.15); color: #5C8CE6; }
+  .tool[data-t="notion"] .tool-mark { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.9); }
+  .tool[data-t="slack"] .tool-mark { background: rgba(180,90,230,0.15); color: #B45AE6; }
+
+  .tool-name-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .tool-name {
+    font-size: clamp(14px, 2.1vh, 19px);
+    font-weight: 800;
+    color: rgba(255,255,255,0.95);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.1;
+  }
+  .tool-role {
+    font-size: clamp(9px, 1.2vh, 11px);
+    font-weight: 600;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .live-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .live-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: clamp(9px, 1.2vh, 11px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: #4BC882;
+    background: rgba(75,200,130,0.08);
+    border: 1px solid rgba(75,200,130,0.25);
+    padding: 4px 9px;
+    border-radius: 4px;
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #4BC882;
+    box-shadow: 0 0 6px rgba(75,200,130,0.6);
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+  .uptime {
+    font-size: clamp(10px, 1.3vh, 12px);
+    font-weight: 700;
+    color: rgba(255,255,255,0.6);
+    font-family: ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sync-line {
+    height: clamp(28px, 5vh, 44px);
+    width: 100%;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .sync-svg { width: 100%; height: 100%; display: block; }
+
+  .last-sync {
+    font-size: clamp(10px, 1.3vh, 12px);
+    color: rgba(255,255,255,0.45);
+    font-weight: 500;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-shrink: 0;
+  }
+  .last-sync .ls-label {
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.85em;
+    color: rgba(255,255,255,0.35);
+    font-weight: 600;
+  }
+  .last-sync .ls-val {
+    color: rgba(255,255,255,0.75);
+    font-family: ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+  }
+
+  .card-footer {
+    font-size: clamp(11px, 1.5vh, 14px);
+    color: rgba(255,255,255,0.55);
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  /* Tight viewport: stack vertically */
+  @media (max-aspect-ratio: 1/1) {
+    .tools-row { grid-template-columns: 1fr; grid-template-rows: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-label">Transparent Ops · Comms Stack</div>
+
+  <div class="tools-row">
+    <div class="tool" data-t="looker" data-i="0">
+      <div class="tool-head">
+        <div class="tool-mark">L</div>
+        <div class="tool-name-group">
+          <div class="tool-name">Looker Studio</div>
+          <div class="tool-role">Live commercial KPIs</div>
+        </div>
+      </div>
+      <div class="live-row">
+        <div class="live-pill"><span class="live-dot"></span>Live · 24/7</div>
+        <div class="uptime">100.0%</div>
+      </div>
+      <div class="sync-line">
+        <svg class="sync-svg" preserveAspectRatio="none" viewBox="0 0 100 40">
+          <path id="line0" d="M0 28 L12 26 L24 30 L36 22 L48 26 L60 18 L72 22 L84 14 L100 12"
+                fill="none" stroke="#5C8CE6" stroke-width="1.6" stroke-linecap="round"
+                vector-effect="non-scaling-stroke"
+                style="filter: drop-shadow(0 0 4px rgba(85,140,230,0.4));"/>
+          <circle id="dot0" cx="100" cy="12" r="1.8" fill="#5C8CE6"/>
+        </svg>
+      </div>
+      <div class="last-sync">
+        <span class="ls-label">Last refresh</span>
+        <span class="ls-val" id="ls0">just now</span>
+      </div>
+    </div>
+
+    <div class="tool" data-t="notion" data-i="1">
+      <div class="tool-head">
+        <div class="tool-mark">N</div>
+        <div class="tool-name-group">
+          <div class="tool-name">Notion</div>
+          <div class="tool-role">Real-time roadmaps</div>
+        </div>
+      </div>
+      <div class="live-row">
+        <div class="live-pill"><span class="live-dot"></span>Live · 24/7</div>
+        <div class="uptime">100.0%</div>
+      </div>
+      <div class="sync-line">
+        <svg class="sync-svg" preserveAspectRatio="none" viewBox="0 0 100 40">
+          <path id="line1" d="M0 30 L14 26 L28 28 L42 20 L56 22 L70 16 L84 18 L100 10"
+                fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.6" stroke-linecap="round"
+                vector-effect="non-scaling-stroke"/>
+          <circle id="dot1" cx="100" cy="10" r="1.8" fill="rgba(255,255,255,0.9)"/>
+        </svg>
+      </div>
+      <div class="last-sync">
+        <span class="ls-label">Last sync</span>
+        <span class="ls-val" id="ls1">just now</span>
+      </div>
+    </div>
+
+    <div class="tool" data-t="slack" data-i="2">
+      <div class="tool-head">
+        <div class="tool-mark">S</div>
+        <div class="tool-name-group">
+          <div class="tool-name">Slack</div>
+          <div class="tool-role">Dedicated daily channel</div>
+        </div>
+      </div>
+      <div class="live-row">
+        <div class="live-pill"><span class="live-dot"></span>Live · 24/7</div>
+        <div class="uptime">100.0%</div>
+      </div>
+      <div class="sync-line">
+        <svg class="sync-svg" preserveAspectRatio="none" viewBox="0 0 100 40">
+          <path id="line2" d="M0 26 L14 22 L26 28 L40 18 L54 24 L66 16 L82 20 L100 14"
+                fill="none" stroke="#B45AE6" stroke-width="1.6" stroke-linecap="round"
+                vector-effect="non-scaling-stroke"
+                style="filter: drop-shadow(0 0 4px rgba(180,90,230,0.4));"/>
+          <circle id="dot2" cx="100" cy="14" r="1.8" fill="#B45AE6"/>
+        </svg>
+      </div>
+      <div class="last-sync">
+        <span class="ls-label">Last message</span>
+        <span class="ls-val" id="ls2">just now</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-footer">All three systems — synced. Always-on. Always visible.</div>
+</div>
+
+<script>
+// Each tool's "last sync" counter ticks up, then resets to "just now"
+var counters = [
+  { sec: 0, maxSec: 8 },
+  { sec: 0, maxSec: 14 },
+  { sec: 0, maxSec: 5 }
+];
+
+function fmt(sec) {
+  if (sec < 2) return 'just now';
+  if (sec < 60) return sec + 's ago';
+  if (sec < 3600) return Math.floor(sec / 60) + 'm ago';
+  return Math.floor(sec / 3600) + 'h ago';
+}
+
+function tickCounter(i) {
+  counters[i].sec++;
+  if (counters[i].sec >= counters[i].maxSec) {
+    // Reset and give it a new random target
+    counters[i].sec = 0;
+    counters[i].maxSec = 5 + Math.floor(Math.random() * 15);
+    // Flash the live pill briefly
+    var tool = document.querySelector('[data-i="' + i + '"]');
+    if (tool) {
+      var pill = tool.querySelector('.live-pill');
+      pill.style.transition = 'background 0.15s ease';
+      pill.style.background = 'rgba(75,200,130,0.25)';
+      setTimeout(function() {
+        pill.style.background = '';
+      }, 250);
+    }
+    // Update the line slightly to feel "live"
+    nudgeLine(i);
+  }
+  var el = document.getElementById('ls' + i);
+  if (el) el.textContent = fmt(counters[i].sec);
+}
+
+function nudgeLine(i) {
+  // Just animate the trailing dot briefly
+  var dot = document.getElementById('dot' + i);
+  if (!dot) return;
+  dot.setAttribute('r', '3');
+  setTimeout(function() { dot.setAttribute('r', '1.8'); }, 350);
+}
+
+setInterval(function() {
+  for (var i = 0; i < 3; i++) tickCounter(i);
+}, 1000);
+</script>
+</body>
+</html>
