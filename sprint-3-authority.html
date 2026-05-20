@@ -465,33 +465,6 @@
             <div class="stat-mini-value" id="statCites">0</div>
           </div>
         </div>
-        <div class="engines-card">
-          <div class="engines-head">AI Share of Voice gain</div>
-          <div class="engine" data-llm="gpt">
-            <div class="eng-mark">G</div>
-            <div class="eng-name">ChatGPT</div>
-            <div class="eng-bar"><div class="eng-fill" data-target="68"></div></div>
-            <div class="eng-pct" data-final="+38">+0</div>
-          </div>
-          <div class="engine" data-llm="pplx">
-            <div class="eng-mark">P</div>
-            <div class="eng-name">Perplexity</div>
-            <div class="eng-bar"><div class="eng-fill" data-target="54"></div></div>
-            <div class="eng-pct" data-final="+29">+0</div>
-          </div>
-          <div class="engine" data-llm="cl">
-            <div class="eng-mark">C</div>
-            <div class="eng-name">Claude</div>
-            <div class="eng-bar"><div class="eng-fill" data-target="61"></div></div>
-            <div class="eng-pct" data-final="+34">+0</div>
-          </div>
-          <div class="engine" data-llm="gem">
-            <div class="eng-mark">M</div>
-            <div class="eng-name">Gemini</div>
-            <div class="eng-bar"><div class="eng-fill" data-target="42"></div></div>
-            <div class="eng-pct" data-final="+22">+0</div>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -755,13 +728,11 @@ async function runCycle() {
   authDelta.textContent = '+0';
   statClusters.textContent = '0';
   statCites.textContent = '0';
-  document.querySelectorAll('.eng-fill').forEach(function(f) { f.style.width = '0%'; });
-  document.querySelectorAll('.eng-pct').forEach(function(p) { p.textContent = '+0'; });
 
   await sleep(700);
 
   // PHASE: Spawn clusters
-  for (var i = 0; i < 6; i++) {
+  for (var i = 0; i < 5; i++) {
     spawnCluster();
     statClusters.textContent = String(i + 1);
     await sleep(280);
@@ -770,34 +741,18 @@ async function runCycle() {
   await sleep(400);
 
   // PHASE: Spawn signals/citations from outer ring
-  var totalSignals = 14;
+  var totalSignals = 10;
   for (var i = 0; i < totalSignals; i++) {
     spawnSignal();
     statCites.textContent = String(i + 1);
 
-    // Update authority score gradually
     var prog = (i + 1) / totalSignals;
     tween(parseInt(authScore.textContent), Math.round(prog * 87), 280, function(v) {
       authScore.textContent = Math.round(v);
       authDelta.textContent = '+' + Math.round(v * 0.6);
     });
 
-    // Animate engine bars at certain milestones
-    if (i === 3 || i === 7 || i === 11 || i === 13) {
-      var fills = document.querySelectorAll('.eng-fill');
-      var pcts = document.querySelectorAll('.eng-pct');
-      var milestone = i === 3 ? 0.25 : i === 7 ? 0.55 : i === 11 ? 0.85 : 1;
-      fills.forEach(function(f) {
-        var target = parseFloat(f.dataset.target);
-        f.style.width = (target * milestone) + '%';
-      });
-      pcts.forEach(function(p) {
-        var finalVal = parseInt(p.dataset.final);
-        p.textContent = '+' + Math.round(finalVal * milestone);
-      });
-    }
-
-    await sleep(280);
+    await sleep(300);
   }
 
   await sleep(3500);

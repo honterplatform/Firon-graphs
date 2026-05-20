@@ -437,34 +437,22 @@
   <div class="main">
     <!-- Left: Issue list -->
     <div class="panel">
-      <div class="panel-label">Technical Debt Resolution</div>
+      <div class="panel-label">Code Surgery · Live</div>
       <div class="issue-list" id="issueList"></div>
     </div>
 
-    <!-- Right: Store status + metrics -->
+    <!-- Right: Store status -->
     <div class="panel">
       <div class="panel-label">Store Status</div>
       <div class="store-card closed" id="storeCard">
         <div class="store-icon" id="storeIcon">✕</div>
-        <div class="store-label">Status</div>
-        <div class="store-value" id="storeValue">Closed · Agent-Blind</div>
+        <div class="store-label">AI agents</div>
+        <div class="store-value" id="storeValue">Closed · Blind</div>
       </div>
-      <div class="metrics">
-        <div class="metric" data-key="errors">
-          <div class="metric-label">Errors resolved</div>
-          <div class="metric-value" id="mErr">0 / 8</div>
-          <div class="metric-bar"><div class="metric-bar-fill" id="mErrBar"></div></div>
-        </div>
-        <div class="metric" data-key="coverage">
-          <div class="metric-label">Schema coverage</div>
-          <div class="metric-value" id="mCov">0%</div>
-          <div class="metric-bar"><div class="metric-bar-fill" id="mCovBar"></div></div>
-        </div>
-        <div class="metric" data-key="ai">
-          <div class="metric-label">AI readiness</div>
-          <div class="metric-value" id="mAi">0 / 100</div>
-          <div class="metric-bar"><div class="metric-bar-fill" id="mAiBar"></div></div>
-        </div>
+      <div class="metric" data-key="ai" style="flex:1;">
+        <div class="metric-label">AI readiness</div>
+        <div class="metric-value" id="mAi">0 / 100</div>
+        <div class="metric-bar"><div class="metric-bar-fill" id="mAiBar"></div></div>
       </div>
     </div>
   </div>
@@ -485,13 +473,10 @@
 <script>
 var ISSUES = [
   { text: 'Missing Product schema', tag: 'JSON-LD' },
-  { text: 'Broken canonical tags', tag: 'HEAD' },
   { text: 'Invalid Offer.price markup', tag: 'JSON-LD' },
   { text: 'No BreadcrumbList', tag: 'NAV' },
   { text: 'Empty image attributes', tag: 'IMG' },
-  { text: 'Malformed Review schema', tag: 'JSON-LD' },
-  { text: 'Missing brand entity', tag: 'ORG' },
-  { text: 'No availability markup', tag: 'OFFER' }
+  { text: 'Missing brand entity', tag: 'ORG' }
 ];
 
 var issueList = document.getElementById('issueList');
@@ -561,10 +546,8 @@ async function runCycle() {
   buildIssues();
   storeCard.className = 'store-card closed';
   storeIcon.textContent = '✕';
-  storeValue.textContent = 'Closed · Agent-Blind';
+  storeValue.textContent = 'Closed · Blind';
   document.querySelectorAll('.metric').forEach(function(m) { m.classList.remove('complete'); });
-  setMetric('errors', 0, 8);
-  setMetric('coverage', 0, 100);
   setMetric('ai', 0, 100);
 
   await sleep(700);
@@ -575,26 +558,17 @@ async function runCycle() {
     await sleep(450);
     setIssueState(i, 'resolved');
 
-    // Update metrics progressively
     var prog = (i + 1) / ISSUES.length;
-    tween(parseInt(document.getElementById('mErr').textContent), i + 1, 350, function(v) {
-      setMetric('errors', v, 8);
-    });
-    var covTarget = Math.round(prog * 100);
     var aiTarget = Math.round(prog * 98);
-    var covStart = parseFloat(document.getElementById('mCov').textContent);
     var aiStart = parseFloat(document.getElementById('mAi').textContent);
-    tween(covStart, covTarget, 400, function(v) { setMetric('coverage', v, 100); });
     tween(aiStart, aiTarget, 400, function(v) { setMetric('ai', v, 100); });
-    await sleep(350);
+    await sleep(400);
   }
 
-  // Mark metrics complete
   document.querySelectorAll('.metric').forEach(function(m) { m.classList.add('complete'); });
 
   await sleep(600);
 
-  // Flip store to open
   storeCard.className = 'store-card open';
   storeIcon.textContent = '✓';
   storeValue.textContent = 'Open · Agent-Ready';

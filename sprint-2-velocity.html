@@ -150,9 +150,9 @@
     flex: 1;
     min-height: 0;
     display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    grid-template-rows: repeat(4, 1fr);
-    gap: clamp(2px, 0.4vh, 4px);
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: clamp(3px, 0.5vh, 5px);
     position: relative;
     overflow: hidden;
   }
@@ -490,13 +490,6 @@
             <div class="stat-mini-value" id="thru">0 /min</div>
           </div>
         </div>
-        <div class="moat-card">
-          <div class="moat-card-head">
-            <div class="moat-card-label">Hard Data Moat</div>
-            <div class="moat-card-val"><span id="moatDepth">0</span>%</div>
-          </div>
-          <div class="moat-bars" id="moatBars"></div>
-        </div>
       </div>
     </div>
   </div>
@@ -515,7 +508,7 @@
 </div>
 
 <script>
-var GRID_SIZE = 32; // 8 cols × 4 rows
+var GRID_SIZE = 18; // 6 cols × 3 rows
 var TOTAL_SKUS = 1247;
 var catalog = document.getElementById('catalog');
 var skus = [];
@@ -548,30 +541,7 @@ var skuCount = document.getElementById('skuCount');
 var skuFill = document.getElementById('skuFill');
 var cov = document.getElementById('cov');
 var thru = document.getElementById('thru');
-var moatDepth = document.getElementById('moatDepth');
-var moatBars = document.getElementById('moatBars');
 var rateLabel = document.getElementById('rateLabel');
-
-// Build moat bars (12 columns)
-function buildMoatBars() {
-  moatBars.innerHTML = '';
-  for (var i = 0; i < 12; i++) {
-    var b = document.createElement('div');
-    b.className = 'mb';
-    moatBars.appendChild(b);
-  }
-}
-
-function setMoatBars(pct) {
-  var bars = moatBars.children;
-  var filled = Math.round((pct / 100) * bars.length);
-  for (var i = 0; i < bars.length; i++) {
-    var heightPct = i < filled ? (60 + (i * 3)) : 0;
-    bars[i].style.height = heightPct + '%';
-    if (i < filled) bars[i].classList.add('full');
-    else bars[i].classList.remove('full');
-  }
-}
 
 function sleep(ms) {
   return new Promise(function(r) { setTimeout(r, ms); });
@@ -590,13 +560,10 @@ function tween(from, to, dur, cb) {
 
 async function runCycle() {
   buildGrid();
-  buildMoatBars();
   skuCount.textContent = '0';
   skuFill.style.width = '0%';
   cov.textContent = '0%';
   thru.textContent = '0 /min';
-  moatDepth.textContent = '0';
-  setMoatBars(0);
   deployLog.innerHTML = '<span class="lg-tag">//</span> awaiting deployment…';
 
   await sleep(700);
@@ -639,12 +606,6 @@ async function runCycle() {
       skuFill.style.width = (v / TOTAL_SKUS * 100) + '%';
     });
     cov.textContent = Math.round(pct * 100) + '%';
-    var moatTarget = Math.round(pct * 96);
-    var moatPrev = parseInt(moatDepth.textContent);
-    tween(moatPrev, moatTarget, 350, function(v) {
-      moatDepth.textContent = Math.round(v);
-      setMoatBars(v);
-    });
 
     await sleep(200);
   }
