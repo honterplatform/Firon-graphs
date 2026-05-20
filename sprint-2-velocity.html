@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 2 · The Velocity Engine</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0F0F0F;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+    font-size: clamp(9px, 1.5vh, 13px);
+  }
+
+  .stage {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 1vh, 10px);
+    padding: clamp(8px, 1.4vh, 14px);
+  }
+
+  /* --- Shared header --- */
+  .header {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(7px, 1vh, 11px) clamp(10px, 1.5vh, 14px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .phase-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.62em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 4px 9px;
+    border-radius: 4px;
+    border: 1px dashed rgba(251,59,36,0.55);
+    background: rgba(251,59,36,0.08);
+    color: #FB3B24;
+    flex-shrink: 0;
+  }
+  .h-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+    flex: 1;
+    margin-left: 6px;
+  }
+  .h-title {
+    font-size: 0.98em;
+    font-weight: 800;
+    color: rgba(255,255,255,0.92);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .h-sub {
+    font-size: 0.62em;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .h-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.62em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #FB3B24;
+    background: rgba(251,59,36,0.08);
+    border: 1px solid rgba(251,59,36,0.25);
+    padding: 4px 9px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .h-status-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #FB3B24;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* --- Main split layout --- */
+  .main {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: clamp(6px, 1vh, 10px);
+  }
+  .panel {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(8px, 1.2vh, 12px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(5px, 0.8vh, 8px);
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    position: relative;
+  }
+  .panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-shrink: 0;
+  }
+  .panel-label {
+    font-size: 0.62em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .panel-sub {
+    font-size: 0.6em;
+    font-weight: 700;
+    color: #FB3B24;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: ui-monospace, monospace;
+  }
+
+  /* --- Left: Catalog deployment grid --- */
+  .catalog-grid {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: clamp(2px, 0.4vh, 4px);
+    position: relative;
+    overflow: hidden;
+  }
+  .sku {
+    background: #0D0D0D;
+    border: 1px solid #1E1E1E;
+    border-radius: 3px;
+    position: relative;
+    transition: background 0.4s, border-color 0.4s, box-shadow 0.4s;
+    overflow: hidden;
+  }
+  .sku::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 70%);
+  }
+  .sku[data-state="deploying"] {
+    border-color: rgba(230,180,60,0.5);
+    background: rgba(230,180,60,0.06);
+  }
+  .sku[data-state="deploying"]::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255,255,255,0.18) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 0.9s linear infinite;
+  }
+  .sku[data-state="ready"] {
+    border-color: rgba(75,200,130,0.5);
+    background: linear-gradient(135deg, rgba(75,200,130,0.15) 0%, rgba(75,200,130,0.04) 100%);
+    box-shadow: 0 0 6px rgba(75,200,130,0.18);
+  }
+  .sku[data-state="ready"]::after {
+    content: '✓';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4BC882;
+    font-size: 0.8em;
+    font-weight: 800;
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .deploy-log {
+    background: #0D0D0D;
+    border: 1px solid #1E1E1E;
+    border-radius: 5px;
+    padding: clamp(5px, 0.8vh, 8px) clamp(8px, 1.1vh, 11px);
+    font-size: 0.7em;
+    font-family: ui-monospace, monospace;
+    color: rgba(255,255,255,0.6);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 0;
+    transition: color 0.3s;
+  }
+  .deploy-log .lg-tag { color: #555; }
+  .deploy-log .lg-ok { color: #4BC882; }
+
+  /* --- Right: Big stats --- */
+  .stats-stack {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(5px, 0.8vh, 8px);
+  }
+  .stat-hero {
+    background: #0D0D0D;
+    border: 1px solid rgba(251,59,36,0.35);
+    border-radius: 6px;
+    padding: clamp(8px, 1.2vh, 12px);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: linear-gradient(135deg, #0D0D0D 0%, rgba(251,59,36,0.05) 100%);
+  }
+  .stat-hero-label {
+    font-size: 0.6em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .stat-hero-value {
+    font-size: clamp(18px, 3.5vh, 28px);
+    font-weight: 800;
+    color: #FB3B24;
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, monospace;
+    line-height: 1;
+  }
+  .stat-hero-value .stat-of {
+    font-size: 0.55em;
+    color: #555;
+    font-weight: 600;
+    margin-left: 6px;
+  }
+  .stat-hero-bar {
+    margin-top: 5px;
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .stat-hero-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #FB3B24 0%, rgba(251,59,36,0.6) 100%);
+    width: 0;
+    transition: width 0.5s cubic-bezier(.2,.8,.2,1);
+    box-shadow: 0 0 8px rgba(251,59,36,0.4);
+  }
+
+  .stat-mini-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(5px, 0.8vh, 8px);
+  }
+  .stat-mini {
+    background: #0D0D0D;
+    border: 1px solid #1E1E1E;
+    border-radius: 5px;
+    padding: clamp(5px, 0.8vh, 8px) clamp(7px, 1vh, 9px);
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+  .stat-mini-label {
+    font-size: 0.55em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .stat-mini-value {
+    font-size: 0.95em;
+    font-weight: 800;
+    color: rgba(255,255,255,0.9);
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, monospace;
+    line-height: 1.1;
+  }
+  .stat-mini-value.red { color: #FB3B24; }
+
+  /* Moat depth gauge */
+  .moat-card {
+    background: #0D0D0D;
+    border: 1px solid #1E1E1E;
+    border-radius: 6px;
+    padding: clamp(6px, 1vh, 10px);
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(4px, 0.7vh, 7px);
+  }
+  .moat-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .moat-card-label {
+    font-size: 0.6em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .moat-card-val {
+    font-size: 0.9em;
+    font-weight: 800;
+    color: #FB3B24;
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, monospace;
+  }
+  .moat-bars {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2px;
+  }
+  .mb {
+    flex: 1;
+    background: rgba(251,59,36,0.08);
+    border-top: 1px solid rgba(251,59,36,0.3);
+    border-radius: 2px 2px 0 0;
+    transition: height 0.5s cubic-bezier(.2,.8,.2,1), background 0.5s;
+    min-width: 0;
+    height: 0;
+  }
+  .mb.full { background: linear-gradient(180deg, rgba(251,59,36,0.4) 0%, rgba(251,59,36,0.15) 100%); }
+
+  /* --- Footer (shared) --- */
+  .footer {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(7px, 1vh, 10px) clamp(10px, 1.5vh, 14px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .mini-timeline {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: clamp(4px, 0.7vh, 7px);
+    min-width: 0;
+  }
+  .mt-phase {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex: 1;
+    min-width: 0;
+  }
+  .mt-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 1.5px solid rgba(255,255,255,0.12);
+    flex-shrink: 0;
+    transition: background 0.4s, border-color 0.4s, box-shadow 0.4s;
+  }
+  .mt-phase.active .mt-dot {
+    background: #FB3B24;
+    border-color: #FB3B24;
+    box-shadow: 0 0 8px rgba(251,59,36,0.5);
+  }
+  .mt-phase.done .mt-dot {
+    background: #4BC882;
+    border-color: #4BC882;
+  }
+  .mt-text {
+    font-size: 0.6em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .mt-phase.active .mt-text { color: #FB3B24; }
+  .mt-phase.done .mt-text { color: #4BC882; }
+  .mt-line {
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+    min-width: 0;
+  }
+  .footer-label {
+    font-size: 0.62em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  /* Stack on narrow */
+  @media (max-aspect-ratio: 1/1) {
+    .main { grid-template-columns: 1fr; grid-template-rows: 1.4fr 1fr; }
+    .catalog-grid { grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(3, 1fr); }
+    .mt-text { display: none; }
+  }
+  @media (max-width: 520px) {
+    .catalog-grid { grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(4, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <!-- Header -->
+  <div class="header">
+    <div class="phase-badge">Phase 2 of 3</div>
+    <div class="h-title-group">
+      <div class="h-title">The Velocity Engine</div>
+      <div class="h-sub">Days 31—60 · Mass-deploy Agent-Ready metadata</div>
+    </div>
+    <div class="h-status">
+      <span class="h-status-dot"></span>
+      Deploying
+    </div>
+  </div>
+
+  <!-- Main split -->
+  <div class="main">
+    <!-- Left: Catalog deployment grid + log -->
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-label">Catalog Deployment · 1,247 SKUs</div>
+        <div class="panel-sub" id="rateLabel">+312 / min</div>
+      </div>
+      <div class="catalog-grid" id="catalog"></div>
+      <div class="deploy-log" id="deployLog">
+        <span class="lg-tag">//</span> awaiting deployment…
+      </div>
+    </div>
+
+    <!-- Right: stats stack -->
+    <div class="panel">
+      <div class="panel-label">Deployment Progress</div>
+      <div class="stats-stack">
+        <div class="stat-hero">
+          <div class="stat-hero-label">SKUs Agent-Ready</div>
+          <div class="stat-hero-value"><span id="skuCount">0</span><span class="stat-of">/ 1,247</span></div>
+          <div class="stat-hero-bar"><div class="stat-hero-fill" id="skuFill"></div></div>
+        </div>
+        <div class="stat-mini-row">
+          <div class="stat-mini">
+            <div class="stat-mini-label">Coverage</div>
+            <div class="stat-mini-value red" id="cov">0%</div>
+          </div>
+          <div class="stat-mini">
+            <div class="stat-mini-label">Throughput</div>
+            <div class="stat-mini-value" id="thru">0 /min</div>
+          </div>
+        </div>
+        <div class="moat-card">
+          <div class="moat-card-head">
+            <div class="moat-card-label">Hard Data Moat</div>
+            <div class="moat-card-val"><span id="moatDepth">0</span>%</div>
+          </div>
+          <div class="moat-bars" id="moatBars"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer mini timeline -->
+  <div class="footer">
+    <div class="footer-label">Sprint 90d</div>
+    <div class="mini-timeline">
+      <div class="mt-phase done"><div class="mt-dot"></div><div class="mt-text">Phase 1 · 1-30</div></div>
+      <div class="mt-line"></div>
+      <div class="mt-phase active"><div class="mt-dot"></div><div class="mt-text">Phase 2 · 31-60</div></div>
+      <div class="mt-line"></div>
+      <div class="mt-phase"><div class="mt-dot"></div><div class="mt-text">Phase 3 · 61-90</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var GRID_SIZE = 32; // 8 cols × 4 rows
+var TOTAL_SKUS = 1247;
+var catalog = document.getElementById('catalog');
+var skus = [];
+
+function buildGrid() {
+  catalog.innerHTML = '';
+  skus = [];
+  for (var i = 0; i < GRID_SIZE; i++) {
+    var s = document.createElement('div');
+    s.className = 'sku';
+    s.dataset.state = 'idle';
+    catalog.appendChild(s);
+    skus.push(s);
+  }
+}
+
+var DEPLOY_LOG_LINES = [
+  'POST /schema/product · batch=247 · OK',
+  'POST /schema/offer · batch=247 · OK',
+  'POST /schema/review · batch=189 · OK',
+  'POST /schema/breadcrumb · batch=247 · OK',
+  'POST /schema/availability · batch=247 · OK',
+  'POST /schema/brand · batch=247 · OK',
+  'POST /schema/image · batch=180 · OK',
+  'POST /schema/aggregate · batch=156 · OK'
+];
+
+var deployLog = document.getElementById('deployLog');
+var skuCount = document.getElementById('skuCount');
+var skuFill = document.getElementById('skuFill');
+var cov = document.getElementById('cov');
+var thru = document.getElementById('thru');
+var moatDepth = document.getElementById('moatDepth');
+var moatBars = document.getElementById('moatBars');
+var rateLabel = document.getElementById('rateLabel');
+
+// Build moat bars (12 columns)
+function buildMoatBars() {
+  moatBars.innerHTML = '';
+  for (var i = 0; i < 12; i++) {
+    var b = document.createElement('div');
+    b.className = 'mb';
+    moatBars.appendChild(b);
+  }
+}
+
+function setMoatBars(pct) {
+  var bars = moatBars.children;
+  var filled = Math.round((pct / 100) * bars.length);
+  for (var i = 0; i < bars.length; i++) {
+    var heightPct = i < filled ? (60 + (i * 3)) : 0;
+    bars[i].style.height = heightPct + '%';
+    if (i < filled) bars[i].classList.add('full');
+    else bars[i].classList.remove('full');
+  }
+}
+
+function sleep(ms) {
+  return new Promise(function(r) { setTimeout(r, ms); });
+}
+
+function tween(from, to, dur, cb) {
+  var start = Date.now();
+  function step() {
+    var t = Math.min(1, (Date.now() - start) / dur);
+    var v = from + (to - from) * (1 - Math.pow(1 - t, 3));
+    cb(v);
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+async function runCycle() {
+  buildGrid();
+  buildMoatBars();
+  skuCount.textContent = '0';
+  skuFill.style.width = '0%';
+  cov.textContent = '0%';
+  thru.textContent = '0 /min';
+  moatDepth.textContent = '0';
+  setMoatBars(0);
+  deployLog.innerHTML = '<span class="lg-tag">//</span> awaiting deployment…';
+
+  await sleep(700);
+
+  // Activate throughput indicator
+  rateLabel.textContent = '+312 / min';
+  thru.textContent = '312 /min';
+
+  // Roll through cards in waves of 4 with shimmer
+  var batchSize = 4;
+  var batches = Math.ceil(GRID_SIZE / batchSize);
+  var logIdx = 0;
+
+  for (var b = 0; b < batches; b++) {
+    // Activate this batch as "deploying"
+    var start = b * batchSize;
+    var end = Math.min(start + batchSize, GRID_SIZE);
+    for (var i = start; i < end; i++) {
+      skus[i].dataset.state = 'deploying';
+    }
+
+    // Update log
+    deployLog.innerHTML = '<span class="lg-tag">//</span> ' + DEPLOY_LOG_LINES[logIdx % DEPLOY_LOG_LINES.length] +
+                          ' <span class="lg-ok">[' + (logIdx * 156) + ']</span>';
+    logIdx++;
+
+    await sleep(420);
+
+    // Mark this batch as ready
+    for (var i = start; i < end; i++) {
+      skus[i].dataset.state = 'ready';
+    }
+
+    // Tween stats forward based on progress through cycle
+    var pct = (end / GRID_SIZE);
+    var skuTarget = Math.round(pct * TOTAL_SKUS);
+    var prev = parseInt(skuCount.textContent.replace(/,/g, ''));
+    tween(prev, skuTarget, 350, function(v) {
+      skuCount.textContent = Math.round(v).toLocaleString();
+      skuFill.style.width = (v / TOTAL_SKUS * 100) + '%';
+    });
+    cov.textContent = Math.round(pct * 100) + '%';
+    var moatTarget = Math.round(pct * 96);
+    var moatPrev = parseInt(moatDepth.textContent);
+    tween(moatPrev, moatTarget, 350, function(v) {
+      moatDepth.textContent = Math.round(v);
+      setMoatBars(v);
+    });
+
+    await sleep(200);
+  }
+
+  // Final state
+  await sleep(2500);
+
+  // Reset
+  runCycle();
+}
+
+runCycle();
+</script>
+</body>
+</html>

@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 1 · Identity Architecture Sprint</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0F0F0F;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+    font-size: clamp(9px, 1.5vh, 13px);
+  }
+
+  .stage {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 1vh, 10px);
+    padding: clamp(8px, 1.4vh, 14px);
+  }
+
+  /* --- Shared header (across all 3 phase graphics) --- */
+  .header {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(7px, 1vh, 11px) clamp(10px, 1.5vh, 14px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .phase-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.62em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 4px 9px;
+    border-radius: 4px;
+    border: 1px dashed rgba(251,59,36,0.55);
+    background: rgba(251,59,36,0.08);
+    color: #FB3B24;
+    flex-shrink: 0;
+  }
+  .h-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+    flex: 1;
+    margin-left: 6px;
+  }
+  .h-title {
+    font-size: 0.98em;
+    font-weight: 800;
+    color: rgba(255,255,255,0.92);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .h-sub {
+    font-size: 0.62em;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .h-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.62em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #FB3B24;
+    background: rgba(251,59,36,0.08);
+    border: 1px solid rgba(251,59,36,0.25);
+    padding: 4px 9px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .h-status-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #FB3B24;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* --- Main split layout --- */
+  .main {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: clamp(6px, 1vh, 10px);
+  }
+  .panel {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(8px, 1.2vh, 12px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(5px, 0.8vh, 8px);
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    position: relative;
+  }
+  .panel-label {
+    font-size: 0.62em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    flex-shrink: 0;
+  }
+
+  /* --- Left: Issue list --- */
+  .issue-list {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(3px, 0.5vh, 5px);
+    overflow: hidden;
+  }
+  .issue {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: clamp(4px, 0.7vh, 7px) clamp(7px, 1vh, 10px);
+    background: #0D0D0D;
+    border: 1px solid #1E1E1E;
+    border-radius: 5px;
+    font-size: 0.8em;
+    transition: background 0.4s, border-color 0.4s, color 0.4s;
+    min-width: 0;
+    flex-shrink: 0;
+  }
+  .issue.error {
+    border-color: rgba(251,59,36,0.4);
+    background: rgba(251,59,36,0.04);
+  }
+  .issue.fixing {
+    border-color: rgba(230,180,60,0.45);
+    background: rgba(230,180,60,0.04);
+  }
+  .issue.resolved {
+    border-color: rgba(75,200,130,0.4);
+    background: rgba(75,200,130,0.03);
+    color: rgba(255,255,255,0.55);
+  }
+  .issue-icon {
+    width: 1.3em;
+    height: 1.3em;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75em;
+    font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
+    transition: background 0.4s;
+  }
+  .issue.error .issue-icon { background: #FB3B24; }
+  .issue.fixing .issue-icon { background: #E6B43C; color: #2A1F00; }
+  .issue.resolved .issue-icon { background: #4BC882; color: #08200F; }
+  .issue.fixing .issue-icon::after {
+    content: '';
+    width: 0.65em;
+    height: 0.65em;
+    border: 1.5px solid #2A1F00;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  .issue.fixing .issue-icon span { display: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .issue-text {
+    flex: 1;
+    min-width: 0;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+  .issue-text-detail {
+    font-size: 0.78em;
+    font-weight: 500;
+    color: #666;
+    font-family: ui-monospace, monospace;
+    margin-top: 1px;
+  }
+  .issue-tag {
+    font-size: 0.62em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .issue.error .issue-tag { background: rgba(251,59,36,0.15); color: #FB3B24; }
+  .issue.fixing .issue-tag { background: rgba(230,180,60,0.15); color: #E6B43C; }
+  .issue.resolved .issue-tag { background: rgba(75,200,130,0.15); color: #4BC882; }
+
+  /* --- Right: Store status + metrics --- */
+  .store-card {
+    background: #0D0D0D;
+    border: 1px solid #1E1E1E;
+    border-radius: 8px;
+    padding: clamp(8px, 1.2vh, 12px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(3px, 0.5vh, 5px);
+    transition: border-color 0.5s, background 0.5s;
+    flex-shrink: 0;
+  }
+  .store-card.closed {
+    border-color: rgba(251,59,36,0.35);
+    background: linear-gradient(135deg, #0D0D0D 0%, rgba(251,59,36,0.04) 100%);
+  }
+  .store-card.open {
+    border-color: rgba(75,200,130,0.4);
+    background: linear-gradient(135deg, #0D0D0D 0%, rgba(75,200,130,0.05) 100%);
+  }
+  .store-icon {
+    width: 2.5em; height: 2.5em;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1em;
+    font-weight: 800;
+    transition: background 0.5s, color 0.5s, box-shadow 0.5s;
+    flex-shrink: 0;
+  }
+  .store-card.closed .store-icon {
+    background: rgba(251,59,36,0.18);
+    color: #FB3B24;
+    box-shadow: 0 0 14px rgba(251,59,36,0.3);
+  }
+  .store-card.open .store-icon {
+    background: rgba(75,200,130,0.2);
+    color: #4BC882;
+    box-shadow: 0 0 18px rgba(75,200,130,0.35);
+  }
+  .store-label {
+    font-size: 0.6em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .store-value {
+    font-size: 0.95em;
+    font-weight: 800;
+    transition: color 0.5s;
+    text-align: center;
+    line-height: 1.1;
+  }
+  .store-card.closed .store-value { color: #FB3B24; }
+  .store-card.open .store-value { color: #4BC882; }
+
+  .metrics {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(4px, 0.7vh, 7px);
+    flex: 1;
+    min-height: 0;
+  }
+  .metric {
+    background: #0D0D0D;
+    border: 1px solid #1E1E1E;
+    border-radius: 5px;
+    padding: clamp(5px, 0.8vh, 8px) clamp(7px, 1vh, 10px);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1px;
+    min-height: 0;
+    transition: border-color 0.4s, background 0.4s;
+  }
+  .metric.complete {
+    border-color: rgba(75,200,130,0.3);
+  }
+  .metric-label {
+    font-size: 0.58em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .metric-value {
+    font-size: 0.95em;
+    font-weight: 800;
+    color: rgba(255,255,255,0.85);
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, monospace;
+    line-height: 1.1;
+  }
+  .metric.complete .metric-value { color: #4BC882; }
+  .metric-bar {
+    margin-top: 3px;
+    height: 3px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .metric-bar-fill {
+    height: 100%;
+    background: #FB3B24;
+    width: 0;
+    transition: width 0.8s cubic-bezier(.2,.8,.2,1), background 0.4s;
+  }
+  .metric.complete .metric-bar-fill { background: #4BC882; }
+
+  /* --- Footer mini timeline (shared style) --- */
+  .footer {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(7px, 1vh, 10px) clamp(10px, 1.5vh, 14px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .mini-timeline {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: clamp(4px, 0.7vh, 7px);
+    min-width: 0;
+  }
+  .mt-phase {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex: 1;
+    min-width: 0;
+  }
+  .mt-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 1.5px solid rgba(255,255,255,0.12);
+    flex-shrink: 0;
+    transition: background 0.4s, border-color 0.4s, box-shadow 0.4s;
+  }
+  .mt-phase.active .mt-dot {
+    background: #FB3B24;
+    border-color: #FB3B24;
+    box-shadow: 0 0 8px rgba(251,59,36,0.5);
+  }
+  .mt-phase.done .mt-dot {
+    background: #4BC882;
+    border-color: #4BC882;
+  }
+  .mt-text {
+    font-size: 0.6em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .mt-phase.active .mt-text { color: #FB3B24; }
+  .mt-phase.done .mt-text { color: #4BC882; }
+  .mt-line {
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+    min-width: 0;
+  }
+  .footer-label {
+    font-size: 0.62em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  /* Stack on narrow */
+  @media (max-aspect-ratio: 1/1) {
+    .main { grid-template-columns: 1fr; grid-template-rows: 1.5fr 1fr; }
+    .store-card { padding: clamp(6px, 1vh, 10px); }
+    .store-icon { width: 2em; height: 2em; }
+    .mt-text { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <!-- Header -->
+  <div class="header">
+    <div class="phase-badge">Phase 1 of 3</div>
+    <div class="h-title-group">
+      <div class="h-title">Identity Architecture Sprint</div>
+      <div class="h-sub">Days 1—30 · Code Surgery + Tech Infrastructure</div>
+    </div>
+    <div class="h-status">
+      <span class="h-status-dot"></span>
+      Sprint Active
+    </div>
+  </div>
+
+  <!-- Main split -->
+  <div class="main">
+    <!-- Left: Issue list -->
+    <div class="panel">
+      <div class="panel-label">Technical Debt Resolution</div>
+      <div class="issue-list" id="issueList"></div>
+    </div>
+
+    <!-- Right: Store status + metrics -->
+    <div class="panel">
+      <div class="panel-label">Store Status</div>
+      <div class="store-card closed" id="storeCard">
+        <div class="store-icon" id="storeIcon">✕</div>
+        <div class="store-label">Status</div>
+        <div class="store-value" id="storeValue">Closed · Agent-Blind</div>
+      </div>
+      <div class="metrics">
+        <div class="metric" data-key="errors">
+          <div class="metric-label">Errors resolved</div>
+          <div class="metric-value" id="mErr">0 / 8</div>
+          <div class="metric-bar"><div class="metric-bar-fill" id="mErrBar"></div></div>
+        </div>
+        <div class="metric" data-key="coverage">
+          <div class="metric-label">Schema coverage</div>
+          <div class="metric-value" id="mCov">0%</div>
+          <div class="metric-bar"><div class="metric-bar-fill" id="mCovBar"></div></div>
+        </div>
+        <div class="metric" data-key="ai">
+          <div class="metric-label">AI readiness</div>
+          <div class="metric-value" id="mAi">0 / 100</div>
+          <div class="metric-bar"><div class="metric-bar-fill" id="mAiBar"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer mini timeline -->
+  <div class="footer">
+    <div class="footer-label">Sprint 90d</div>
+    <div class="mini-timeline">
+      <div class="mt-phase active"><div class="mt-dot"></div><div class="mt-text">Phase 1 · 1-30</div></div>
+      <div class="mt-line"></div>
+      <div class="mt-phase"><div class="mt-dot"></div><div class="mt-text">Phase 2 · 31-60</div></div>
+      <div class="mt-line"></div>
+      <div class="mt-phase"><div class="mt-dot"></div><div class="mt-text">Phase 3 · 61-90</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var ISSUES = [
+  { text: 'Missing Product schema', tag: 'JSON-LD' },
+  { text: 'Broken canonical tags', tag: 'HEAD' },
+  { text: 'Invalid Offer.price markup', tag: 'JSON-LD' },
+  { text: 'No BreadcrumbList', tag: 'NAV' },
+  { text: 'Empty image attributes', tag: 'IMG' },
+  { text: 'Malformed Review schema', tag: 'JSON-LD' },
+  { text: 'Missing brand entity', tag: 'ORG' },
+  { text: 'No availability markup', tag: 'OFFER' }
+];
+
+var issueList = document.getElementById('issueList');
+var storeCard = document.getElementById('storeCard');
+var storeIcon = document.getElementById('storeIcon');
+var storeValue = document.getElementById('storeValue');
+
+function buildIssues() {
+  issueList.innerHTML = '';
+  ISSUES.forEach(function(it, i) {
+    var d = document.createElement('div');
+    d.className = 'issue error';
+    d.dataset.idx = i;
+    d.innerHTML =
+      '<div class="issue-icon"><span>✕</span></div>' +
+      '<div class="issue-text">' + it.text + '</div>' +
+      '<div class="issue-tag">' + it.tag + '</div>';
+    issueList.appendChild(d);
+  });
+}
+
+function setIssueState(idx, state) {
+  var el = issueList.children[idx];
+  el.classList.remove('error', 'fixing', 'resolved');
+  el.classList.add(state);
+  var icon = el.querySelector('.issue-icon span');
+  var tag = el.querySelector('.issue-tag');
+  if (state === 'error') {
+    icon.textContent = '✕';
+    tag.textContent = ISSUES[idx].tag;
+  } else if (state === 'fixing') {
+    icon.textContent = '';
+    tag.textContent = 'Fixing';
+  } else if (state === 'resolved') {
+    icon.textContent = '✓';
+    tag.textContent = 'Resolved';
+  }
+}
+
+function sleep(ms) {
+  return new Promise(function(r) { setTimeout(r, ms); });
+}
+
+function tween(from, to, dur, cb) {
+  var start = Date.now();
+  function step() {
+    var t = Math.min(1, (Date.now() - start) / dur);
+    var v = from + (to - from) * (1 - Math.pow(1 - t, 3));
+    cb(v);
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function setMetric(key, val, max, suffix) {
+  var idMap = { errors: ['mErr', 'mErrBar'], coverage: ['mCov', 'mCovBar'], ai: ['mAi', 'mAiBar'] };
+  var ids = idMap[key];
+  var valEl = document.getElementById(ids[0]);
+  var barEl = document.getElementById(ids[1]);
+  if (key === 'errors') valEl.textContent = Math.round(val) + ' / ' + max;
+  else if (key === 'coverage') valEl.textContent = Math.round(val) + '%';
+  else if (key === 'ai') valEl.textContent = Math.round(val) + ' / 100';
+  barEl.style.width = ((val / max) * 100) + '%';
+}
+
+async function runCycle() {
+  buildIssues();
+  storeCard.className = 'store-card closed';
+  storeIcon.textContent = '✕';
+  storeValue.textContent = 'Closed · Agent-Blind';
+  document.querySelectorAll('.metric').forEach(function(m) { m.classList.remove('complete'); });
+  setMetric('errors', 0, 8);
+  setMetric('coverage', 0, 100);
+  setMetric('ai', 0, 100);
+
+  await sleep(700);
+
+  // Resolve each issue one by one
+  for (var i = 0; i < ISSUES.length; i++) {
+    setIssueState(i, 'fixing');
+    await sleep(450);
+    setIssueState(i, 'resolved');
+
+    // Update metrics progressively
+    var prog = (i + 1) / ISSUES.length;
+    tween(parseInt(document.getElementById('mErr').textContent), i + 1, 350, function(v) {
+      setMetric('errors', v, 8);
+    });
+    var covTarget = Math.round(prog * 100);
+    var aiTarget = Math.round(prog * 98);
+    var covStart = parseFloat(document.getElementById('mCov').textContent);
+    var aiStart = parseFloat(document.getElementById('mAi').textContent);
+    tween(covStart, covTarget, 400, function(v) { setMetric('coverage', v, 100); });
+    tween(aiStart, aiTarget, 400, function(v) { setMetric('ai', v, 100); });
+    await sleep(350);
+  }
+
+  // Mark metrics complete
+  document.querySelectorAll('.metric').forEach(function(m) { m.classList.add('complete'); });
+
+  await sleep(600);
+
+  // Flip store to open
+  storeCard.className = 'store-card open';
+  storeIcon.textContent = '✓';
+  storeValue.textContent = 'Open · Agent-Ready';
+
+  await sleep(3500);
+  runCycle();
+}
+
+runCycle();
+</script>
+</body>
+</html>

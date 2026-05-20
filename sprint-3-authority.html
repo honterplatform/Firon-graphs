@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 3 · Growth & Authority Layer</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0F0F0F;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+    font-size: clamp(9px, 1.5vh, 13px);
+  }
+
+  .stage {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 1vh, 10px);
+    padding: clamp(8px, 1.4vh, 14px);
+  }
+
+  /* --- Shared header --- */
+  .header {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(7px, 1vh, 11px) clamp(10px, 1.5vh, 14px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .phase-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.62em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 4px 9px;
+    border-radius: 4px;
+    border: 1px dashed rgba(251,59,36,0.55);
+    background: rgba(251,59,36,0.08);
+    color: #FB3B24;
+    flex-shrink: 0;
+  }
+  .h-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+    flex: 1;
+    margin-left: 6px;
+  }
+  .h-title {
+    font-size: 0.98em;
+    font-weight: 800;
+    color: rgba(255,255,255,0.92);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .h-sub {
+    font-size: 0.62em;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .h-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.62em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #FB3B24;
+    background: rgba(251,59,36,0.08);
+    border: 1px solid rgba(251,59,36,0.25);
+    padding: 4px 9px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .h-status-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #FB3B24;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* --- Main split layout --- */
+  .main {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: clamp(6px, 1vh, 10px);
+  }
+  .panel {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(8px, 1.2vh, 12px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(5px, 0.8vh, 8px);
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    position: relative;
+  }
+  .panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-shrink: 0;
+  }
+  .panel-label {
+    font-size: 0.62em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .panel-sub {
+    font-size: 0.6em;
+    font-weight: 700;
+    color: #FB3B24;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: ui-monospace, monospace;
+  }
+
+  /* --- Left: Network canvas --- */
+  .network-wrap {
+    flex: 1;
+    min-height: 0;
+    background: #0D0D0D;
+    border: 1px solid #1E1E1E;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+  .net-canvas { width: 100%; height: 100%; display: block; }
+
+  .legend {
+    display: flex;
+    gap: clamp(8px, 1.4vh, 14px);
+    flex-shrink: 0;
+    padding: 4px 2px 0;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.62em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .legend-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .ld-brand { background: #FB3B24; box-shadow: 0 0 6px rgba(251,59,36,0.5); }
+  .ld-cluster { background: rgba(255,255,255,0.5); }
+  .ld-signal { background: #4BC882; box-shadow: 0 0 4px rgba(75,200,130,0.5); }
+
+  /* --- Right: Authority metrics --- */
+  .stats-stack {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(5px, 0.8vh, 8px);
+  }
+  .auth-hero {
+    background: linear-gradient(135deg, #0D0D0D 0%, rgba(251,59,36,0.05) 100%);
+    border: 1px solid rgba(251,59,36,0.35);
+    border-radius: 6px;
+    padding: clamp(8px, 1.2vh, 12px);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .auth-label {
+    font-size: 0.6em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .auth-value {
+    font-size: clamp(20px, 4vh, 32px);
+    font-weight: 800;
+    color: #FB3B24;
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, monospace;
+    line-height: 1;
+  }
+  .auth-value .of {
+    font-size: 0.5em;
+    color: #555;
+    font-weight: 600;
+    margin-left: 4px;
+  }
+  .auth-delta {
+    font-size: 0.65em;
+    font-weight: 700;
+    color: #4BC882;
+    margin-top: 2px;
+  }
+  .auth-delta::before {
+    content: '↑ ';
+  }
+
+  .stat-mini-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(5px, 0.8vh, 8px);
+  }
+  .stat-mini {
+    background: #0D0D0D;
+    border: 1px solid #1E1E1E;
+    border-radius: 5px;
+    padding: clamp(5px, 0.8vh, 8px) clamp(7px, 1vh, 9px);
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+  .stat-mini-label {
+    font-size: 0.55em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .stat-mini-value {
+    font-size: 0.95em;
+    font-weight: 800;
+    color: rgba(255,255,255,0.9);
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, monospace;
+    line-height: 1.1;
+  }
+
+  /* AI engines panel */
+  .engines-card {
+    background: #0D0D0D;
+    border: 1px solid #1E1E1E;
+    border-radius: 6px;
+    padding: clamp(6px, 1vh, 9px);
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(3px, 0.5vh, 5px);
+  }
+  .engines-head {
+    font-size: 0.6em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+  .engine {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  .eng-mark {
+    width: 1.1em; height: 1.1em;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65em;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .engine[data-llm="gpt"] .eng-mark { background: rgba(75,200,130,0.18); color: #4BC882; }
+  .engine[data-llm="pplx"] .eng-mark { background: rgba(85,170,210,0.18); color: #55AAD2; }
+  .engine[data-llm="cl"] .eng-mark { background: rgba(220,140,80,0.18); color: #DC8C50; }
+  .engine[data-llm="gem"] .eng-mark { background: rgba(180,120,220,0.18); color: #B478DC; }
+  .eng-name {
+    font-size: 0.7em;
+    font-weight: 600;
+    color: rgba(255,255,255,0.7);
+    flex: 0 0 4.5em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .eng-bar {
+    flex: 1;
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    overflow: hidden;
+    min-width: 0;
+  }
+  .eng-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #FB3B24 0%, rgba(251,59,36,0.6) 100%);
+    width: 0;
+    transition: width 1s cubic-bezier(.2,.8,.2,1);
+    box-shadow: 0 0 6px rgba(251,59,36,0.3);
+  }
+  .eng-pct {
+    font-size: 0.68em;
+    font-weight: 700;
+    color: rgba(255,255,255,0.8);
+    font-family: ui-monospace, monospace;
+    min-width: 2.2em;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* --- Footer (shared) --- */
+  .footer {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(7px, 1vh, 10px) clamp(10px, 1.5vh, 14px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .mini-timeline {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: clamp(4px, 0.7vh, 7px);
+    min-width: 0;
+  }
+  .mt-phase {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex: 1;
+    min-width: 0;
+  }
+  .mt-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 1.5px solid rgba(255,255,255,0.12);
+    flex-shrink: 0;
+    transition: background 0.4s, border-color 0.4s, box-shadow 0.4s;
+  }
+  .mt-phase.active .mt-dot {
+    background: #FB3B24;
+    border-color: #FB3B24;
+    box-shadow: 0 0 8px rgba(251,59,36,0.5);
+  }
+  .mt-phase.done .mt-dot {
+    background: #4BC882;
+    border-color: #4BC882;
+  }
+  .mt-text {
+    font-size: 0.6em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .mt-phase.active .mt-text { color: #FB3B24; }
+  .mt-phase.done .mt-text { color: #4BC882; }
+  .mt-line {
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+    min-width: 0;
+  }
+  .footer-label {
+    font-size: 0.62em;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  /* Stack on narrow */
+  @media (max-aspect-ratio: 1/1) {
+    .main { grid-template-columns: 1fr; grid-template-rows: 1.4fr 1fr; }
+    .mt-text { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <!-- Header -->
+  <div class="header">
+    <div class="phase-badge">Phase 3 of 3</div>
+    <div class="h-title-group">
+      <div class="h-title">Growth &amp; Authority Layer</div>
+      <div class="h-sub">Days 61—90 · Cluster bombing + Signal Engine</div>
+    </div>
+    <div class="h-status">
+      <span class="h-status-dot"></span>
+      Amplifying
+    </div>
+  </div>
+
+  <!-- Main split -->
+  <div class="main">
+    <!-- Left: Authority Network -->
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-label">Authority Network</div>
+        <div class="panel-sub">Live · cluster + signal</div>
+      </div>
+      <div class="network-wrap">
+        <canvas class="net-canvas" id="netCanvas"></canvas>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot ld-brand"></div>Your brand</div>
+        <div class="legend-item"><div class="legend-dot ld-cluster"></div>Content cluster</div>
+        <div class="legend-item"><div class="legend-dot ld-signal"></div>Citation / backlink</div>
+      </div>
+    </div>
+
+    <!-- Right: stats stack -->
+    <div class="panel">
+      <div class="panel-label">Authority Metrics</div>
+      <div class="stats-stack">
+        <div class="auth-hero">
+          <div class="auth-label">Authority score</div>
+          <div class="auth-value"><span id="authScore">0</span><span class="of">/ 100</span></div>
+          <div class="auth-delta"><span id="authDelta">+0</span> pts this sprint</div>
+        </div>
+        <div class="stat-mini-row">
+          <div class="stat-mini">
+            <div class="stat-mini-label">Clusters built</div>
+            <div class="stat-mini-value" id="statClusters">0</div>
+          </div>
+          <div class="stat-mini">
+            <div class="stat-mini-label">Citations earned</div>
+            <div class="stat-mini-value" id="statCites">0</div>
+          </div>
+        </div>
+        <div class="engines-card">
+          <div class="engines-head">AI Share of Voice gain</div>
+          <div class="engine" data-llm="gpt">
+            <div class="eng-mark">G</div>
+            <div class="eng-name">ChatGPT</div>
+            <div class="eng-bar"><div class="eng-fill" data-target="68"></div></div>
+            <div class="eng-pct" data-final="+38">+0</div>
+          </div>
+          <div class="engine" data-llm="pplx">
+            <div class="eng-mark">P</div>
+            <div class="eng-name">Perplexity</div>
+            <div class="eng-bar"><div class="eng-fill" data-target="54"></div></div>
+            <div class="eng-pct" data-final="+29">+0</div>
+          </div>
+          <div class="engine" data-llm="cl">
+            <div class="eng-mark">C</div>
+            <div class="eng-name">Claude</div>
+            <div class="eng-bar"><div class="eng-fill" data-target="61"></div></div>
+            <div class="eng-pct" data-final="+34">+0</div>
+          </div>
+          <div class="engine" data-llm="gem">
+            <div class="eng-mark">M</div>
+            <div class="eng-name">Gemini</div>
+            <div class="eng-bar"><div class="eng-fill" data-target="42"></div></div>
+            <div class="eng-pct" data-final="+22">+0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer mini timeline -->
+  <div class="footer">
+    <div class="footer-label">Sprint 90d</div>
+    <div class="mini-timeline">
+      <div class="mt-phase done"><div class="mt-dot"></div><div class="mt-text">Phase 1 · 1-30</div></div>
+      <div class="mt-line"></div>
+      <div class="mt-phase done"><div class="mt-dot"></div><div class="mt-text">Phase 2 · 31-60</div></div>
+      <div class="mt-line"></div>
+      <div class="mt-phase active"><div class="mt-dot"></div><div class="mt-text">Phase 3 · 61-90</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// === Authority Network Canvas ===
+var canvas = document.getElementById('netCanvas');
+var ctx = canvas.getContext('2d');
+var dpr = window.devicePixelRatio || 1;
+var W, H, CX, CY;
+
+function resize() {
+  W = canvas.clientWidth;
+  H = canvas.clientHeight;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  CX = W / 2;
+  CY = H / 2;
+}
+window.addEventListener('resize', function() {
+  resize();
+});
+
+// State machine
+var phase = 'idle'; // idle, spawning-clusters, spawning-signals, hold
+var clusters = []; // content cluster nodes
+var signals = []; // outer citation/signal nodes
+var connections = []; // active edges between signals and clusters
+var pulses = []; // pulses traveling along edges
+
+var startTime = Date.now();
+function now() { return (Date.now() - startTime) / 1000; }
+
+function rand(min, max) { return min + Math.random() * (max - min); }
+
+function spawnCluster() {
+  var angle = rand(0, Math.PI * 2);
+  var dist = Math.min(W, H) * 0.18;
+  clusters.push({
+    angle: angle,
+    dist: dist,
+    spawnTime: now(),
+    scale: 0,
+    radius: Math.max(3, Math.min(W, H) * 0.015)
+  });
+}
+
+function spawnSignal() {
+  var angle = rand(0, Math.PI * 2);
+  var dist = Math.min(W, H) * 0.42;
+  var signal = {
+    angle: angle,
+    dist: dist,
+    spawnTime: now(),
+    scale: 0,
+    radius: Math.max(2, Math.min(W, H) * 0.011)
+  };
+  signals.push(signal);
+
+  // Connect to nearest cluster
+  if (clusters.length > 0) {
+    var sx = CX + Math.cos(angle) * dist;
+    var sy = CY + Math.sin(angle) * dist;
+    var nearest = clusters[0];
+    var nearestDist = Infinity;
+    clusters.forEach(function(c) {
+      var cx = CX + Math.cos(c.angle) * c.dist;
+      var cy = CY + Math.sin(c.angle) * c.dist;
+      var d = Math.hypot(sx - cx, sy - cy);
+      if (d < nearestDist) {
+        nearestDist = d;
+        nearest = c;
+      }
+    });
+    connections.push({
+      from: signal,
+      to: nearest,
+      progress: 0,
+      spawnTime: now()
+    });
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  var t = now();
+
+  // Background radial glow when authority high
+  var totalSignals = signals.length;
+  var glowAlpha = Math.min(0.18, totalSignals / 60);
+  var maxR = Math.min(W, H) * 0.5;
+  var grad = ctx.createRadialGradient(CX, CY, 0, CX, CY, maxR);
+  grad.addColorStop(0, 'rgba(251,59,36,' + (glowAlpha * 0.7) + ')');
+  grad.addColorStop(0.6, 'rgba(251,59,36,' + (glowAlpha * 0.25) + ')');
+  grad.addColorStop(1, 'rgba(251,59,36,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Draw connections (animated)
+  connections.forEach(function(conn) {
+    if (conn.progress < 1) {
+      var elapsed = t - conn.spawnTime;
+      conn.progress = Math.min(1, elapsed / 1.2);
+    }
+    var fx = CX + Math.cos(conn.from.angle) * conn.from.dist;
+    var fy = CY + Math.sin(conn.from.angle) * conn.from.dist;
+    var tx = CX + Math.cos(conn.to.angle) * conn.to.dist;
+    var ty = CY + Math.sin(conn.to.angle) * conn.to.dist;
+    // Curve via midpoint slightly offset
+    var mx = (fx + tx) / 2;
+    var my = (fy + ty) / 2;
+    // Animate dash via progress
+    var endX = fx + (tx - fx) * conn.progress;
+    var endY = fy + (ty - fy) * conn.progress;
+
+    ctx.beginPath();
+    ctx.moveTo(fx, fy);
+    ctx.lineTo(endX, endY);
+    ctx.strokeStyle = 'rgba(75,200,130,0.45)';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+
+    // Pulse traveling from signal toward cluster
+    if (conn.progress >= 1) {
+      var pulseT = (((t * 0.5) + (conn.from.spawnTime * 0.7)) % 1);
+      // Reverse direction (signal -> cluster): pulse goes from from to to
+      var px = fx + (tx - fx) * pulseT;
+      var py = fy + (ty - fy) * pulseT;
+      ctx.beginPath();
+      ctx.arc(px, py, 1.4, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(75,200,130,0.9)';
+      ctx.fill();
+    }
+  });
+
+  // Lines from clusters to brand center
+  clusters.forEach(function(c) {
+    if (c.scale > 0.3) {
+      var cx = CX + Math.cos(c.angle) * c.dist;
+      var cy = CY + Math.sin(c.angle) * c.dist;
+      ctx.beginPath();
+      ctx.moveTo(CX, CY);
+      ctx.lineTo(cx, cy);
+      ctx.strokeStyle = 'rgba(251,59,36,' + (0.3 * c.scale) + ')';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  });
+
+  // Draw cluster nodes
+  clusters.forEach(function(c) {
+    var elapsed = t - c.spawnTime;
+    c.scale = Math.min(1, elapsed / 0.4);
+    var cx = CX + Math.cos(c.angle) * c.dist;
+    var cy = CY + Math.sin(c.angle) * c.dist;
+    var r = c.radius * c.scale;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 2.2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = '#1A1A1A';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(251,59,36,0.6)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.4, 0, Math.PI * 2);
+    ctx.fillStyle = '#FB3B24';
+    ctx.fill();
+  });
+
+  // Draw signal nodes
+  signals.forEach(function(s) {
+    var elapsed = t - s.spawnTime;
+    s.scale = Math.min(1, elapsed / 0.4);
+    var sx = CX + Math.cos(s.angle) * s.dist;
+    var sy = CY + Math.sin(s.angle) * s.dist;
+    var r = s.radius * s.scale;
+    ctx.beginPath();
+    ctx.arc(sx, sy, r * 1.8, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(75,200,130,0.12)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(sx, sy, r, 0, Math.PI * 2);
+    ctx.fillStyle = '#4BC882';
+    ctx.fill();
+  });
+
+  // Brand node (center) - draw last so it's on top
+  var brandPulse = 1 + Math.sin(t * 2) * 0.06;
+  var brandR = Math.max(7, Math.min(W, H) * 0.04);
+  // Outer glow
+  var glowR2 = brandR * 2.4 * brandPulse;
+  var glowGrad = ctx.createRadialGradient(CX, CY, 0, CX, CY, glowR2);
+  glowGrad.addColorStop(0, 'rgba(251,59,36,0.5)');
+  glowGrad.addColorStop(1, 'rgba(251,59,36,0)');
+  ctx.fillStyle = glowGrad;
+  ctx.beginPath();
+  ctx.arc(CX, CY, glowR2, 0, Math.PI * 2);
+  ctx.fill();
+  // Core
+  ctx.beginPath();
+  ctx.arc(CX, CY, brandR, 0, Math.PI * 2);
+  ctx.fillStyle = '#FB3B24';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  // Inner dot
+  ctx.beginPath();
+  ctx.arc(CX, CY, brandR * 0.4, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+
+  requestAnimationFrame(draw);
+}
+
+// === Right-side stats ===
+var authScore = document.getElementById('authScore');
+var authDelta = document.getElementById('authDelta');
+var statClusters = document.getElementById('statClusters');
+var statCites = document.getElementById('statCites');
+
+function sleep(ms) {
+  return new Promise(function(r) { setTimeout(r, ms); });
+}
+
+function tween(from, to, dur, cb) {
+  var start = Date.now();
+  function step() {
+    var t = Math.min(1, (Date.now() - start) / dur);
+    var v = from + (to - from) * (1 - Math.pow(1 - t, 3));
+    cb(v);
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+async function runCycle() {
+  // Reset
+  clusters = [];
+  signals = [];
+  connections = [];
+  authScore.textContent = '0';
+  authDelta.textContent = '+0';
+  statClusters.textContent = '0';
+  statCites.textContent = '0';
+  document.querySelectorAll('.eng-fill').forEach(function(f) { f.style.width = '0%'; });
+  document.querySelectorAll('.eng-pct').forEach(function(p) { p.textContent = '+0'; });
+
+  await sleep(700);
+
+  // PHASE: Spawn clusters
+  for (var i = 0; i < 6; i++) {
+    spawnCluster();
+    statClusters.textContent = String(i + 1);
+    await sleep(280);
+  }
+
+  await sleep(400);
+
+  // PHASE: Spawn signals/citations from outer ring
+  var totalSignals = 14;
+  for (var i = 0; i < totalSignals; i++) {
+    spawnSignal();
+    statCites.textContent = String(i + 1);
+
+    // Update authority score gradually
+    var prog = (i + 1) / totalSignals;
+    tween(parseInt(authScore.textContent), Math.round(prog * 87), 280, function(v) {
+      authScore.textContent = Math.round(v);
+      authDelta.textContent = '+' + Math.round(v * 0.6);
+    });
+
+    // Animate engine bars at certain milestones
+    if (i === 3 || i === 7 || i === 11 || i === 13) {
+      var fills = document.querySelectorAll('.eng-fill');
+      var pcts = document.querySelectorAll('.eng-pct');
+      var milestone = i === 3 ? 0.25 : i === 7 ? 0.55 : i === 11 ? 0.85 : 1;
+      fills.forEach(function(f) {
+        var target = parseFloat(f.dataset.target);
+        f.style.width = (target * milestone) + '%';
+      });
+      pcts.forEach(function(p) {
+        var finalVal = parseInt(p.dataset.final);
+        p.textContent = '+' + Math.round(finalVal * milestone);
+      });
+    }
+
+    await sleep(280);
+  }
+
+  await sleep(3500);
+
+  // Reset and loop
+  runCycle();
+}
+
+// Initialize
+window.addEventListener('load', function() {
+  resize();
+  draw();
+  setTimeout(runCycle, 200);
+});
+
+// Fallback if load event already passed
+if (document.readyState === 'complete') {
+  resize();
+  draw();
+  setTimeout(runCycle, 200);
+}
+</script>
+</body>
+</html>
