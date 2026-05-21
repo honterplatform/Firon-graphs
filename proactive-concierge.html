@@ -144,11 +144,15 @@
     display: flex;
     flex-direction: column;
     gap: clamp(8px, 1.2vh, 12px);
-    overflow-y: hidden;
+    overflow-y: auto;
+    scroll-behavior: smooth;
     background: #161616;
     background-image:
       radial-gradient(circle at 20% 0%, rgba(251,59,36,0.04), transparent 50%);
   }
+  /* Hide scrollbar for clean chat aesthetic */
+  .chat-body { scrollbar-width: none; -ms-overflow-style: none; }
+  .chat-body::-webkit-scrollbar { display: none; }
 
   .memory-chip {
     display: inline-flex;
@@ -445,6 +449,15 @@ var memChip = document.getElementById('memChip');
 
 function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
 
+function scrollChatToBottom() {
+  // Defer to next frame so newly added DOM has measurable height
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: 'smooth' });
+    });
+  });
+}
+
 function addMessage(html) {
   var m = document.createElement('div');
   m.className = 'msg ai';
@@ -453,6 +466,7 @@ function addMessage(html) {
   requestAnimationFrame(function() {
     requestAnimationFrame(function() { m.classList.add('show'); });
   });
+  scrollChatToBottom();
   return m;
 }
 
@@ -464,6 +478,7 @@ function addTyping() {
   requestAnimationFrame(function() {
     requestAnimationFrame(function() { t.classList.add('show'); });
   });
+  scrollChatToBottom();
   return t;
 }
 
@@ -483,6 +498,7 @@ function addProductsRow() {
         '<div class="prod-meta"><span class="prod-size">3-6M</span><span class="prod-price">£38</span></div></div></div>' +
     '</div>';
   chatBody.appendChild(wrap);
+  scrollChatToBottom();
   return wrap;
 }
 
@@ -494,6 +510,7 @@ function addQuickReplies() {
     '<button class="qr">Show more prints</button>' +
     '<button class="qr">Save for later</button>';
   chatBody.appendChild(qr);
+  scrollChatToBottom();
   return qr;
 }
 
