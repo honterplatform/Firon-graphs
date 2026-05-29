@@ -3,278 +3,352 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Knowledge Fence</title>
+<title>Knowledge Fence · Restricted Sources</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 100%; height: 100%; overflow: hidden; }
   body {
-    background: #0A0A0A;
+    background: #0F0F0F;
     font-family: system-ui, -apple-system, sans-serif;
     color: #fff;
   }
+
   .card {
-    background: #0F0F0F;
     width: 100%;
     height: 100%;
-    overflow: hidden;
-    padding: 16px;
-  }
-  .breadcrumb {
+    background: #0F0F0F;
+    padding: clamp(20px, 4vh, 36px) clamp(20px, 3.5vw, 40px);
     display: flex;
+    flex-direction: column;
+    gap: clamp(12px, 2vh, 18px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-label {
+    font-size: clamp(11px, 1.5vh, 14px);
+    font-weight: 700;
+    color: #FB3B24;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    flex-shrink: 0;
+  }
+
+  /* --- Fence container --- */
+  .fence {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: clamp(12px, 2vw, 22px);
+    align-items: stretch;
+    position: relative;
+  }
+
+  .column {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1.4vh, 12px);
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .col-head {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+  .col-status {
+    display: inline-flex;
     align-items: center;
     gap: 6px;
-    margin-bottom: 4px;
-    font-size: 13px;
-    color: #888;
-  }
-  .breadcrumb .separator { color: #444; }
-  .breadcrumb .active { color: #ccc; font-weight: 600; }
-  .url-bar {
-    font-size: 11px;
-    color: #555;
-    margin-bottom: 14px;
-    padding: 6px 10px;
-    background: #141414;
-    border-radius: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .url-globe {
-    width: 14px; height: 14px;
-    background: #333;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-  .content {
-    display: flex;
-    gap: 16px;
-    height: calc(100% - 56px);
-    overflow: hidden;
-  }
-  .fields-panel {
-    flex: 1;
-    min-width: 0;
-    overflow-y: auto;
-  }
-  .fields-panel::-webkit-scrollbar { display: none; }
-  .section-head {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 0 6px;
-    font-size: 11px;
+    font-size: clamp(10px, 1.3vh, 12px);
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.6px;
-    color: #555;
-    border-bottom: 1px solid #1A1A1A;
-    margin-bottom: 2px;
+    letter-spacing: 0.8px;
+    width: fit-content;
   }
-  .section-head .badge {
-    font-family: 'SF Mono', 'Menlo', monospace;
-    font-size: 10px;
-    padding: 2px 5px;
-    border-radius: 3px;
+  .approved .col-status {
+    color: #4BC882;
+    background: rgba(75,200,130,0.08);
+    border: 1px solid rgba(75,200,130,0.3);
+    padding: 4px 10px;
+    border-radius: 4px;
   }
-  .section-head .badge.allow { color: #4BC882; background: rgba(75,200,130,0.08); }
-  .section-head .badge.deny { color: #FB3B24; background: rgba(251,59,36,0.08); }
-  .field-row {
+  .blocked .col-status {
+    color: #FB3B24;
+    background: rgba(251,59,36,0.08);
+    border: 1px solid rgba(251,59,36,0.3);
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 5px currentColor;
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .col-title {
+    font-size: clamp(13px, 1.7vh, 16px);
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    margin-top: 4px;
+    letter-spacing: -0.2px;
+  }
+
+  .items {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(5px, 0.9vh, 8px);
+    flex: 1;
+    min-height: 0;
+  }
+  .item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 0;
-    border-bottom: 1px solid #1A1A1A;
-    opacity: 0;
-    transform: translateX(-10px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
-  }
-  .field-row.visible {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  .field-icon {
-    width: 14px; height: 14px;
-    border-radius: 2px;
+    gap: 8px;
+    padding: clamp(7px, 1.1vh, 10px) clamp(10px, 1.4vh, 13px);
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 6px;
+    font-size: clamp(11px, 1.4vh, 13px);
+    font-weight: 500;
+    color: rgba(255,255,255,0.8);
     flex-shrink: 0;
+    opacity: 0;
+    transform: translateX(0);
+    transition: opacity 0.4s, transform 0.4s, background 0.3s, border-color 0.3s;
+  }
+  .item.show { opacity: 1; }
+  .approved .item.show {
+    border-color: rgba(75,200,130,0.25);
+    background: rgba(75,200,130,0.03);
+  }
+  .blocked .item.show {
+    border-color: rgba(251,59,36,0.25);
+    background: rgba(251,59,36,0.03);
+  }
+  .approved .item {
+    transform: translateX(-6px);
+  }
+  .blocked .item {
+    transform: translateX(6px);
+  }
+  .item.show { transform: translateX(0); }
+
+  .item-icon {
+    width: clamp(16px, 2.1vh, 19px);
+    height: clamp(16px, 2.1vh, 19px);
+    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 9px;
+    font-size: clamp(9px, 1.2vh, 11px);
     font-weight: 800;
-    font-family: 'SF Mono', monospace;
+    color: #fff;
+    flex-shrink: 0;
   }
-  .field-icon.allow { background: rgba(75,200,130,0.15); color: #4BC882; }
-  .field-icon.deny { background: rgba(251,59,36,0.15); color: #FB3B24; }
-  .field-key {
+  .approved .item-icon { background: #4BC882; color: #08200F; }
+  .blocked .item-icon { background: #FB3B24; }
+  .item-text {
     flex: 1;
     min-width: 0;
-    font-size: 12px;
-    color: #ccc;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .field-row.deny .field-key {
-    color: #888;
-    text-decoration: line-through;
-    text-decoration-color: rgba(251,59,36,0.5);
-  }
-  .field-value {
-    font-size: 11px;
-    color: #555;
-    font-family: 'SF Mono', monospace;
-    flex-shrink: 0;
-  }
-  .code-panel {
-    width: 280px;
-    flex-shrink: 0;
-    background: #141414;
-    border-radius: 4px;
-    padding: 12px;
-    overflow: hidden;
-    opacity: 0;
-    transition: opacity 0.5s ease;
-  }
-  .code-panel.visible { opacity: 1; }
-  .code-tabs {
+  .blocked .item .item-text { text-decoration: line-through; text-decoration-color: rgba(251,59,36,0.5); color: rgba(255,255,255,0.55); }
+
+  /* Fence divider */
+  .divider {
     display: flex;
-    gap: 16px;
-    margin-bottom: 10px;
-    font-size: 11px;
-    font-weight: 600;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    gap: clamp(8px, 1.4vh, 12px);
+    padding: clamp(10px, 2vh, 18px) 0;
   }
-  .code-tab { color: #555; cursor: pointer; padding-bottom: 4px; }
-  .code-tab.active { color: #FB3B24; border-bottom: 2px solid #FB3B24; }
-  .code-line {
-    font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
-    font-size: 10px;
-    line-height: 1.7;
-    white-space: pre;
-    color: #888;
+  .fence-line {
+    flex: 1;
+    width: 0;
+    border-left: 2px dashed rgba(251,59,36,0.4);
+    min-height: 30px;
   }
-  .ck { color: #FB3B24; }
-  .cv { color: #ccc; }
-  .cb { color: #555; }
-  .cg { color: #4BC882; }
-  .cr { color: #FB3B24; }
-  @media (max-width: 480px) {
-    .breadcrumb { font-size: 11px; margin-bottom: 2px; }
-    .url-bar { margin-bottom: 8px; padding: 4px 8px; font-size: 10px; }
-    .content { flex-direction: column; gap: 8px; height: auto; }
-    .fields-panel { flex: none; }
-    .field-row { padding: 5px 0; }
-    .field-key { font-size: 11px; }
-    .field-value { font-size: 10px; }
-    .code-panel { width: 100%; max-height: 130px; padding: 8px; }
-    .code-tabs { gap: 10px; margin-bottom: 6px; font-size: 10px; }
-    .code-line { font-size: 9px; line-height: 1.5; }
+  .fence-label {
+    font-size: clamp(9px, 1.2vh, 11px);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #FB3B24;
+    background: #0F0F0F;
+    padding: 5px 9px;
+    border: 1px solid rgba(251,59,36,0.35);
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .card-footer {
+    font-size: clamp(11px, 1.5vh, 14px);
+    color: rgba(255,255,255,0.55);
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  /* Stack on narrow */
+  @media (max-aspect-ratio: 1/1) {
+    .card {
+      padding: clamp(12px, 2vh, 18px) clamp(14px, 4vw, 22px);
+      gap: clamp(6px, 1vh, 9px);
+    }
+    .card-label {
+      font-size: clamp(10px, 1.3vh, 12px);
+      letter-spacing: 1.1px;
+    }
+    .fence {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto auto;
+      gap: clamp(6px, 1vh, 9px);
+    }
+    .fence-line { display: none; }
+    .divider {
+      flex-direction: row;
+      padding: 0;
+      gap: 6px;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 0;
+      border-top: 1.5px dashed rgba(251,59,36,0.4);
+    }
+    .fence-label {
+      font-size: clamp(8px, 0.95vh, 9.5px);
+      padding: 3px 7px;
+      letter-spacing: 0.8px;
+    }
+    /* Put status pill + title on one row to save vertical space */
+    .col-head {
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .col-status {
+      font-size: clamp(9px, 1.1vh, 10.5px);
+      padding: 3px 7px;
+    }
+    .col-title {
+      font-size: clamp(11px, 1.4vh, 13px);
+      margin-top: 0;
+      font-weight: 700;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: -0.1px;
+    }
+    .items { gap: clamp(3px, 0.5vh, 5px); }
+    .item {
+      padding: clamp(4px, 0.7vh, 7px) clamp(7px, 1vh, 10px);
+      font-size: clamp(10px, 1.2vh, 11.5px);
+    }
+    .item-icon {
+      width: clamp(13px, 1.7vh, 15px);
+      height: clamp(13px, 1.7vh, 15px);
+      font-size: clamp(8px, 0.95vh, 9.5px);
+    }
+    /* Drop the 4th item per column on mobile — keeps content fitting */
+    .items > .item:nth-child(4) { display: none; }
+    .card-footer {
+      font-size: clamp(10px, 1.3vh, 12px);
+      line-height: 1.35;
+    }
+  }
+  /* Extra-narrow / very short: scrollable as a safety net */
+  @media (max-aspect-ratio: 1/1) and (max-height: 480px) {
+    .card { overflow-y: auto; scrollbar-width: none; }
+    .card::-webkit-scrollbar { display: none; }
   }
 </style>
 </head>
 <body>
 <div class="card">
-  <div class="breadcrumb">
-    <span>Policies</span>
-    <span class="separator">›</span>
-    <span class="active">Knowledge fence</span>
-  </div>
-  <div class="url-bar">
-    <div class="url-globe"></div>
-    https://firon.io/policies/knowledge-sources?brand=petit-atelier
-  </div>
-  <div class="content">
-    <div class="fields-panel" id="fields">
-      <div class="section-head">Approved sources <span class="badge allow">ALLOW</span></div>
-      <div class="field-row" data-type="allow">
-        <div class="field-icon allow">✓</div>
-        <div class="field-key">Product catalog</div>
-        <div class="field-value">1,247 SKUs</div>
+  <div class="card-label">Knowledge Fence · Restricted Sources</div>
+
+  <div class="fence">
+    <div class="column approved">
+      <div class="col-head">
+        <div class="col-status"><span class="status-dot"></span>Approved</div>
+        <div class="col-title">100% your data</div>
       </div>
-      <div class="field-row" data-type="allow">
-        <div class="field-icon allow">✓</div>
-        <div class="field-key">Brand content &amp; copy</div>
-        <div class="field-value">CMS</div>
-      </div>
-      <div class="field-row" data-type="allow">
-        <div class="field-icon allow">✓</div>
-        <div class="field-key">Customer history</div>
-        <div class="field-value">CRM</div>
-      </div>
-      <div class="field-row" data-type="allow">
-        <div class="field-icon allow">✓</div>
-        <div class="field-key">Internal style guide</div>
-        <div class="field-value">PDF</div>
-      </div>
-      <div class="section-head">Blocked sources <span class="badge deny">DENY</span></div>
-      <div class="field-row deny" data-type="deny">
-        <div class="field-icon deny">✕</div>
-        <div class="field-key">Competitor data</div>
-        <div class="field-value">blocked</div>
-      </div>
-      <div class="field-row deny" data-type="deny">
-        <div class="field-icon deny">✕</div>
-        <div class="field-key">Open-web scrapes</div>
-        <div class="field-value">blocked</div>
-      </div>
-      <div class="field-row deny" data-type="deny">
-        <div class="field-icon deny">✕</div>
-        <div class="field-key">Training-set drift</div>
-        <div class="field-value">blocked</div>
-      </div>
-      <div class="field-row deny" data-type="deny">
-        <div class="field-icon deny">✕</div>
-        <div class="field-key">Unverified APIs</div>
-        <div class="field-value">blocked</div>
+      <div class="items" id="approvedItems">
+        <div class="item"><div class="item-icon">✓</div><div class="item-text">Product catalog</div></div>
+        <div class="item"><div class="item-icon">✓</div><div class="item-text">Brand content &amp; copy</div></div>
+        <div class="item"><div class="item-icon">✓</div><div class="item-text">Customer history</div></div>
+        <div class="item"><div class="item-icon">✓</div><div class="item-text">Internal style guide</div></div>
       </div>
     </div>
-    <div class="code-panel" id="codePanel">
-      <div class="code-tabs">
-        <span class="code-tab active">POLICY</span>
-        <span class="code-tab">AUDIT</span>
-        <span class="code-tab">MORE INFO</span>
+
+    <div class="divider">
+      <div class="fence-line"></div>
+      <div class="fence-label">Fence</div>
+      <div class="fence-line"></div>
+    </div>
+
+    <div class="column blocked">
+      <div class="col-head">
+        <div class="col-status"><span class="status-dot"></span>Blocked</div>
+        <div class="col-title">0% hallucination risk</div>
       </div>
-      <div id="codeContent"></div>
+      <div class="items" id="blockedItems">
+        <div class="item"><div class="item-icon">✕</div><div class="item-text">Competitor data</div></div>
+        <div class="item"><div class="item-icon">✕</div><div class="item-text">Open-web scrapes</div></div>
+        <div class="item"><div class="item-icon">✕</div><div class="item-text">Training-set drift</div></div>
+        <div class="item"><div class="item-icon">✕</div><div class="item-text">Unverified APIs</div></div>
+      </div>
     </div>
   </div>
+
+  <div class="card-footer">Strictly on-brand. Strictly on-catalog. Never recommends a competitor.</div>
 </div>
+
 <script>
-const codeLines = [
-  '<span class="cb">{</span>',
-  '  <span class="ck">"brand"</span>: <span class="cv">"petit-atelier"</span>,',
-  '  <span class="ck">"allow"</span>: <span class="cb">[</span>',
-  '    <span class="cg">"catalog"</span>,',
-  '    <span class="cg">"cms"</span>,',
-  '    <span class="cg">"crm"</span>,',
-  '    <span class="cg">"style_guide"</span>',
-  '  <span class="cb">]</span>,',
-  '  <span class="ck">"deny"</span>: <span class="cb">[</span>',
-  '    <span class="cr">"competitor.*"</span>,',
-  '    <span class="cr">"open_web"</span>,',
-  '    <span class="cr">"training_set"</span>,',
-  '    <span class="cr">"unverified"</span>',
-  '  <span class="cb">]</span>,',
-  '  <span class="ck">"hallucination_risk"</span>: <span class="cv">0</span>,',
-  '  <span class="ck">"compliance"</span>: <span class="cv">"strict"</span>',
-  '<span class="cb">}</span>',
-];
+var approvedItems = document.querySelectorAll('#approvedItems .item');
+var blockedItems = document.querySelectorAll('#blockedItems .item');
 
-const codeContent = document.getElementById('codeContent');
-codeLines.forEach(line => {
-  const el = document.createElement('div');
-  el.className = 'code-line';
-  el.innerHTML = line;
-  codeContent.appendChild(el);
-});
+function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
 
-const rows = document.querySelectorAll('.field-row');
-rows.forEach((row, i) => {
-  setTimeout(() => row.classList.add('visible'), 200 + i * 80);
-});
-setTimeout(() => document.getElementById('codePanel').classList.add('visible'), 500);
+async function runCycle() {
+  // Reset
+  approvedItems.forEach(function(it) { it.classList.remove('show'); });
+  blockedItems.forEach(function(it) { it.classList.remove('show'); });
+
+  await sleep(500);
+
+  // Reveal approved items first
+  for (var i = 0; i < approvedItems.length; i++) {
+    approvedItems[i].classList.add('show');
+    await sleep(140);
+  }
+
+  await sleep(300);
+
+  // Then blocked items
+  for (var i = 0; i < blockedItems.length; i++) {
+    blockedItems[i].classList.add('show');
+    await sleep(140);
+  }
+
+  // Hold
+  await sleep(6000);
+  runCycle();
+}
+
+window.addEventListener('load', function() { setTimeout(runCycle, 200); });
 </script>
 </body>
 </html>

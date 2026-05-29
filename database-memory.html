@@ -3,221 +3,625 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Database Memory</title>
+<title>Database Memory · Customer Profile</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 100%; height: 100%; overflow: hidden; }
   body {
-    background: #0A0A0A;
+    background: #0F0F0F;
     font-family: system-ui, -apple-system, sans-serif;
     color: #fff;
   }
+
   .card {
-    background: #0F0F0F;
     width: 100%;
     height: 100%;
+    background: #0F0F0F;
+    padding: clamp(16px, 3vh, 28px) clamp(16px, 3vw, 32px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 1.6vh, 16px);
+    position: relative;
     overflow: hidden;
-    padding: 16px;
   }
-  .breadcrumb {
+
+  .card-label {
+    font-size: clamp(11px, 1.5vh, 14px);
+    font-weight: 700;
+    color: #FB3B24;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    flex-shrink: 0;
+  }
+
+  .main {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: clamp(10px, 1.6vw, 16px);
+  }
+
+  .panel {
+    background: #161616;
+    border: 1px solid #232323;
+    border-radius: clamp(10px, 1.6vh, 14px);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* === LEFT: Customer memory === */
+  .mem-head {
+    padding: clamp(11px, 1.6vh, 14px) clamp(12px, 1.6vw, 16px);
+    border-bottom: 1px solid #232323;
+    flex-shrink: 0;
+    background: #181818;
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-bottom: 4px;
-    font-size: 13px;
-    color: #888;
+    gap: clamp(8px, 1.2vw, 11px);
   }
-  .breadcrumb .separator { color: #444; }
-  .breadcrumb .active { color: #ccc; font-weight: 600; }
-  .url-bar {
-    font-size: 11px;
-    color: #555;
-    margin-bottom: 14px;
-    padding: 6px 10px;
-    background: #141414;
-    border-radius: 4px;
+  .avatar {
+    width: clamp(32px, 4.4vh, 40px);
+    height: clamp(32px, 4.4vh, 40px);
+    border-radius: 50%;
+    background: linear-gradient(135deg, #C58A5C 0%, #8E5E3A 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(13px, 1.7vh, 15px);
+    font-weight: 800;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
+  .cust-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .cust-name {
+    font-size: clamp(13px, 1.7vh, 15px);
+    font-weight: 700;
+    color: rgba(255,255,255,0.95);
+    line-height: 1.1;
+    letter-spacing: -0.2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  .cust-meta {
+    font-size: clamp(9px, 1.2vh, 11px);
+    font-weight: 600;
+    color: rgba(255,255,255,0.45);
+    font-family: ui-monospace, monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cust-meta .returning {
+    color: #4BC882;
+    font-weight: 700;
+  }
+
+  .mem-body {
+    flex: 1;
+    min-height: 0;
+    padding: clamp(10px, 1.5vh, 14px) clamp(12px, 1.6vw, 16px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1.4vh, 12px);
+    overflow: hidden;
+  }
+
+  .mem-section {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(4px, 0.7vh, 6px);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.4s, transform 0.4s;
+  }
+  .mem-section.show { opacity: 1; transform: translateY(0); }
+
+  .mem-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: clamp(9px, 1.1vh, 11px);
+    font-weight: 700;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+  }
+  .mem-label .ml-icon {
+    color: #FB3B24;
+    font-size: 1em;
+  }
+
+  /* Sizing arc */
+  .sizing-arc {
+    display: flex;
+    align-items: center;
+    gap: clamp(2px, 0.6vw, 5px);
+    padding: clamp(4px, 0.6vh, 6px) 0;
+  }
+  .size-pill {
+    flex: 1;
+    text-align: center;
+    padding: clamp(5px, 0.8vh, 7px) clamp(5px, 0.7vw, 8px);
+    border-radius: 5px;
+    font-size: clamp(10px, 1.3vh, 12px);
+    font-weight: 700;
+    font-family: ui-monospace, monospace;
+    border: 1px solid;
+    min-width: 0;
+    white-space: nowrap;
+    position: relative;
+  }
+  .size-pill.done {
+    color: rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(255,255,255,0.1);
+    text-decoration: line-through;
+    text-decoration-color: rgba(255,255,255,0.3);
+  }
+  .size-pill.current {
+    color: #fff;
+    background: rgba(75,200,130,0.12);
+    border-color: rgba(75,200,130,0.5);
+  }
+  .size-pill.predicted {
+    color: #FB3B24;
+    background: rgba(251,59,36,0.08);
+    border-color: rgba(251,59,36,0.4);
+    border-style: dashed;
+  }
+  .size-arrow {
+    color: rgba(255,255,255,0.3);
+    font-size: clamp(10px, 1.3vh, 13px);
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  /* Purchase rows */
+  .purchases {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(3px, 0.5vh, 5px);
+  }
+  .purchase {
     display: flex;
     align-items: center;
     gap: 8px;
+    padding: clamp(4px, 0.7vh, 6px) clamp(7px, 1vh, 9px);
+    background: #0D0D0D;
+    border: 1px solid #1E1E1E;
+    border-radius: 5px;
+    font-size: clamp(10px, 1.3vh, 11.5px);
   }
-  .url-globe {
-    width: 14px; height: 14px;
-    background: #333;
-    border-radius: 50%;
+  .purchase-img {
+    width: clamp(20px, 2.6vh, 24px);
+    height: clamp(20px, 2.6vh, 24px);
+    border-radius: 4px;
     flex-shrink: 0;
   }
-  .content {
-    display: flex;
-    gap: 16px;
-    height: calc(100% - 56px);
-    overflow: hidden;
-  }
-  .fields-panel {
+  .purchase-img.bloom { background: linear-gradient(135deg, #4A6F47 0%, #2F4A2D 100%); }
+  .purchase-img.stripe { background: linear-gradient(135deg, #D4A876 0%, #B8915F 100%); }
+  .purchase-img.constellation { background: linear-gradient(135deg, #2C3A6E 0%, #1B2547 100%); }
+  .purchase-info {
     flex: 1;
     min-width: 0;
-    overflow-y: auto;
-  }
-  .fields-panel::-webkit-scrollbar { display: none; }
-  .field-row {
     display: flex;
-    padding: 8px 0;
-    border-bottom: 1px solid #1A1A1A;
-    opacity: 0;
-    transform: translateX(-10px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    flex-direction: column;
+    gap: 0;
   }
-  .field-row.visible {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  .field-row.indent { padding-left: 20px; }
-  .field-key {
-    width: 130px;
-    flex-shrink: 0;
-    font-size: 12px;
-    color: #666;
-  }
-  .field-value {
-    font-size: 12px;
-    color: #ccc;
-    flex: 1;
-    min-width: 0;
+  .purchase-name {
+    color: rgba(255,255,255,0.85);
+    font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-size: clamp(10px, 1.3vh, 11.5px);
+    line-height: 1.2;
   }
-  .field-value .accent { color: #FB3B24; font-weight: 600; }
-  .field-value .ok { color: #4BC882; }
-  .code-panel {
-    width: 280px;
+  .purchase-date {
+    color: rgba(255,255,255,0.35);
+    font-size: clamp(8.5px, 1vh, 10px);
+    font-family: ui-monospace, monospace;
+  }
+  .purchase-price {
+    color: rgba(255,255,255,0.8);
+    font-weight: 700;
+    font-family: ui-monospace, monospace;
+    font-size: clamp(10px, 1.3vh, 11.5px);
     flex-shrink: 0;
-    background: #141414;
+  }
+
+  /* Timeline mini */
+  .timeline-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: clamp(10px, 1.3vh, 12px);
+    color: rgba(255,255,255,0.7);
+    font-family: ui-monospace, monospace;
+  }
+  .timeline-row span.tl-key { color: rgba(255,255,255,0.4); }
+  .timeline-row span.tl-val { color: rgba(255,255,255,0.85); font-weight: 700; }
+
+  /* === RIGHT: AI suggestion === */
+  .sugg-head {
+    padding: clamp(11px, 1.6vh, 14px) clamp(12px, 1.6vw, 16px);
+    border-bottom: 1px solid #232323;
+    flex-shrink: 0;
+    background: #181818;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .sugg-title {
+    font-size: clamp(11px, 1.4vh, 13px);
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  .sugg-title .st-icon {
+    color: #FB3B24;
+    font-weight: 800;
+  }
+  .sugg-confidence {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: clamp(9px, 1.1vh, 11px);
+    font-weight: 700;
+    color: #4BC882;
+    background: rgba(75,200,130,0.08);
+    border: 1px solid rgba(75,200,130,0.25);
+    padding: 3px 7px;
     border-radius: 4px;
-    padding: 12px;
+    font-family: ui-monospace, monospace;
+    flex-shrink: 0;
+  }
+
+  .sugg-body {
+    flex: 1;
+    min-height: 0;
+    padding: clamp(10px, 1.5vh, 14px) clamp(12px, 1.6vw, 16px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1.3vh, 12px);
+    overflow: hidden;
+  }
+
+  .product-card {
+    background: #0D0D0D;
+    border: 1px solid #1E1E1E;
+    border-radius: 8px;
     overflow: hidden;
     opacity: 0;
-    transition: opacity 0.5s ease;
+    transform: scale(0.96);
+    transition: opacity 0.5s, transform 0.5s;
   }
-  .code-panel.visible { opacity: 1; }
-  .code-tabs {
+  .product-card.show { opacity: 1; transform: scale(1); }
+
+  .prod-img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background:
+      radial-gradient(circle at 30% 40%, rgba(255,255,255,0.06) 0%, transparent 40%),
+      linear-gradient(135deg, #E8C99B 0%, #B8915F 100%);
+    position: relative;
+  }
+  .prod-info {
+    padding: clamp(7px, 1.1vh, 10px) clamp(8px, 1.2vw, 11px);
     display: flex;
-    gap: 16px;
-    margin-bottom: 10px;
-    font-size: 11px;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .prod-name {
+    font-size: clamp(12px, 1.5vh, 13.5px);
+    font-weight: 700;
+    color: rgba(255,255,255,0.95);
+    line-height: 1.2;
+    letter-spacing: -0.1px;
+  }
+  .prod-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 6px;
+    margin-top: 2px;
+  }
+  .prod-size {
+    font-size: clamp(9px, 1.2vh, 11px);
+    color: rgba(255,255,255,0.45);
     font-weight: 600;
+    font-family: ui-monospace, monospace;
   }
-  .code-tab { color: #555; cursor: pointer; padding-bottom: 4px; }
-  .code-tab.active { color: #FB3B24; border-bottom: 2px solid #FB3B24; }
-  .code-line {
-    font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
-    font-size: 10px;
-    line-height: 1.7;
-    white-space: pre;
-    color: #888;
+  .prod-price {
+    font-size: clamp(12px, 1.5vh, 13.5px);
+    font-weight: 800;
+    color: #FB3B24;
+    font-family: ui-monospace, monospace;
   }
-  .ck { color: #FB3B24; }
-  .cv { color: #ccc; }
-  .cb { color: #555; }
-  .cg { color: #4BC882; }
-  @media (max-width: 480px) {
-    .breadcrumb { font-size: 11px; margin-bottom: 2px; }
-    .url-bar { margin-bottom: 8px; padding: 4px 8px; font-size: 10px; }
-    .content { flex-direction: column; gap: 8px; height: auto; }
-    .fields-panel { flex: none; }
-    .field-row { padding: 5px 0; }
-    .field-row.indent { padding-left: 12px; }
-    .field-key { width: 90px; font-size: 11px; }
-    .field-value { font-size: 11px; }
-    .code-panel { width: 100%; max-height: 120px; padding: 8px; }
-    .code-tabs { gap: 10px; margin-bottom: 6px; font-size: 10px; }
-    .code-line { font-size: 9px; line-height: 1.5; }
+
+  .reasoning {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(3px, 0.5vh, 5px);
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  .reasoning.show { opacity: 1; }
+  .reasoning-label {
+    font-size: clamp(8.5px, 1vh, 10px);
+    font-weight: 700;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .reason {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: clamp(10px, 1.2vh, 11.5px);
+    color: rgba(255,255,255,0.7);
+    line-height: 1.3;
+  }
+  .reason-icon {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: #4BC882;
+    color: #08200F;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  .card-footer {
+    font-size: clamp(11px, 1.5vh, 14px);
+    color: rgba(255,255,255,0.55);
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  /* Stack on narrow */
+  @media (max-aspect-ratio: 1/1) {
+    .card {
+      padding: clamp(11px, 1.8vh, 16px) clamp(14px, 4vw, 22px);
+      gap: clamp(7px, 1vh, 10px);
+    }
+    .card-label {
+      font-size: clamp(10px, 1.3vh, 12px);
+      letter-spacing: 1.1px;
+    }
+    .main {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: clamp(7px, 1vh, 10px);
+    }
+    .mem-head, .sugg-head {
+      padding: clamp(7px, 1vh, 9px) clamp(9px, 1.3vw, 12px);
+    }
+    .avatar {
+      width: clamp(26px, 3.6vh, 32px);
+      height: clamp(26px, 3.6vh, 32px);
+      font-size: clamp(11px, 1.4vh, 13px);
+    }
+    .cust-name { font-size: clamp(12px, 1.5vh, 13.5px); }
+    .cust-meta { font-size: clamp(8.5px, 1vh, 10px); }
+    .mem-body, .sugg-body {
+      padding: clamp(7px, 1vh, 10px) clamp(9px, 1.3vw, 12px);
+      gap: clamp(5px, 0.8vh, 8px);
+    }
+    /* Compress sections */
+    .mem-label {
+      font-size: clamp(8.5px, 1vh, 10px);
+      letter-spacing: 0.5px;
+    }
+    .size-pill {
+      padding: clamp(4px, 0.6vh, 6px) clamp(4px, 0.5vw, 6px);
+      font-size: clamp(9px, 1.1vh, 11px);
+    }
+    .timeline-row {
+      font-size: clamp(9.5px, 1.2vh, 11px);
+    }
+    /* HIDE timeline section on mobile — purchase dates already imply timeline */
+    #sec2 { display: none; }
+    /* Show only the most recent purchase on mobile */
+    .purchases > .purchase:nth-child(n+2) { display: none; }
+    .purchase {
+      padding: clamp(4px, 0.6vh, 6px) clamp(6px, 0.9vh, 8px);
+    }
+    .purchase-img {
+      width: clamp(18px, 2.4vh, 22px);
+      height: clamp(18px, 2.4vh, 22px);
+    }
+    .purchase-name { font-size: clamp(9.5px, 1.2vh, 11px); }
+    .purchase-date { font-size: clamp(8px, 0.95vh, 9.5px); }
+    .purchase-price { font-size: clamp(9.5px, 1.2vh, 11px); }
+    /* Suggestion panel */
+    .sugg-title { font-size: clamp(10px, 1.3vh, 12px); }
+    .sugg-confidence { font-size: clamp(8.5px, 1vh, 10px); padding: 2px 6px; }
+    .prod-info { padding: clamp(6px, 0.9vh, 8px) clamp(8px, 1.1vw, 10px); }
+    .prod-name { font-size: clamp(11px, 1.4vh, 12.5px); }
+    .prod-size, .prod-price { font-size: clamp(9px, 1.2vh, 11px); }
+    /* Show only 2 reasoning bullets on mobile */
+    .reasoning > .reason:nth-child(n+4) { display: none; }
+    .reasoning-label { font-size: clamp(8px, 0.95vh, 9.5px); }
+    .reason { font-size: clamp(9.5px, 1.15vh, 11px); }
+    .card-footer {
+      font-size: clamp(10px, 1.25vh, 12px);
+      line-height: 1.35;
+    }
+  }
+  /* Very tight: scrollable safety net */
+  @media (max-aspect-ratio: 1/1) and (max-height: 520px) {
+    .card { overflow-y: auto; scrollbar-width: none; }
+    .card::-webkit-scrollbar { display: none; }
   }
 </style>
 </head>
 <body>
 <div class="card">
-  <div class="breadcrumb">
-    <span>Profiles</span>
-    <span class="separator">›</span>
-    <span class="active">Customer memory</span>
-  </div>
-  <div class="url-bar">
-    <div class="url-globe"></div>
-    https://firon.io/profiles/sarah-k-2814?brand=petit-atelier
-  </div>
-  <div class="content">
-    <div class="fields-panel" id="fields"></div>
-    <div class="code-panel" id="codePanel">
-      <div class="code-tabs">
-        <span class="code-tab active">RECORD</span>
-        <span class="code-tab">PREDICT</span>
-        <span class="code-tab">MORE INFO</span>
+  <div class="card-label">Database Memory · Customer Profile</div>
+
+  <div class="main">
+    <!-- LEFT: memory profile -->
+    <div class="panel">
+      <div class="mem-head">
+        <div class="avatar">SK</div>
+        <div class="cust-info">
+          <div class="cust-name">Sarah K.</div>
+          <div class="cust-meta"><span class="returning">● Returning</span> · visit 4 · member Aug ’24</div>
+        </div>
       </div>
-      <div id="codeContent"></div>
+      <div class="mem-body">
+        <div class="mem-section" id="sec1">
+          <div class="mem-label"><span class="ml-icon">⟁</span> Sizing arc</div>
+          <div class="sizing-arc">
+            <div class="size-pill done">0–3M</div>
+            <span class="size-arrow">→</span>
+            <div class="size-pill current">3–6M</div>
+            <span class="size-arrow">→</span>
+            <div class="size-pill predicted">6–9M*</div>
+          </div>
+        </div>
+
+        <div class="mem-section" id="sec2">
+          <div class="mem-label"><span class="ml-icon">⟁</span> Timeline</div>
+          <div class="timeline-row"><span class="tl-key">Last visit</span> <span class="tl-val">6 weeks ago</span></div>
+          <div class="timeline-row"><span class="tl-key">Next size due</span> <span class="tl-val">~4 weeks</span></div>
+        </div>
+
+        <div class="mem-section" id="sec3">
+          <div class="mem-label"><span class="ml-icon">⟁</span> Last purchases</div>
+          <div class="purchases">
+            <div class="purchase">
+              <div class="purchase-img bloom"></div>
+              <div class="purchase-info">
+                <div class="purchase-name">Botanical Bloom Romper</div>
+                <div class="purchase-date">3-6M · Mar 2026</div>
+              </div>
+              <div class="purchase-price">£42</div>
+            </div>
+            <div class="purchase">
+              <div class="purchase-img stripe"></div>
+              <div class="purchase-info">
+                <div class="purchase-name">Sand Stripe Onesie</div>
+                <div class="purchase-date">3-6M · Feb 2026</div>
+              </div>
+              <div class="purchase-price">£28</div>
+            </div>
+            <div class="purchase">
+              <div class="purchase-img constellation"></div>
+              <div class="purchase-info">
+                <div class="purchase-name">Constellation Sleeper</div>
+                <div class="purchase-date">0-3M · Nov 2025</div>
+              </div>
+              <div class="purchase-price">£38</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: AI suggestion -->
+    <div class="panel">
+      <div class="sugg-head">
+        <div class="sugg-title"><span class="st-icon">✦</span>Next purchase predicted</div>
+        <div class="sugg-confidence" id="confPill"><span id="confVal">0</span>%</div>
+      </div>
+      <div class="sugg-body">
+        <div class="product-card" id="prodCard">
+          <div class="prod-img"></div>
+          <div class="prod-info">
+            <div class="prod-name">Petit Linen Sleeper</div>
+            <div class="prod-meta">
+              <span class="prod-size">6–9M · in stock</span>
+              <span class="prod-price">£38</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="reasoning" id="reasoning">
+          <div class="reasoning-label">Based on memory</div>
+          <div class="reason"><span class="reason-icon">✓</span>Size progression · 3-6M → 6-9M</div>
+          <div class="reason"><span class="reason-icon">✓</span>Time since last visit · 6 wks</div>
+          <div class="reason"><span class="reason-icon">✓</span>Style affinity · natural fibres</div>
+        </div>
+      </div>
     </div>
   </div>
+
+  <div class="card-footer">Custom architecture logs sizing, timelines, and purchase history — then proactively surfaces the next logical purchase on return.</div>
 </div>
+
 <script>
-const fields = [
-  { key: 'customer_id', value: 'sarah_k_2814' },
-  { key: 'status', value: '<span class="ok">● returning</span> · visit 4' },
-  { key: 'member_since', value: '2024-08-12' },
-  { key: 'sizing_arc', value: '' },
-  { key: 'worn', value: '0–3M, 3–6M', indent: true },
-  { key: 'current', value: '3–6M', indent: true },
-  { key: 'predicted_next', value: '<span class="accent">6–9M</span>', indent: true },
-  { key: 'last_visit', value: '6 weeks ago' },
-  { key: 'next_size_due', value: '~4 weeks' },
-  { key: 'last_purchases', value: '' },
-  { key: 'item_1', value: 'Botanical Bloom Romper · 3-6M · £42', indent: true },
-  { key: 'item_2', value: 'Sand Stripe Onesie · 3-6M · £28', indent: true },
-  { key: 'item_3', value: 'Constellation Sleeper · 0-3M · £38', indent: true },
-  { key: 'predicted', value: '<span class="accent">Petit Linen Sleeper · 6-9M · £38</span>' },
-  { key: 'confidence', value: '<span class="ok">0.94</span>' },
+var sections = [
+  document.getElementById('sec1'),
+  document.getElementById('sec2'),
+  document.getElementById('sec3')
 ];
+var prodCard = document.getElementById('prodCard');
+var reasoning = document.getElementById('reasoning');
+var confVal = document.getElementById('confVal');
 
-const fieldsEl = document.getElementById('fields');
-fields.forEach(f => {
-  const row = document.createElement('div');
-  row.className = 'field-row' + (f.indent ? ' indent' : '');
-  row.innerHTML = '<div class="field-key">' + f.key + '</div><div class="field-value">' + f.value + '</div>';
-  fieldsEl.appendChild(row);
-});
+function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
 
-const codeLines = [
-  '<span class="cb">{</span>',
-  '  <span class="ck">"customer_id"</span>: <span class="cv">"sarah_k_2814"</span>,',
-  '  <span class="ck">"sizing_arc"</span>: <span class="cb">[</span>',
-  '    <span class="cv">"0-3M"</span>, <span class="cv">"3-6M"</span>, <span class="ck">"6-9M*"</span>',
-  '  <span class="cb">]</span>,',
-  '  <span class="ck">"last_visit_days"</span>: <span class="cv">42</span>,',
-  '  <span class="ck">"purchases"</span>: <span class="cv">7</span>,',
-  '  <span class="ck">"ltv"</span>: <span class="cv">342.00</span>,',
-  '  <span class="ck">"predicted"</span>: <span class="cb">{</span>',
-  '    <span class="ck">"sku"</span>: <span class="cv">"PLS-69"</span>,',
-  '    <span class="ck">"size"</span>: <span class="cv">"6-9M"</span>,',
-  '    <span class="ck">"price"</span>: <span class="cv">38.00</span>,',
-  '    <span class="ck">"confidence"</span>: <span class="cg">0.94</span>',
-  '  <span class="cb">}</span>',
-  '<span class="cb">}</span>',
-];
+function tween(from, to, dur, cb) {
+  var start = Date.now();
+  function step() {
+    var t = Math.min(1, (Date.now() - start) / dur);
+    var v = from + (to - from) * (1 - Math.pow(1 - t, 3));
+    cb(v);
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
 
-const codeContent = document.getElementById('codeContent');
-codeLines.forEach(line => {
-  const el = document.createElement('div');
-  el.className = 'code-line';
-  el.innerHTML = line;
-  codeContent.appendChild(el);
-});
+async function runCycle() {
+  // Reset
+  sections.forEach(function(s) { s.classList.remove('show'); });
+  prodCard.classList.remove('show');
+  reasoning.classList.remove('show');
+  confVal.textContent = '0';
 
-const rows = document.querySelectorAll('.field-row');
-rows.forEach((row, i) => {
-  setTimeout(() => row.classList.add('visible'), 200 + i * 75);
-});
-setTimeout(() => document.getElementById('codePanel').classList.add('visible'), 500);
+  await sleep(500);
+
+  // Memory sections reveal in sequence
+  for (var i = 0; i < sections.length; i++) {
+    sections[i].classList.add('show');
+    await sleep(380);
+  }
+
+  await sleep(400);
+
+  // Product card appears
+  prodCard.classList.add('show');
+  await sleep(300);
+
+  // Reasoning appears
+  reasoning.classList.add('show');
+
+  // Confidence climbs
+  tween(0, 94, 1100, function(v) {
+    confVal.textContent = Math.round(v);
+  });
+
+  await sleep(5000);
+  runCycle();
+}
+
+window.addEventListener('load', function() { setTimeout(runCycle, 200); });
 </script>
 </body>
 </html>
