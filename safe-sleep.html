@@ -3,661 +3,249 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Safe Sleep Guide · Temperature-Aligned</title>
+<title>Safe Sleep Guide</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 100%; height: 100%; overflow: hidden; }
   body {
-    background: #0F0F0F;
+    background: #0A0A0A;
     font-family: system-ui, -apple-system, sans-serif;
     color: #fff;
   }
-
   .card {
+    background: #0F0F0F;
     width: 100%;
     height: 100%;
-    background: #0F0F0F;
-    padding: clamp(16px, 3vh, 28px) clamp(16px, 3vw, 32px);
-    display: flex;
-    flex-direction: column;
-    gap: clamp(10px, 1.6vh, 16px);
-    position: relative;
     overflow: hidden;
+    padding: 16px;
   }
-
-  .card-label {
-    font-size: clamp(11px, 1.5vh, 14px);
-    font-weight: 700;
-    color: #FB3B24;
-    text-transform: uppercase;
-    letter-spacing: 1.4px;
-    flex-shrink: 0;
-  }
-
-  /* Two-panel main */
-  .main {
-    flex: 1;
-    min-height: 0;
-    display: grid;
-    grid-template-columns: 1fr 1.1fr;
-    gap: clamp(10px, 1.6vw, 16px);
-  }
-
-  .panel {
-    background: #161616;
-    border: 1px solid #232323;
-    border-radius: clamp(10px, 1.6vh, 14px);
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    min-height: 0;
-    overflow: hidden;
-    position: relative;
-  }
-
-  .panel-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: clamp(9px, 1.3vh, 12px) clamp(11px, 1.5vw, 14px);
-    border-bottom: 1px solid #232323;
-    flex-shrink: 0;
-    background: #181818;
-  }
-  .panel-title {
+  .breadcrumb {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: clamp(11px, 1.4vh, 13px);
-    font-weight: 700;
-    color: rgba(255,255,255,0.85);
-    min-width: 0;
+    margin-bottom: 4px;
+    font-size: 13px;
+    color: #888;
   }
-  .pt-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: #4BC882;
-    box-shadow: 0 0 5px rgba(75,200,130,0.6);
-    animation: pulse 1.4s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
-  .pt-icon {
-    color: #FB3B24;
-    font-weight: 800;
-  }
-  .panel-meta {
-    font-size: clamp(9px, 1.1vh, 10.5px);
-    font-weight: 700;
-    color: rgba(255,255,255,0.4);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-family: ui-monospace, monospace;
+  .breadcrumb .separator { color: #444; }
+  .breadcrumb .active { color: #ccc; font-weight: 600; }
+  .url-bar {
+    font-size: 11px;
+    color: #555;
+    margin-bottom: 14px;
+    padding: 6px 10px;
+    background: #141414;
+    border-radius: 4px;
     white-space: nowrap;
-  }
-
-  .panel-body {
-    flex: 1;
-    min-height: 0;
-    padding: clamp(10px, 1.5vh, 14px) clamp(11px, 1.5vw, 14px);
-    display: flex;
-    flex-direction: column;
-    gap: clamp(8px, 1.3vh, 12px);
     overflow: hidden;
-  }
-
-  /* === LEFT: Temperature reading + TOG scale === */
-  .temp-display {
-    background: #0D0D0D;
-    border: 1px solid #1E1E1E;
-    border-radius: 8px;
-    padding: clamp(10px, 1.6vh, 14px);
+    text-overflow: ellipsis;
     display: flex;
     align-items: center;
-    gap: clamp(10px, 1.6vw, 14px);
+    gap: 8px;
   }
-  .thermo-icon {
-    width: clamp(28px, 4vh, 36px);
-    height: clamp(28px, 4vh, 36px);
+  .url-globe {
+    width: 14px; height: 14px;
+    background: #333;
     border-radius: 50%;
-    background: linear-gradient(180deg, rgba(85,170,210,0.2) 0%, rgba(85,170,210,0.05) 100%);
-    color: #55AAD2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: clamp(15px, 2vh, 20px);
-    font-weight: 800;
     flex-shrink: 0;
   }
-  .temp-vals {
+  .content {
     display: flex;
-    flex-direction: column;
-    gap: 1px;
-    min-width: 0;
-    flex: 1;
-  }
-  .temp-label {
-    font-size: clamp(8.5px, 1vh, 10px);
-    font-weight: 700;
-    color: rgba(255,255,255,0.4);
-    text-transform: uppercase;
-    letter-spacing: 0.7px;
-  }
-  .temp-num {
-    font-size: clamp(22px, 4vh, 36px);
-    font-weight: 800;
-    color: #fff;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-    font-family: ui-monospace, monospace;
-    letter-spacing: -1px;
-  }
-  .temp-num .deg {
-    color: #55AAD2;
-    font-size: 0.55em;
-    font-weight: 700;
-    margin-left: 2px;
-  }
-  .temp-source {
-    font-size: clamp(9px, 1.1vh, 10.5px);
-    color: rgba(255,255,255,0.5);
-    font-family: ui-monospace, monospace;
-    margin-top: 2px;
-  }
-
-  /* TOG scale */
-  .tog-section {
-    display: flex;
-    flex-direction: column;
-    gap: clamp(5px, 0.8vh, 8px);
-    flex: 1;
-    min-height: 0;
-  }
-  .tog-label {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    font-size: clamp(9px, 1.1vh, 11px);
-    font-weight: 700;
-    color: rgba(255,255,255,0.4);
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-  }
-  .tog-label .tl-rec {
-    color: #4BC882;
-    font-weight: 800;
-    font-family: ui-monospace, monospace;
-    font-size: 1em;
-  }
-  .tog-scale {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 4px;
-  }
-  .tog-zone {
-    background: #0D0D0D;
-    border: 1px solid #1E1E1E;
-    border-radius: 5px;
-    padding: clamp(6px, 1vh, 8px) clamp(5px, 0.7vw, 7px);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    text-align: center;
-    transition: all 0.4s;
-    min-width: 0;
-  }
-  .tog-zone.active {
-    border-color: #4BC882;
-    background: linear-gradient(180deg, rgba(75,200,130,0.12) 0%, rgba(75,200,130,0.03) 100%);
-    box-shadow: 0 0 12px rgba(75,200,130,0.2);
-  }
-  .tog-range {
-    font-size: clamp(8.5px, 1vh, 10px);
-    font-weight: 700;
-    color: rgba(255,255,255,0.5);
-    font-family: ui-monospace, monospace;
-    white-space: nowrap;
-    transition: color 0.4s;
-  }
-  .tog-zone.active .tog-range { color: #fff; }
-  .tog-val {
-    font-size: clamp(13px, 1.8vh, 16px);
-    font-weight: 800;
-    color: rgba(255,255,255,0.85);
-    font-family: ui-monospace, monospace;
-    line-height: 1;
-    transition: color 0.4s;
-  }
-  .tog-zone.active .tog-val { color: #4BC882; }
-  .tog-unit {
-    font-size: clamp(8px, 0.95vh, 9.5px);
-    color: rgba(255,255,255,0.35);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-  }
-
-  /* === RIGHT: Recommendation === */
-  .rec-products {
-    display: flex;
-    flex-direction: column;
-    gap: clamp(6px, 1vh, 9px);
-    flex: 1;
-    min-height: 0;
+    gap: 16px;
+    height: calc(100% - 56px);
     overflow: hidden;
   }
-  .rec-product {
-    background: #0D0D0D;
-    border: 1px solid #1E1E1E;
-    border-radius: 7px;
-    padding: clamp(6px, 1vh, 9px) clamp(8px, 1.2vw, 11px);
+  .fields-panel {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+  }
+  .fields-panel::-webkit-scrollbar { display: none; }
+  .field-row {
     display: flex;
     align-items: center;
-    gap: clamp(8px, 1.2vw, 12px);
-    transition: border-color 0.4s, background 0.4s;
-    min-width: 0;
+    padding: 8px 0;
+    border-bottom: 1px solid #1A1A1A;
     opacity: 0;
-    transform: translateY(6px);
-    transition: opacity 0.4s, transform 0.4s, border-color 0.4s, background 0.4s;
+    transform: translateX(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
   }
-  .rec-product.show { opacity: 1; transform: translateY(0); }
-  .rec-product.primary {
-    border-color: rgba(251,59,36,0.3);
-    background: linear-gradient(135deg, #0D0D0D 0%, rgba(251,59,36,0.04) 100%);
+  .field-row.visible {
+    opacity: 1;
+    transform: translateX(0);
   }
-
-  .rp-img {
-    width: clamp(40px, 5.5vh, 50px);
-    height: clamp(40px, 5.5vh, 50px);
-    border-radius: 6px;
+  .field-row.indent { padding-left: 20px; }
+  .field-key {
+    width: 140px;
     flex-shrink: 0;
-    position: relative;
-    overflow: hidden;
+    font-size: 12px;
+    color: #666;
   }
-  .rp-img.bag {
-    background:
-      radial-gradient(circle at 50% 30%, rgba(255,255,255,0.06) 0%, transparent 50%),
-      linear-gradient(135deg, #5C7A8C 0%, #3C5566 100%);
-  }
-  .rp-img.pj {
-    background:
-      repeating-linear-gradient(0deg, #E0D4B8 0px, #E0D4B8 4px, #D4C5A4 4px, #D4C5A4 8px),
-      #D4C5A4;
-  }
-  .rp-tog-badge {
-    position: absolute;
-    bottom: 2px;
-    right: 2px;
-    background: #FB3B24;
-    color: #fff;
-    font-size: clamp(7.5px, 0.9vh, 9px);
-    font-weight: 800;
-    padding: 1px 4px;
-    border-radius: 2px;
-    line-height: 1;
-    font-family: ui-monospace, monospace;
-  }
-  .rec-product.primary .rp-tog-badge { background: #4BC882; color: #08200F; }
-
-  .rp-info {
+  .field-value {
+    font-size: 12px;
+    color: #ccc;
     flex: 1;
     min-width: 0;
     display: flex;
-    flex-direction: column;
-    gap: 1px;
-  }
-  .rp-name {
-    font-size: clamp(11px, 1.4vh, 12.5px);
-    font-weight: 700;
-    color: rgba(255,255,255,0.95);
-    line-height: 1.25;
-    letter-spacing: -0.1px;
+    align-items: center;
+    gap: 8px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .rp-meta {
-    font-size: clamp(9px, 1.1vh, 10.5px);
-    color: rgba(255,255,255,0.45);
-    font-family: ui-monospace, monospace;
+  .field-value .mono { font-family: 'SF Mono', monospace; }
+  .field-value .ok { color: #4BC882; font-weight: 600; }
+  .field-value .accent { color: #FB3B24; font-weight: 600; }
+  .tog-zones {
+    display: flex;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+  }
+  .tog-zone {
+    flex: 1;
+    padding: 3px 4px;
+    border: 1px solid #222;
+    border-radius: 3px;
+    text-align: center;
+    font-family: 'SF Mono', monospace;
+    font-size: 10px;
+    color: #555;
+    min-width: 0;
+    line-height: 1.3;
+  }
+  .tog-zone.active {
+    border-color: #4BC882;
+    background: rgba(75,200,130,0.08);
+    color: #4BC882;
+    font-weight: 700;
+  }
+  .tog-zone span { display: block; font-size: 9px; opacity: 0.7; }
+  .code-panel {
+    width: 280px;
+    flex-shrink: 0;
+    background: #141414;
+    border-radius: 4px;
+    padding: 12px;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .code-panel.visible { opacity: 1; }
+  .code-tabs {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 10px;
+    font-size: 11px;
     font-weight: 600;
   }
-  .rp-tag {
-    margin-top: 3px;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: clamp(8.5px, 1vh, 10px);
-    font-weight: 700;
-    color: #4BC882;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    align-self: flex-start;
+  .code-tab { color: #555; cursor: pointer; padding-bottom: 4px; }
+  .code-tab.active { color: #FB3B24; border-bottom: 2px solid #FB3B24; }
+  .code-line {
+    font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+    font-size: 10px;
+    line-height: 1.7;
+    white-space: pre;
+    color: #888;
   }
-  .rp-tag-icon {
-    width: 11px; height: 11px;
-    border-radius: 50%;
-    background: #4BC882;
-    color: #08200F;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 8px;
-    font-weight: 800;
-  }
-  .rp-price {
-    font-size: clamp(11px, 1.4vh, 12.5px);
-    font-weight: 800;
-    color: rgba(255,255,255,0.9);
-    font-family: ui-monospace, monospace;
-    flex-shrink: 0;
-  }
-  .rec-product.primary .rp-price { color: #FB3B24; }
-
-  /* Action row */
-  .action-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    flex-shrink: 0;
-  }
-  .compliance-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: clamp(9px, 1.1vh, 10.5px);
-    font-weight: 700;
-    color: #4BC882;
-    background: rgba(75,200,130,0.08);
-    border: 1px solid rgba(75,200,130,0.3);
-    padding: 5px 9px;
-    border-radius: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    white-space: nowrap;
-  }
-  .cb-icon {
-    width: 11px; height: 11px;
-    border-radius: 50%;
-    background: #4BC882;
-    color: #08200F;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 8px;
-    font-weight: 800;
-    flex-shrink: 0;
-  }
-  .add-btn {
-    flex: 1;
-    background: #FB3B24;
-    color: #fff;
-    border: none;
-    border-radius: 7px;
-    padding: clamp(7px, 1.1vh, 10px) clamp(11px, 1.6vw, 16px);
-    font-size: clamp(11px, 1.4vh, 12.5px);
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    box-shadow: 0 4px 12px rgba(251,59,36,0.3);
-    white-space: nowrap;
-    opacity: 0.4;
-    transition: opacity 0.4s, transform 0.1s, background 0.3s;
-  }
-  .add-btn.active { opacity: 1; }
-  .add-btn.pressed { transform: scale(0.97); }
-  .add-btn.done { background: #4BC882; }
-
-  .card-footer {
-    font-size: clamp(11px, 1.5vh, 14px);
-    color: rgba(255,255,255,0.55);
-    font-weight: 500;
-    flex-shrink: 0;
-  }
-
-  /* === MOBILE === */
-  @media (max-aspect-ratio: 1/1) {
-    .card {
-      padding: clamp(11px, 1.8vh, 16px) clamp(14px, 4vw, 22px);
-      gap: clamp(7px, 1vh, 10px);
-    }
-    .card-label {
-      font-size: clamp(10px, 1.3vh, 12px);
-      letter-spacing: 1.1px;
-    }
-    /* Sensor panel slightly smaller, prediction panel slightly larger */
-    .main {
-      grid-template-columns: 1fr;
-      grid-template-rows: 0.95fr 1fr;
-      gap: clamp(6px, 0.9vh, 9px);
-    }
-    .panel-head {
-      padding: clamp(6px, 0.9vh, 8px) clamp(10px, 1.4vw, 12px);
-    }
-    .panel-title { font-size: clamp(10px, 1.25vh, 12px); }
-    .panel-meta { font-size: clamp(8.5px, 1vh, 10px); }
-    .panel-body {
-      padding: clamp(7px, 1vh, 10px) clamp(10px, 1.4vw, 12px);
-      gap: clamp(6px, 0.9vh, 8px);
-    }
-    /* Temperature: smaller and put source in line */
-    .temp-display {
-      padding: clamp(6px, 1vh, 9px);
-      gap: clamp(7px, 1.2vw, 10px);
-    }
-    .thermo-icon { width: clamp(22px, 3vh, 26px); height: clamp(22px, 3vh, 26px); font-size: clamp(12px, 1.5vh, 14px); }
-    .temp-label { font-size: clamp(7.5px, 0.9vh, 9px); }
-    .temp-num { font-size: clamp(18px, 2.6vh, 24px); }
-    /* Hide sensor source on mobile */
-    .temp-source { display: none; }
-    /* TOG zones much tighter */
-    .tog-section { gap: clamp(4px, 0.6vh, 6px); }
-    .tog-label { font-size: clamp(8.5px, 1vh, 10px); }
-    .tog-zone {
-      padding: clamp(4px, 0.6vh, 6px) clamp(2px, 0.4vw, 4px);
-      gap: 0;
-    }
-    .tog-range { font-size: clamp(7px, 0.85vh, 8.5px); }
-    .tog-val { font-size: clamp(10px, 1.3vh, 12px); }
-    .tog-unit { font-size: clamp(6.5px, 0.8vh, 8px); }
-    /* HIDE secondary product on mobile — keep primary as hero */
-    #prodB { display: none; }
-    /* HIDE the inline "Matches 18°C room" tag — primary card already says it via TOG badge */
-    .rec-product .rp-tag { display: none; }
-    .rec-product {
-      padding: clamp(5px, 0.8vh, 7px) clamp(7px, 1vw, 9px);
-      gap: clamp(7px, 1vw, 10px);
-    }
-    .rp-img { width: clamp(32px, 4.4vh, 40px); height: clamp(32px, 4.4vh, 40px); }
-    .rp-name { font-size: clamp(10.5px, 1.3vh, 12px); }
-    .rp-meta { font-size: clamp(8.5px, 1vh, 10px); }
-    .rp-price { font-size: clamp(10.5px, 1.3vh, 12px); }
-    .rp-tog-badge { font-size: clamp(7px, 0.85vh, 8.5px); padding: 1px 3px; }
-    /* Hide compliance badge text on very narrow — just show check */
-    .compliance-badge { font-size: clamp(8.5px, 1vh, 10px); padding: 3px 6px; }
-    .add-btn {
-      padding: clamp(6px, 1vh, 9px) clamp(10px, 1.4vw, 13px);
-      font-size: clamp(10.5px, 1.3vh, 12px);
-    }
-    .card-footer {
-      font-size: clamp(10px, 1.3vh, 12px);
-      line-height: 1.35;
-    }
-  }
-  /* Very narrow: collapse compliance badge to icon only */
-  @media (max-aspect-ratio: 1/1) and (max-width: 420px) {
-    .compliance-badge { font-size: 0; padding: 4px; gap: 0; }
-    .compliance-badge .cb-icon { font-size: 8px; }
+  .ck { color: #FB3B24; }
+  .cv { color: #ccc; }
+  .cb { color: #555; }
+  .cg { color: #4BC882; }
+  @media (max-width: 480px) {
+    .breadcrumb { font-size: 11px; margin-bottom: 2px; }
+    .url-bar { margin-bottom: 8px; padding: 4px 8px; font-size: 10px; }
+    .content { flex-direction: column; gap: 8px; height: auto; }
+    .fields-panel { flex: none; }
+    .field-row { padding: 5px 0; }
+    .field-row.indent { padding-left: 12px; }
+    .field-key { width: 100px; font-size: 11px; }
+    .field-value { font-size: 11px; }
+    .tog-zone { font-size: 9px; padding: 2px 3px; }
+    .tog-zone span { font-size: 8px; }
+    .code-panel { width: 100%; max-height: 120px; padding: 8px; }
+    .code-tabs { gap: 10px; margin-bottom: 6px; font-size: 10px; }
+    .code-line { font-size: 9px; line-height: 1.5; }
   }
 </style>
 </head>
 <body>
 <div class="card">
-  <div class="card-label">Safe Sleep Guide · Temperature-Aligned</div>
-
-  <div class="main">
-    <!-- LEFT: Sensor + TOG scale -->
-    <div class="panel">
-      <div class="panel-head">
-        <div class="panel-title"><span class="pt-dot"></span>Nursery sensor</div>
-        <div class="panel-meta">Live</div>
+  <div class="breadcrumb">
+    <span>Guides</span>
+    <span class="separator">›</span>
+    <span class="active">Safe sleep</span>
+  </div>
+  <div class="url-bar">
+    <div class="url-globe"></div>
+    https://petit-atelier.com/api/safe-sleep?room=nursery_01&amp;temp=18
+  </div>
+  <div class="content">
+    <div class="fields-panel" id="fields"></div>
+    <div class="code-panel" id="codePanel">
+      <div class="code-tabs">
+        <span class="code-tab active">RECOMMEND</span>
+        <span class="code-tab">GUIDELINES</span>
+        <span class="code-tab">MORE INFO</span>
       </div>
-      <div class="panel-body">
-        <div class="temp-display">
-          <div class="thermo-icon">🌡</div>
-          <div class="temp-vals">
-            <div class="temp-label">Room temperature</div>
-            <div class="temp-num"><span id="tempNum">0</span><span class="deg">°C</span></div>
-            <div class="temp-source">Sensor · nursery_01</div>
-          </div>
-        </div>
-
-        <div class="tog-section">
-          <div class="tog-label">
-            <span>TOG match</span>
-            <span class="tl-rec" id="togRec">— TOG</span>
-          </div>
-          <div class="tog-scale">
-            <div class="tog-zone" data-range="24+">
-              <div class="tog-range">24°C+</div>
-              <div class="tog-val">0.2</div>
-              <div class="tog-unit">TOG</div>
-            </div>
-            <div class="tog-zone" data-range="20-24">
-              <div class="tog-range">20-24°C</div>
-              <div class="tog-val">1.0</div>
-              <div class="tog-unit">TOG</div>
-            </div>
-            <div class="tog-zone" data-range="16-20">
-              <div class="tog-range">16-20°C</div>
-              <div class="tog-val">2.5</div>
-              <div class="tog-unit">TOG</div>
-            </div>
-            <div class="tog-zone" data-range="under-16">
-              <div class="tog-range">&lt;16°C</div>
-              <div class="tog-val">3.5</div>
-              <div class="tog-unit">TOG</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- RIGHT: Recommendation -->
-    <div class="panel">
-      <div class="panel-head">
-        <div class="panel-title"><span class="pt-icon">✦</span>AI Recommendation</div>
-        <div class="compliance-badge">
-          <span class="cb-icon">✓</span>Medically aligned
-        </div>
-      </div>
-      <div class="panel-body">
-        <div class="rec-products">
-          <div class="rec-product primary" id="prodA">
-            <div class="rp-img bag"><div class="rp-tog-badge">2.5</div></div>
-            <div class="rp-info">
-              <div class="rp-name">Petit Sleep Bag</div>
-              <div class="rp-meta">6-12M · cotton-lined</div>
-              <div class="rp-tag"><span class="rp-tag-icon">✓</span>Matches 18°C room</div>
-            </div>
-            <div class="rp-price">£42</div>
-          </div>
-          <div class="rec-product" id="prodB">
-            <div class="rp-img pj"><div class="rp-tog-badge">L</div></div>
-            <div class="rp-info">
-              <div class="rp-name">Cotton Footed PJ</div>
-              <div class="rp-meta">6-12M · 100% cotton</div>
-              <div class="rp-tag"><span class="rp-tag-icon">✓</span>Pairs under sleep bag</div>
-            </div>
-            <div class="rp-price">£24</div>
-          </div>
-        </div>
-
-        <div class="action-row">
-          <button class="add-btn" id="addBtn">Add safe sleep kit →</button>
-        </div>
-      </div>
+      <div id="codeContent"></div>
     </div>
   </div>
-
-  <div class="card-footer">Input the room temperature — the AI returns medically-aligned products for safe, comfortable sleep.</div>
 </div>
-
 <script>
-var tempNumEl = document.getElementById('tempNum');
-var togRec = document.getElementById('togRec');
-var togZones = document.querySelectorAll('.tog-zone');
-var prodA = document.getElementById('prodA');
-var prodB = document.getElementById('prodB');
-var addBtn = document.getElementById('addBtn');
+const fields = [
+  { key: 'sensor', value: '<span class="mono">nursery_01</span> · <span class="ok">live</span>' },
+  { key: 'room_temp', value: '<span class="accent">18.0°C</span>' },
+  { key: 'tog_scale', value: '<div class="tog-zones"><div class="tog-zone">24+<span>0.2</span></div><div class="tog-zone">20-24<span>1.0</span></div><div class="tog-zone active">16-20<span>2.5</span></div><div class="tog-zone">&lt;16<span>3.5</span></div></div>' },
+  { key: 'tog_match', value: '<span class="ok mono">2.5 TOG</span>' },
+  { key: 'guideline', value: 'AAP · NHS aligned' },
+  { key: 'product', value: '<span class="accent">Petit Sleep Bag</span>' },
+  { key: 'sku', value: '<span class="mono">PSB-25-69</span>' },
+  { key: 'size', value: '6-12M' },
+  { key: 'material', value: 'Cotton-lined · 2.5 TOG', indent: true },
+  { key: 'price', value: '<span class="mono">£42</span>' },
+  { key: 'compliance', value: '<span class="ok">✓ medically aligned</span>' },
+];
 
-function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+const fieldsEl = document.getElementById('fields');
+fields.forEach(f => {
+  const row = document.createElement('div');
+  row.className = 'field-row' + (f.indent ? ' indent' : '');
+  row.innerHTML = '<div class="field-key">' + f.key + '</div><div class="field-value">' + f.value + '</div>';
+  fieldsEl.appendChild(row);
+});
 
-function tween(from, to, dur, cb) {
-  var start = Date.now();
-  function step() {
-    var t = Math.min(1, (Date.now() - start) / dur);
-    var v = from + (to - from) * (1 - Math.pow(1 - t, 3));
-    cb(v);
-    if (t < 1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
-}
+const codeLines = [
+  '<span class="cb">GET /api/safe-sleep</span>',
+  '<span class="cb">{</span>',
+  '  <span class="ck">"sensor"</span>: <span class="cv">"nursery_01"</span>,',
+  '  <span class="ck">"temp_c"</span>: <span class="cv">18.0</span>,',
+  '  <span class="ck">"tog_match"</span>: <span class="cg">2.5</span>,',
+  '  <span class="ck">"guideline"</span>: <span class="cv">"AAP+NHS"</span>,',
+  '  <span class="ck">"recommend"</span>: <span class="cb">{</span>',
+  '    <span class="ck">"sku"</span>: <span class="cv">"PSB-25-69"</span>,',
+  '    <span class="ck">"name"</span>: <span class="cv">"Petit Sleep Bag"</span>,',
+  '    <span class="ck">"tog"</span>: <span class="cv">2.5</span>,',
+  '    <span class="ck">"size"</span>: <span class="cv">"6-12M"</span>,',
+  '    <span class="ck">"price"</span>: <span class="cv">42.00</span>',
+  '  <span class="cb">}</span>,',
+  '  <span class="ck">"medical_aligned"</span>: <span class="cg">true</span>',
+  '<span class="cb">}</span>',
+];
 
-function pickZone(temp) {
-  if (temp >= 24) return { idx: 0, tog: '0.2' };
-  if (temp >= 20) return { idx: 1, tog: '1.0' };
-  if (temp >= 16) return { idx: 2, tog: '2.5' };
-  return { idx: 3, tog: '3.5' };
-}
+const codeContent = document.getElementById('codeContent');
+codeLines.forEach(line => {
+  const el = document.createElement('div');
+  el.className = 'code-line';
+  el.innerHTML = line;
+  codeContent.appendChild(el);
+});
 
-async function runCycle() {
-  // Reset
-  togZones.forEach(function(z) { z.classList.remove('active'); });
-  togRec.textContent = '— TOG';
-  prodA.classList.remove('show');
-  prodB.classList.remove('show');
-  addBtn.classList.remove('active', 'pressed', 'done');
-  addBtn.textContent = 'Add safe sleep kit →';
-  tempNumEl.textContent = '0';
-
-  await sleep(500);
-
-  // Temperature tweens up to 18°C
-  tween(0, 18, 1200, function(v) { tempNumEl.textContent = v.toFixed(1); });
-  await sleep(1300);
-
-  // Zone activates
-  var zone = pickZone(18);
-  togZones[zone.idx].classList.add('active');
-  togRec.textContent = zone.tog + ' TOG';
-
-  await sleep(500);
-
-  // Products appear
-  prodA.classList.add('show');
-  await sleep(280);
-  prodB.classList.add('show');
-
-  await sleep(700);
-  addBtn.classList.add('active');
-
-  await sleep(1100);
-  addBtn.classList.add('pressed');
-  await sleep(220);
-  addBtn.classList.remove('pressed');
-  addBtn.classList.add('done');
-  addBtn.textContent = '✓ Safe sleep kit added';
-
-  await sleep(4500);
-  runCycle();
-}
-
-window.addEventListener('load', function() { setTimeout(runCycle, 200); });
+const rows = document.querySelectorAll('.field-row');
+rows.forEach((row, i) => {
+  setTimeout(() => row.classList.add('visible'), 200 + i * 85);
+});
+setTimeout(() => document.getElementById('codePanel').classList.add('visible'), 500);
 </script>
 </body>
 </html>

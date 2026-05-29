@@ -3,588 +3,251 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Direct API · Action Layer</title>
+<title>Direct API Actions</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 100%; height: 100%; overflow: hidden; }
   body {
-    background: #0F0F0F;
+    background: #0A0A0A;
     font-family: system-ui, -apple-system, sans-serif;
     color: #fff;
   }
-
   .card {
+    background: #0F0F0F;
     width: 100%;
     height: 100%;
-    background: #0F0F0F;
-    padding: clamp(16px, 3vh, 28px) clamp(16px, 3vw, 32px);
-    display: flex;
-    flex-direction: column;
-    gap: clamp(10px, 1.6vh, 16px);
-    position: relative;
     overflow: hidden;
+    padding: 16px;
   }
-
-  .card-label {
-    font-size: clamp(11px, 1.5vh, 14px);
-    font-weight: 700;
-    color: #FB3B24;
-    text-transform: uppercase;
-    letter-spacing: 1.4px;
-    flex-shrink: 0;
-  }
-
-  /* --- Main split --- */
-  .main {
-    flex: 1;
-    min-height: 0;
-    display: grid;
-    grid-template-columns: 1.7fr 1fr;
-    gap: clamp(10px, 1.6vw, 16px);
-  }
-
-  .panel {
-    background: #161616;
-    border: 1px solid #232323;
-    border-radius: clamp(10px, 1.6vh, 14px);
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    min-height: 0;
-    overflow: hidden;
-    position: relative;
-  }
-
-  .panel-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: clamp(8px, 1.2vh, 11px) clamp(12px, 1.6vw, 16px);
-    border-bottom: 1px solid #232323;
-    flex-shrink: 0;
-    background: #181818;
-  }
-  .panel-title {
-    font-size: clamp(11px, 1.4vh, 13px);
-    font-weight: 700;
-    color: rgba(255,255,255,0.85);
+  .breadcrumb {
     display: flex;
     align-items: center;
     gap: 6px;
-    min-width: 0;
+    margin-bottom: 4px;
+    font-size: 13px;
+    color: #888;
   }
-  .panel-title .pt-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: #4BC882;
-    box-shadow: 0 0 5px rgba(75,200,130,0.7);
-    animation: pulse 1.4s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
-  .panel-meta {
-    font-size: clamp(9px, 1.1vh, 11px);
-    font-weight: 700;
-    color: rgba(255,255,255,0.4);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-family: ui-monospace, monospace;
+  .breadcrumb .separator { color: #444; }
+  .breadcrumb .active { color: #ccc; font-weight: 600; }
+  .url-bar {
+    font-size: 11px;
+    color: #555;
+    margin-bottom: 14px;
+    padding: 6px 10px;
+    background: #141414;
+    border-radius: 4px;
     white-space: nowrap;
-  }
-
-  /* --- Left: API actions log --- */
-  .log-body {
-    flex: 1;
-    min-height: 0;
     overflow: hidden;
-    padding: clamp(8px, 1.2vh, 12px) clamp(10px, 1.4vw, 14px);
-    display: flex;
-    flex-direction: column;
-    gap: clamp(5px, 0.8vh, 8px);
-    font-family: ui-monospace, monospace;
-  }
-
-  .log-row {
+    text-overflow: ellipsis;
     display: flex;
     align-items: center;
-    gap: clamp(7px, 1vw, 10px);
-    padding: clamp(7px, 1.1vh, 10px) clamp(9px, 1.2vw, 12px);
-    background: #0D0D0D;
-    border: 1px solid #1E1E1E;
-    border-radius: 6px;
-    font-size: clamp(10px, 1.3vh, 12px);
-    opacity: 0;
-    transform: translateY(6px);
-    transition: opacity 0.4s, transform 0.4s, border-color 0.3s, background 0.3s;
-    min-width: 0;
+    gap: 8px;
   }
-  .log-row.show { opacity: 1; transform: translateY(0); }
-  .log-row.executing { border-color: rgba(230,180,60,0.4); }
-  .log-row.success { border-color: rgba(75,200,130,0.35); background: rgba(75,200,130,0.025); }
-
-  .log-method {
-    font-size: clamp(8.5px, 1vh, 10px);
-    font-weight: 800;
-    color: #FB3B24;
-    background: rgba(251,59,36,0.12);
-    padding: 2px 6px;
-    border-radius: 3px;
-    letter-spacing: 0.3px;
+  .url-globe {
+    width: 14px; height: 14px;
+    background: #333;
+    border-radius: 50%;
     flex-shrink: 0;
   }
-  .log-path {
-    color: rgba(255,255,255,0.85);
-    font-weight: 600;
-    white-space: nowrap;
+  .content {
+    display: flex;
+    gap: 16px;
+    height: calc(100% - 56px);
     overflow: hidden;
-    text-overflow: ellipsis;
-    flex-shrink: 0;
   }
-  .log-payload {
+  .fields-panel {
     flex: 1;
-    color: #888;
-    font-size: 0.85em;
+    min-width: 0;
+    overflow-y: auto;
+  }
+  .fields-panel::-webkit-scrollbar { display: none; }
+  .field-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #1A1A1A;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .field-row.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .method {
+    font-family: 'SF Mono', monospace;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 2px;
+    color: #FB3B24;
+    background: rgba(251,59,36,0.1);
+    flex-shrink: 0;
+  }
+  .field-key {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    color: #ccc;
+    font-family: 'SF Mono', monospace;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    min-width: 0;
   }
-  .log-payload .pk { color: rgba(85,170,210,0.85); }
-  .log-payload .pv { color: rgba(230,180,90,0.85); }
-
-  .log-status {
+  .status {
     display: flex;
     align-items: center;
     gap: 5px;
-    font-size: clamp(8.5px, 1vh, 10px);
-    font-weight: 700;
-    color: rgba(255,255,255,0.4);
-    flex-shrink: 0;
-  }
-  .log-row.executing .log-status .ls-text { color: #E6B43C; }
-  .log-row.success .log-status .ls-text { color: #4BC882; }
-  .ls-spinner {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    border: 1.5px solid currentColor;
-    border-top-color: transparent;
-    animation: spin 0.9s linear infinite;
-    color: #E6B43C;
-    flex-shrink: 0;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .log-row.success .ls-spinner { display: none; }
-  .log-row.executing .ls-check { display: none; }
-  .ls-check {
-    width: 12px; height: 12px;
-    border-radius: 50%;
-    background: #4BC882;
-    color: #08200F;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 8px;
-    font-weight: 800;
-    flex-shrink: 0;
-  }
-  .log-row:not(.success):not(.executing) .ls-spinner,
-  .log-row:not(.success):not(.executing) .ls-check { display: none; }
-  .log-time {
-    font-size: clamp(8.5px, 1vh, 10px);
-    color: rgba(255,255,255,0.4);
-    font-variant-numeric: tabular-nums;
-    flex-shrink: 0;
-  }
-
-  /* --- Right: Cart preview --- */
-  .cart-body {
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    padding: clamp(10px, 1.4vh, 14px) clamp(11px, 1.4vw, 14px);
-    gap: clamp(7px, 1vh, 10px);
-  }
-  .cart-items {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    gap: clamp(5px, 0.8vh, 8px);
-    overflow: hidden;
-  }
-  .cart-item {
-    display: flex;
-    align-items: center;
-    gap: clamp(7px, 1vw, 10px);
-    padding: clamp(5px, 0.8vh, 7px);
-    background: #0D0D0D;
-    border: 1px solid #1E1E1E;
-    border-radius: 6px;
-    opacity: 0;
-    transform: translateX(8px);
-    transition: opacity 0.4s, transform 0.4s;
-    min-width: 0;
-  }
-  .cart-item.show { opacity: 1; transform: translateX(0); }
-  .ci-img {
-    width: clamp(26px, 3.6vh, 34px);
-    height: clamp(26px, 3.6vh, 34px);
-    border-radius: 5px;
-    flex-shrink: 0;
-    position: relative;
-    overflow: hidden;
-  }
-  .ci-img.a { background: linear-gradient(135deg, #6B4A3A 0%, #4A3024 100%); }
-  .ci-img.b { background: linear-gradient(135deg, #5C7A8C 0%, #3C5566 100%); }
-  .ci-img.c {
-    background:
-      repeating-linear-gradient(45deg, #2D3A2D 0px, #2D3A2D 3px, #4A5A4A 3px, #4A5A4A 6px);
-  }
-  .ci-info {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-  }
-  .ci-name {
-    font-size: clamp(10px, 1.3vh, 12px);
-    font-weight: 700;
-    color: rgba(255,255,255,0.9);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.2;
-  }
-  .ci-sku {
-    font-size: clamp(8.5px, 1vh, 10px);
-    color: rgba(255,255,255,0.4);
-    font-family: ui-monospace, monospace;
-  }
-  .ci-price {
-    font-size: clamp(10px, 1.3vh, 12px);
-    font-weight: 800;
-    color: rgba(255,255,255,0.85);
-    font-family: ui-monospace, monospace;
-    flex-shrink: 0;
-  }
-
-  .cart-summary {
-    border-top: 1px solid #1E1E1E;
-    padding-top: clamp(7px, 1vh, 10px);
-    display: flex;
-    flex-direction: column;
-    gap: clamp(4px, 0.6vh, 6px);
-    flex-shrink: 0;
-  }
-  .summary-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    font-size: clamp(10px, 1.3vh, 12px);
-    color: rgba(255,255,255,0.5);
-    font-family: ui-monospace, monospace;
-    transition: color 0.3s;
-  }
-  .summary-row.discount {
+    font-size: 11px;
     color: #4BC882;
-    opacity: 0;
-    height: 0;
-    overflow: hidden;
-    transition: opacity 0.3s, height 0.3s;
-  }
-  .summary-row.discount.show {
-    opacity: 1;
-    height: auto;
-  }
-  .summary-row.total {
-    font-size: clamp(13px, 1.7vh, 16px);
-    font-weight: 800;
-    color: rgba(255,255,255,0.95);
-    margin-top: 2px;
-  }
-  .checkout-btn {
-    background: rgba(75,200,130,0.08);
-    border: 1px solid rgba(75,200,130,0.25);
-    color: rgba(255,255,255,0.4);
-    padding: clamp(8px, 1.2vh, 11px);
-    border-radius: 6px;
-    font-size: clamp(11px, 1.4vh, 13px);
-    font-weight: 700;
-    text-align: center;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    transition: all 0.4s;
-  }
-  .checkout-btn.ready {
-    background: #4BC882;
-    color: #08200F;
-    border-color: #4BC882;
-    box-shadow: 0 0 14px rgba(75,200,130,0.35);
-  }
-
-  .card-footer {
-    font-size: clamp(11px, 1.5vh, 14px);
-    color: rgba(255,255,255,0.55);
-    font-weight: 500;
+    font-family: 'SF Mono', monospace;
     flex-shrink: 0;
   }
-
-  /* Stack on narrow */
-  @media (max-aspect-ratio: 1/1) {
-    .card {
-      padding: clamp(12px, 2vh, 18px) clamp(14px, 4vw, 22px);
-      gap: clamp(8px, 1.2vh, 12px);
-    }
-    .main {
-      grid-template-columns: 1fr;
-      grid-template-rows: 1fr 1fr;
-      gap: clamp(8px, 1.2vh, 11px);
-    }
-    .log-payload { display: none; }
-    .panel-head {
-      padding: clamp(6px, 0.9vh, 9px) clamp(10px, 1.4vw, 12px);
-    }
-    .log-body {
-      padding: clamp(6px, 1vh, 9px) clamp(8px, 1.2vw, 11px);
-      gap: clamp(4px, 0.6vh, 6px);
-    }
-    .log-row {
-      padding: clamp(5px, 0.8vh, 8px) clamp(7px, 1vw, 10px);
-      font-size: clamp(9px, 1.1vh, 11px);
-    }
-    /* Cap visible log rows on mobile so panel stays bounded */
-    .log-row:nth-last-child(n+5) { display: none; }
-    .cart-body {
-      padding: clamp(7px, 1vh, 11px) clamp(9px, 1.2vw, 12px);
-      gap: clamp(5px, 0.8vh, 8px);
-    }
-    .cart-items {
-      gap: clamp(4px, 0.6vh, 6px);
-    }
-    .cart-item {
-      padding: clamp(4px, 0.6vh, 6px);
-      gap: 7px;
-    }
-    .ci-img {
-      width: clamp(22px, 3vh, 28px);
-      height: clamp(22px, 3vh, 28px);
-    }
-    .ci-name { font-size: clamp(9.5px, 1.2vh, 11px); }
-    .ci-sku { font-size: clamp(8px, 0.95vh, 9.5px); }
-    .ci-price { font-size: clamp(9.5px, 1.2vh, 11px); }
-    .cart-summary {
-      padding-top: clamp(5px, 0.8vh, 8px);
-      gap: clamp(3px, 0.5vh, 5px);
-    }
-    .summary-row { font-size: clamp(9px, 1.2vh, 11px); }
-    .summary-row.total { font-size: clamp(12px, 1.5vh, 14px); }
-    .checkout-btn {
-      padding: clamp(6px, 0.9vh, 9px);
-      font-size: clamp(10px, 1.2vh, 12px);
-    }
-    .card-footer {
-      font-size: clamp(10px, 1.3vh, 12px);
-      line-height: 1.35;
-    }
+  .status .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #4BC882;
+  }
+  .field-time {
+    font-size: 11px;
+    color: #555;
+    font-family: 'SF Mono', monospace;
+    flex-shrink: 0;
+    min-width: 42px;
+    text-align: right;
+  }
+  .code-panel {
+    width: 280px;
+    flex-shrink: 0;
+    background: #141414;
+    border-radius: 4px;
+    padding: 12px;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .code-panel.visible { opacity: 1; }
+  .code-tabs {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .code-tab { color: #555; cursor: pointer; padding-bottom: 4px; }
+  .code-tab.active { color: #FB3B24; border-bottom: 2px solid #FB3B24; }
+  .code-line {
+    font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+    font-size: 10px;
+    line-height: 1.7;
+    white-space: pre;
+    color: #888;
+  }
+  .ck { color: #FB3B24; }
+  .cv { color: #ccc; }
+  .cb { color: #555; }
+  .cg { color: #4BC882; }
+  @media (max-width: 480px) {
+    .breadcrumb { font-size: 11px; margin-bottom: 2px; }
+    .url-bar { margin-bottom: 8px; padding: 4px 8px; font-size: 10px; }
+    .content { flex-direction: column; gap: 8px; height: auto; }
+    .fields-panel { flex: none; }
+    .field-row { padding: 5px 0; }
+    .field-key { font-size: 11px; }
+    .field-time { font-size: 10px; min-width: 36px; }
+    .status { font-size: 10px; }
+    .code-panel { width: 100%; max-height: 120px; padding: 8px; }
+    .code-tabs { gap: 10px; margin-bottom: 6px; font-size: 10px; }
+    .code-line { font-size: 9px; line-height: 1.5; }
   }
 </style>
 </head>
 <body>
 <div class="card">
-  <div class="card-label">Direct API · Action Layer</div>
-
-  <div class="main">
-    <!-- Left: API actions log -->
-    <div class="panel">
-      <div class="panel-head">
-        <div class="panel-title"><span class="pt-dot"></span>API actions · live</div>
-        <div class="panel-meta">POST · 200 OK</div>
+  <div class="breadcrumb">
+    <span>API actions</span>
+    <span class="separator">›</span>
+    <span class="active">Cart &amp; checkout log</span>
+  </div>
+  <div class="url-bar">
+    <div class="url-globe"></div>
+    https://petit-atelier.com/api/actions?session=stripe_x9y2
+  </div>
+  <div class="content">
+    <div class="fields-panel" id="fields">
+      <div class="field-row">
+        <div class="method">POST</div>
+        <div class="field-key">/api/cart/add · sku:A4F2</div>
+        <div class="status"><span class="dot"></span>200</div>
+        <div class="field-time">312ms</div>
       </div>
-      <div class="log-body" id="logBody"></div>
+      <div class="field-row">
+        <div class="method">POST</div>
+        <div class="field-key">/api/cart/add · sku:B891</div>
+        <div class="status"><span class="dot"></span>200</div>
+        <div class="field-time">287ms</div>
+      </div>
+      <div class="field-row">
+        <div class="method">POST</div>
+        <div class="field-key">/api/cart/add · sku:C247</div>
+        <div class="status"><span class="dot"></span>200</div>
+        <div class="field-time">298ms</div>
+      </div>
+      <div class="field-row">
+        <div class="method">POST</div>
+        <div class="field-key">/api/discount/apply · BUNDLE15</div>
+        <div class="status"><span class="dot"></span>200</div>
+        <div class="field-time">124ms</div>
+      </div>
+      <div class="field-row">
+        <div class="method">POST</div>
+        <div class="field-key">/api/checkout/init · stripe</div>
+        <div class="status"><span class="dot"></span>201</div>
+        <div class="field-time">198ms</div>
+      </div>
     </div>
-
-    <!-- Right: Cart preview -->
-    <div class="panel">
-      <div class="panel-head">
-        <div class="panel-title">Cart preview</div>
-        <div class="panel-meta" id="cartCount">0 items</div>
+    <div class="code-panel" id="codePanel">
+      <div class="code-tabs">
+        <span class="code-tab active">PAYLOAD</span>
+        <span class="code-tab">RESPONSE</span>
+        <span class="code-tab">MORE INFO</span>
       </div>
-      <div class="cart-body">
-        <div class="cart-items" id="cartItems"></div>
-        <div class="cart-summary">
-          <div class="summary-row">
-            <span>Subtotal</span>
-            <span id="sumSubtotal">£0</span>
-          </div>
-          <div class="summary-row discount" id="sumDiscountRow">
-            <span>Bundle discount</span>
-            <span id="sumDiscount">−£0</span>
-          </div>
-          <div class="summary-row total">
-            <span>Total</span>
-            <span id="sumTotal">£0</span>
-          </div>
-          <div class="checkout-btn" id="checkoutBtn">Awaiting…</div>
-        </div>
-      </div>
+      <div id="codeContent"></div>
     </div>
   </div>
-
-  <div class="card-footer">No detours. The AI executes the action — bundle, discount, checkout — straight through the API.</div>
 </div>
-
 <script>
-var ACTIONS = [
-  {
-    method: 'POST',
-    path: '/api/cart/add',
-    payload: '{ <span class="pk">sku</span>: <span class="pv">"A4F2"</span>, <span class="pk">qty</span>: <span class="pv">1</span> }',
-    time: '312ms',
-    cart: { name: 'Heavyweight Wool Throw', sku: 'SKU-A4F2', price: 189, img: 'a' }
-  },
-  {
-    method: 'POST',
-    path: '/api/cart/add',
-    payload: '{ <span class="pk">sku</span>: <span class="pv">"B891"</span>, <span class="pk">qty</span>: <span class="pv">1</span> }',
-    time: '287ms',
-    cart: { name: 'Cashmere Lounge Set', sku: 'SKU-B891', price: 345, img: 'b' }
-  },
-  {
-    method: 'POST',
-    path: '/api/cart/add',
-    payload: '{ <span class="pk">sku</span>: <span class="pv">"C247"</span>, <span class="pk">qty</span>: <span class="pv">1</span> }',
-    time: '298ms',
-    cart: { name: 'Merino Cardigan', sku: 'SKU-C247', price: 128, img: 'c' }
-  },
-  {
-    method: 'POST',
-    path: '/api/discount/apply',
-    payload: '{ <span class="pk">code</span>: <span class="pv">"BUNDLE15"</span> }',
-    time: '124ms',
-    discount: 0.15
-  },
-  {
-    method: 'POST',
-    path: '/api/checkout/init',
-    payload: '{ <span class="pk">session</span>: <span class="pv">"stripe_x9y2"</span> }',
-    time: '198ms',
-    checkout: true
-  }
+const codeLines = [
+  '<span class="cb">POST /api/checkout/init</span>',
+  '<span class="cb">{</span>',
+  '  <span class="ck">"items"</span>: <span class="cb">[</span>',
+  '    <span class="cb">{</span> <span class="ck">"sku"</span>: <span class="cv">"A4F2"</span>, <span class="ck">"qty"</span>: <span class="cv">1</span> <span class="cb">}</span>,',
+  '    <span class="cb">{</span> <span class="ck">"sku"</span>: <span class="cv">"B891"</span>, <span class="ck">"qty"</span>: <span class="cv">1</span> <span class="cb">}</span>,',
+  '    <span class="cb">{</span> <span class="ck">"sku"</span>: <span class="cv">"C247"</span>, <span class="ck">"qty"</span>: <span class="cv">1</span> <span class="cb">}</span>',
+  '  <span class="cb">]</span>,',
+  '  <span class="ck">"discount"</span>: <span class="cv">"BUNDLE15"</span>,',
+  '  <span class="ck">"subtotal"</span>: <span class="cv">662</span>,',
+  '  <span class="ck">"total"</span>: <span class="cv">563</span>,',
+  '  <span class="ck">"session"</span>: <span class="cv">"stripe_x9y2"</span>',
+  '<span class="cb">}</span>',
+  '',
+  '<span class="cg">→ 201 Created · 198ms</span>',
 ];
 
-var logBody = document.getElementById('logBody');
-var cartItems = document.getElementById('cartItems');
-var sumSubtotal = document.getElementById('sumSubtotal');
-var sumDiscount = document.getElementById('sumDiscount');
-var sumDiscountRow = document.getElementById('sumDiscountRow');
-var sumTotal = document.getElementById('sumTotal');
-var checkoutBtn = document.getElementById('checkoutBtn');
-var cartCount = document.getElementById('cartCount');
+const codeContent = document.getElementById('codeContent');
+codeLines.forEach(line => {
+  const el = document.createElement('div');
+  el.className = 'code-line';
+  el.innerHTML = line;
+  codeContent.appendChild(el);
+});
 
-function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
-
-function addLogRow(action) {
-  var row = document.createElement('div');
-  row.className = 'log-row executing';
-  row.innerHTML =
-    '<span class="log-method">' + action.method + '</span>' +
-    '<span class="log-path">' + action.path + '</span>' +
-    '<span class="log-payload">' + action.payload + '</span>' +
-    '<span class="log-status">' +
-      '<span class="ls-spinner"></span>' +
-      '<span class="ls-check">✓</span>' +
-      '<span class="ls-text">…</span>' +
-    '</span>' +
-    '<span class="log-time">' + action.time + '</span>';
-  logBody.appendChild(row);
-  requestAnimationFrame(function() {
-    requestAnimationFrame(function() { row.classList.add('show'); });
-  });
-  return row;
-}
-
-function addCartItem(item) {
-  var div = document.createElement('div');
-  div.className = 'cart-item';
-  div.innerHTML =
-    '<div class="ci-img ' + item.img + '"></div>' +
-    '<div class="ci-info">' +
-      '<div class="ci-name">' + item.name + '</div>' +
-      '<div class="ci-sku">' + item.sku + '</div>' +
-    '</div>' +
-    '<div class="ci-price">£' + item.price + '</div>';
-  cartItems.appendChild(div);
-  requestAnimationFrame(function() {
-    requestAnimationFrame(function() { div.classList.add('show'); });
-  });
-}
-
-async function runCycle() {
-  // Reset
-  logBody.innerHTML = '';
-  cartItems.innerHTML = '';
-  sumSubtotal.textContent = '£0';
-  sumDiscount.textContent = '−£0';
-  sumDiscountRow.classList.remove('show');
-  sumTotal.textContent = '£0';
-  checkoutBtn.classList.remove('ready');
-  checkoutBtn.textContent = 'Awaiting…';
-  cartCount.textContent = '0 items';
-
-  var subtotal = 0;
-  var itemCount = 0;
-  var discountPct = 0;
-
-  await sleep(600);
-
-  for (var i = 0; i < ACTIONS.length; i++) {
-    var action = ACTIONS[i];
-    var row = addLogRow(action);
-
-    // Executing for a moment
-    await sleep(500);
-
-    // Mark success
-    row.classList.remove('executing');
-    row.classList.add('success');
-    var status = row.querySelector('.ls-text');
-    if (status) status.textContent = '200';
-
-    // Update cart based on action
-    if (action.cart) {
-      itemCount++;
-      subtotal += action.cart.price;
-      addCartItem(action.cart);
-      cartCount.textContent = itemCount + ' item' + (itemCount > 1 ? 's' : '');
-      sumSubtotal.textContent = '£' + subtotal;
-      sumTotal.textContent = '£' + subtotal;
-    } else if (action.discount) {
-      discountPct = action.discount;
-      var disc = Math.round(subtotal * discountPct);
-      sumDiscount.textContent = '−£' + disc;
-      sumDiscountRow.classList.add('show');
-      sumTotal.textContent = '£' + (subtotal - disc);
-    } else if (action.checkout) {
-      checkoutBtn.classList.add('ready');
-      checkoutBtn.textContent = '✓ Checkout ready';
-    }
-
-    await sleep(500);
-  }
-
-  // Hold final state
-  await sleep(5500);
-
-  runCycle();
-}
-
-window.addEventListener('load', function() { setTimeout(runCycle, 200); });
+const rows = document.querySelectorAll('.field-row');
+rows.forEach((row, i) => {
+  setTimeout(() => row.classList.add('visible'), 200 + i * 110);
+});
+setTimeout(() => document.getElementById('codePanel').classList.add('visible'), 500);
 </script>
 </body>
 </html>
