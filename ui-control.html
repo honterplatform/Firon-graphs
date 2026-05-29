@@ -397,18 +397,75 @@
   /* Stack on narrow */
   @media (max-aspect-ratio: 1/1) {
     .card {
-      padding: clamp(12px, 2vh, 18px) clamp(14px, 4vw, 22px);
+      padding: clamp(11px, 1.8vh, 16px) clamp(14px, 4vw, 22px);
       gap: clamp(8px, 1.2vh, 12px);
+    }
+    .card-label {
+      font-size: clamp(10px, 1.3vh, 12px);
+      letter-spacing: 1.1px;
     }
     .compare {
       grid-template-columns: 1fr;
       grid-template-rows: 1fr 1fr;
-      gap: clamp(8px, 1.2vh, 12px);
+      gap: clamp(10px, 1.6vh, 14px);
     }
+    .side { gap: clamp(6px, 0.9vh, 9px); }
+    .side-tag {
+      font-size: clamp(9px, 1.1vh, 10.5px);
+      padding: 3px 9px;
+    }
+
+    /* GENERIC widget — strip to essentials */
+    .side.generic .widget-head {
+      padding: clamp(7px, 1vh, 9px) clamp(10px, 1.4vw, 12px);
+    }
+    .gen-bot { width: clamp(20px, 2.7vh, 24px); height: clamp(20px, 2.7vh, 24px); }
+    .gen-name { font-size: clamp(10.5px, 1.3vh, 12px); }
+    .gen-body {
+      padding: clamp(7px, 1vh, 9px) clamp(10px, 1.4vw, 12px);
+      gap: clamp(4px, 0.6vh, 6px);
+    }
+    .gen-msg {
+      font-size: clamp(10.5px, 1.3vh, 12px);
+      padding: clamp(5px, 0.7vh, 7px) clamp(8px, 1.1vw, 10px);
+    }
+    .gen-quick { display: none; }
+    .gen-input { display: none; }
+    .gen-footer {
+      padding: clamp(4px, 0.6vh, 6px) clamp(10px, 1.4vw, 12px);
+      font-size: clamp(8px, 0.95vh, 9.5px);
+    }
+
+    /* BRAND widget — strip to essentials */
+    .brand-head {
+      padding: clamp(7px, 1vh, 9px) clamp(10px, 1.4vw, 12px);
+      gap: 7px;
+    }
+    .brand-mark { width: clamp(22px, 3vh, 26px); height: clamp(22px, 3vh, 26px); font-size: clamp(11px, 1.4vh, 12px); }
+    .brand-name { font-size: clamp(11px, 1.4vh, 12.5px); }
+    .brand-status { font-size: clamp(8.5px, 1vh, 9.5px); }
+    .brand-dots { display: none; }
+    .brand-body {
+      padding: clamp(7px, 1vh, 10px) clamp(10px, 1.4vw, 12px);
+      gap: clamp(4px, 0.6vh, 7px);
+    }
+    .brand-bubble {
+      font-size: clamp(10.5px, 1.3vh, 12px);
+      padding: clamp(5px, 0.8vh, 7px) clamp(8px, 1.1vw, 10px);
+    }
+    .brand-avatar { width: clamp(18px, 2.4vh, 22px); height: clamp(18px, 2.4vh, 22px); font-size: clamp(9px, 1.2vh, 11px); }
+    .brand-quick { display: none; }
+    .brand-input { display: none; }
+
     .card-footer {
       font-size: clamp(10px, 1.3vh, 12px);
       line-height: 1.35;
     }
+  }
+  /* Very short heights: scroll fallback */
+  @media (max-aspect-ratio: 1/1) and (max-height: 520px) {
+    .card { overflow-y: auto; scrollbar-width: none; }
+    .card::-webkit-scrollbar { display: none; }
   }
 </style>
 </head>
