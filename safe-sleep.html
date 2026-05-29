@@ -429,41 +429,56 @@
       font-size: clamp(10px, 1.3vh, 12px);
       letter-spacing: 1.1px;
     }
+    /* Sensor panel slightly smaller, prediction panel slightly larger */
     .main {
       grid-template-columns: 1fr;
-      grid-template-rows: 1fr 1fr;
-      gap: clamp(7px, 1vh, 10px);
+      grid-template-rows: 0.95fr 1fr;
+      gap: clamp(6px, 0.9vh, 9px);
     }
     .panel-head {
-      padding: clamp(7px, 1vh, 10px) clamp(10px, 1.4vw, 12px);
+      padding: clamp(6px, 0.9vh, 8px) clamp(10px, 1.4vw, 12px);
     }
+    .panel-title { font-size: clamp(10px, 1.25vh, 12px); }
+    .panel-meta { font-size: clamp(8.5px, 1vh, 10px); }
     .panel-body {
-      padding: clamp(8px, 1.2vh, 11px) clamp(10px, 1.4vw, 12px);
-      gap: clamp(7px, 1.1vh, 10px);
+      padding: clamp(7px, 1vh, 10px) clamp(10px, 1.4vw, 12px);
+      gap: clamp(6px, 0.9vh, 8px);
     }
+    /* Temperature: smaller and put source in line */
     .temp-display {
-      padding: clamp(8px, 1.2vh, 10px);
-      gap: clamp(8px, 1.4vw, 12px);
+      padding: clamp(6px, 1vh, 9px);
+      gap: clamp(7px, 1.2vw, 10px);
     }
-    .thermo-icon { width: clamp(24px, 3.4vh, 28px); height: clamp(24px, 3.4vh, 28px); font-size: clamp(13px, 1.7vh, 16px); }
-    .temp-num { font-size: clamp(20px, 3vh, 28px); }
+    .thermo-icon { width: clamp(22px, 3vh, 26px); height: clamp(22px, 3vh, 26px); font-size: clamp(12px, 1.5vh, 14px); }
+    .temp-label { font-size: clamp(7.5px, 0.9vh, 9px); }
+    .temp-num { font-size: clamp(18px, 2.6vh, 24px); }
+    /* Hide sensor source on mobile */
+    .temp-source { display: none; }
+    /* TOG zones much tighter */
+    .tog-section { gap: clamp(4px, 0.6vh, 6px); }
+    .tog-label { font-size: clamp(8.5px, 1vh, 10px); }
     .tog-zone {
-      padding: clamp(5px, 0.8vh, 7px) clamp(3px, 0.5vw, 5px);
-      gap: 1px;
+      padding: clamp(4px, 0.6vh, 6px) clamp(2px, 0.4vw, 4px);
+      gap: 0;
     }
-    .tog-range { font-size: clamp(7.5px, 0.9vh, 9px); }
-    .tog-val { font-size: clamp(11px, 1.4vh, 13px); }
-    .tog-unit { font-size: clamp(7px, 0.85vh, 8.5px); }
+    .tog-range { font-size: clamp(7px, 0.85vh, 8.5px); }
+    .tog-val { font-size: clamp(10px, 1.3vh, 12px); }
+    .tog-unit { font-size: clamp(6.5px, 0.8vh, 8px); }
+    /* HIDE secondary product on mobile — keep primary as hero */
+    #prodB { display: none; }
+    /* HIDE the inline "Matches 18°C room" tag — primary card already says it via TOG badge */
+    .rec-product .rp-tag { display: none; }
     .rec-product {
       padding: clamp(5px, 0.8vh, 7px) clamp(7px, 1vw, 9px);
       gap: clamp(7px, 1vw, 10px);
     }
-    .rp-img { width: clamp(36px, 4.8vh, 44px); height: clamp(36px, 4.8vh, 44px); }
+    .rp-img { width: clamp(32px, 4.4vh, 40px); height: clamp(32px, 4.4vh, 40px); }
     .rp-name { font-size: clamp(10.5px, 1.3vh, 12px); }
     .rp-meta { font-size: clamp(8.5px, 1vh, 10px); }
-    .rp-tag { font-size: clamp(8px, 0.95vh, 9.5px); }
     .rp-price { font-size: clamp(10.5px, 1.3vh, 12px); }
-    .compliance-badge { font-size: clamp(8.5px, 1vh, 10px); padding: 4px 7px; }
+    .rp-tog-badge { font-size: clamp(7px, 0.85vh, 8.5px); padding: 1px 3px; }
+    /* Hide compliance badge text on very narrow — just show check */
+    .compliance-badge { font-size: clamp(8.5px, 1vh, 10px); padding: 3px 6px; }
     .add-btn {
       padding: clamp(6px, 1vh, 9px) clamp(10px, 1.4vw, 13px);
       font-size: clamp(10.5px, 1.3vh, 12px);
@@ -472,6 +487,11 @@
       font-size: clamp(10px, 1.3vh, 12px);
       line-height: 1.35;
     }
+  }
+  /* Very narrow: collapse compliance badge to icon only */
+  @media (max-aspect-ratio: 1/1) and (max-width: 420px) {
+    .compliance-badge { font-size: 0; padding: 4px; gap: 0; }
+    .compliance-badge .cb-icon { font-size: 8px; }
   }
 </style>
 </head>
