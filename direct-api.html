@@ -337,8 +337,61 @@
 
   /* Stack on narrow */
   @media (max-aspect-ratio: 1/1) {
-    .main { grid-template-columns: 1fr; grid-template-rows: 1.3fr 1fr; }
+    .card {
+      padding: clamp(12px, 2vh, 18px) clamp(14px, 4vw, 22px);
+      gap: clamp(8px, 1.2vh, 12px);
+    }
+    .main {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: clamp(8px, 1.2vh, 11px);
+    }
     .log-payload { display: none; }
+    .panel-head {
+      padding: clamp(6px, 0.9vh, 9px) clamp(10px, 1.4vw, 12px);
+    }
+    .log-body {
+      padding: clamp(6px, 1vh, 9px) clamp(8px, 1.2vw, 11px);
+      gap: clamp(4px, 0.6vh, 6px);
+    }
+    .log-row {
+      padding: clamp(5px, 0.8vh, 8px) clamp(7px, 1vw, 10px);
+      font-size: clamp(9px, 1.1vh, 11px);
+    }
+    /* Cap visible log rows on mobile so panel stays bounded */
+    .log-row:nth-last-child(n+5) { display: none; }
+    .cart-body {
+      padding: clamp(7px, 1vh, 11px) clamp(9px, 1.2vw, 12px);
+      gap: clamp(5px, 0.8vh, 8px);
+    }
+    .cart-items {
+      gap: clamp(4px, 0.6vh, 6px);
+    }
+    .cart-item {
+      padding: clamp(4px, 0.6vh, 6px);
+      gap: 7px;
+    }
+    .ci-img {
+      width: clamp(22px, 3vh, 28px);
+      height: clamp(22px, 3vh, 28px);
+    }
+    .ci-name { font-size: clamp(9.5px, 1.2vh, 11px); }
+    .ci-sku { font-size: clamp(8px, 0.95vh, 9.5px); }
+    .ci-price { font-size: clamp(9.5px, 1.2vh, 11px); }
+    .cart-summary {
+      padding-top: clamp(5px, 0.8vh, 8px);
+      gap: clamp(3px, 0.5vh, 5px);
+    }
+    .summary-row { font-size: clamp(9px, 1.2vh, 11px); }
+    .summary-row.total { font-size: clamp(12px, 1.5vh, 14px); }
+    .checkout-btn {
+      padding: clamp(6px, 0.9vh, 9px);
+      font-size: clamp(10px, 1.2vh, 12px);
+    }
+    .card-footer {
+      font-size: clamp(10px, 1.3vh, 12px);
+      line-height: 1.35;
+    }
   }
 </style>
 </head>
