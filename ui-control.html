@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Total UI Control</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0F0F0F;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+  }
+
+  .card {
+    width: 100%;
+    height: 100%;
+    background: #0F0F0F;
+    padding: clamp(16px, 3vh, 28px) clamp(16px, 3vw, 32px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 1.6vh, 16px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-label {
+    font-size: clamp(11px, 1.5vh, 14px);
+    font-weight: 700;
+    color: #FB3B24;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    flex-shrink: 0;
+  }
+
+  /* --- Comparison split --- */
+  .compare {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(10px, 1.6vw, 18px);
+    align-items: stretch;
+  }
+
+  .side {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1.2vh, 11px);
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .side-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: clamp(9px, 1.2vh, 11px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    width: fit-content;
+    flex-shrink: 0;
+  }
+  .side.generic .side-tag {
+    color: rgba(255,255,255,0.55);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .side.brand .side-tag {
+    color: #FB3B24;
+    background: rgba(251,59,36,0.08);
+    border: 1px solid rgba(251,59,36,0.3);
+  }
+  .side-tag .st-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .side.brand .st-dot {
+    box-shadow: 0 0 5px currentColor;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% {opacity:1;} 50% {opacity:0.4;} }
+
+  /* === GENERIC widget (off-the-shelf) === */
+  .widget {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .side.generic .widget {
+    background: #1B1F26;
+    border: 1px solid #232932;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    opacity: 0.7;
+  }
+  .side.generic .widget-head {
+    background: #4A6BCF;
+    color: #fff;
+    padding: clamp(8px, 1.2vh, 11px) clamp(10px, 1.4vw, 13px);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .gen-bot {
+    width: clamp(22px, 3vh, 26px);
+    height: clamp(22px, 3vh, 26px);
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(11px, 1.4vh, 13px);
+    flex-shrink: 0;
+  }
+  .gen-name {
+    font-size: clamp(11px, 1.4vh, 13px);
+    font-weight: 700;
+    font-family: Arial, sans-serif;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .gen-x {
+    color: rgba(255,255,255,0.7);
+    font-size: clamp(12px, 1.6vh, 14px);
+    font-weight: 400;
+  }
+  .gen-body {
+    flex: 1;
+    min-height: 0;
+    padding: clamp(8px, 1.2vh, 11px) clamp(10px, 1.4vw, 13px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(5px, 0.8vh, 8px);
+    overflow: hidden;
+    background: #1B1F26;
+  }
+  .gen-msg {
+    background: #2A323F;
+    padding: clamp(6px, 0.9vh, 9px) clamp(9px, 1.2vw, 11px);
+    border-radius: 12px 12px 12px 2px;
+    font-size: clamp(11px, 1.4vh, 12.5px);
+    color: rgba(255,255,255,0.8);
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.4;
+    max-width: 90%;
+    align-self: flex-start;
+  }
+  .gen-quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 2px;
+  }
+  .gen-quick button {
+    background: transparent;
+    border: 1px solid #4A6BCF;
+    color: #87A0E0;
+    padding: 4px 9px;
+    border-radius: 12px;
+    font-size: clamp(9.5px, 1.2vh, 11px);
+    font-weight: 600;
+    font-family: Arial, sans-serif;
+  }
+  .gen-footer {
+    padding: clamp(5px, 0.8vh, 7px) clamp(10px, 1.4vw, 13px);
+    background: #161A21;
+    border-top: 1px solid #232932;
+    font-size: clamp(8.5px, 1vh, 10px);
+    color: rgba(255,255,255,0.35);
+    text-align: center;
+    font-family: Arial, sans-serif;
+    flex-shrink: 0;
+  }
+  .gen-footer b { color: #87A0E0; font-weight: 700; }
+  .gen-input {
+    background: #161A21;
+    border-top: 1px solid #232932;
+    padding: clamp(6px, 1vh, 9px) clamp(10px, 1.4vw, 13px);
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .gen-input-pill {
+    flex: 1;
+    background: #2A323F;
+    border-radius: 16px;
+    padding: clamp(5px, 0.8vh, 7px) clamp(10px, 1.4vw, 12px);
+    font-size: clamp(10px, 1.2vh, 11.5px);
+    color: rgba(255,255,255,0.4);
+    font-family: Arial, sans-serif;
+    min-width: 0;
+  }
+  .gen-send {
+    background: #4A6BCF;
+    color: #fff;
+    width: clamp(26px, 3.6vh, 32px);
+    height: clamp(26px, 3.6vh, 32px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(11px, 1.4vh, 13px);
+    flex-shrink: 0;
+  }
+
+  /* === BRAND widget (native, premium) === */
+  .side.brand .widget {
+    background: #161616;
+    border: 1px solid #232323;
+    border-radius: clamp(10px, 1.5vh, 14px);
+    box-shadow:
+      0 18px 36px -12px rgba(0,0,0,0.6),
+      0 0 0 1px rgba(255,255,255,0.02) inset;
+    position: relative;
+  }
+  .side.brand .widget::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: clamp(10px, 1.5vh, 14px);
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(251,59,36,0.4), transparent 50%);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    pointer-events: none;
+  }
+  .brand-head {
+    padding: clamp(9px, 1.3vh, 12px) clamp(11px, 1.5vw, 14px);
+    border-bottom: 1px solid #232323;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    background: #171717;
+    flex-shrink: 0;
+  }
+  .brand-mark {
+    width: clamp(26px, 3.6vh, 32px);
+    height: clamp(26px, 3.6vh, 32px);
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FB3B24 0%, #C72D19 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(12px, 1.6vh, 14px);
+    font-weight: 800;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(251,59,36,0.3);
+    position: relative;
+  }
+  .brand-mark::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #4BC882;
+    border: 2px solid #171717;
+  }
+  .brand-info { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+  .brand-name {
+    font-size: clamp(12px, 1.5vh, 13.5px);
+    font-weight: 700;
+    color: rgba(255,255,255,0.95);
+    letter-spacing: -0.2px;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .brand-status {
+    font-size: clamp(8.5px, 1vh, 10px);
+    color: #4BC882;
+    font-weight: 600;
+  }
+  .brand-dots {
+    color: rgba(255,255,255,0.4);
+    font-size: clamp(14px, 1.8vh, 16px);
+    letter-spacing: 2px;
+    flex-shrink: 0;
+  }
+  .brand-body {
+    flex: 1;
+    min-height: 0;
+    padding: clamp(9px, 1.3vh, 12px) clamp(11px, 1.5vw, 14px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 0.9vh, 9px);
+    background: #161616;
+    background-image: radial-gradient(circle at 20% 0%, rgba(251,59,36,0.05), transparent 50%);
+    overflow: hidden;
+  }
+  .brand-msg {
+    display: flex;
+    gap: 6px;
+    align-items: flex-end;
+    max-width: 92%;
+    align-self: flex-start;
+  }
+  .brand-avatar {
+    width: clamp(20px, 2.6vh, 24px);
+    height: clamp(20px, 2.6vh, 24px);
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(251,59,36,0.25) 0%, rgba(251,59,36,0.08) 100%);
+    border: 1px solid rgba(251,59,36,0.35);
+    color: #FB3B24;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(10px, 1.3vh, 12px);
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .brand-bubble {
+    background: #1F1F1F;
+    border: 1px solid #2A2A2A;
+    border-radius: 4px clamp(11px, 1.4vh, 13px) clamp(11px, 1.4vh, 13px) clamp(11px, 1.4vh, 13px);
+    padding: clamp(7px, 1vh, 9px) clamp(10px, 1.4vw, 12px);
+    font-size: clamp(11px, 1.4vh, 12.5px);
+    color: rgba(255,255,255,0.92);
+    line-height: 1.45;
+    letter-spacing: -0.1px;
+  }
+  .brand-bubble b { color: #FB3B24; font-weight: 700; }
+  .brand-quick {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-left: clamp(26px, 3.4vh, 30px);
+  }
+  .brand-quick button {
+    background: rgba(251,59,36,0.12);
+    border: 1px solid rgba(251,59,36,0.4);
+    color: #FB3B24;
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: clamp(10px, 1.2vh, 11px);
+    font-weight: 700;
+  }
+  .brand-input {
+    border-top: 1px solid #232323;
+    padding: clamp(7px, 1vh, 10px) clamp(11px, 1.5vw, 14px);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    background: #171717;
+    flex-shrink: 0;
+  }
+  .brand-input-pill {
+    flex: 1;
+    background: #1F1F1F;
+    border: 1px solid #2A2A2A;
+    border-radius: 18px;
+    padding: clamp(6px, 0.9vh, 8px) clamp(11px, 1.5vw, 13px);
+    font-size: clamp(10px, 1.3vh, 12px);
+    color: rgba(255,255,255,0.4);
+    min-width: 0;
+  }
+  .brand-send {
+    background: #FB3B24;
+    color: #fff;
+    width: clamp(28px, 3.8vh, 34px);
+    height: clamp(28px, 3.8vh, 34px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(13px, 1.6vh, 15px);
+    font-weight: 700;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(251,59,36,0.3);
+  }
+
+  .card-footer {
+    font-size: clamp(11px, 1.5vh, 14px);
+    color: rgba(255,255,255,0.55);
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  /* Stack on narrow */
+  @media (max-aspect-ratio: 1/1) {
+    .card {
+      padding: clamp(12px, 2vh, 18px) clamp(14px, 4vw, 22px);
+      gap: clamp(8px, 1.2vh, 12px);
+    }
+    .compare {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: clamp(8px, 1.2vh, 12px);
+    }
+    .card-footer {
+      font-size: clamp(10px, 1.3vh, 12px);
+      line-height: 1.35;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-label">Total UI Control · Native Extension</div>
+
+  <div class="compare">
+    <!-- LEFT: Generic third-party plugin -->
+    <div class="side generic">
+      <div class="side-tag"><span class="st-dot"></span>Off-the-shelf plugin</div>
+      <div class="widget">
+        <div class="widget-head">
+          <div class="gen-bot">🤖</div>
+          <div class="gen-name">ChatBot Pro</div>
+          <div class="gen-x">×</div>
+        </div>
+        <div class="gen-body">
+          <div class="gen-msg">Hi there! 👋 How can I help you today?</div>
+          <div class="gen-quick">
+            <button>Track order</button>
+            <button>FAQs</button>
+            <button>Talk to human</button>
+          </div>
+        </div>
+        <div class="gen-input">
+          <div class="gen-input-pill">Type a message…</div>
+          <div class="gen-send">➤</div>
+        </div>
+        <div class="gen-footer">Powered by <b>ChatBot Pro™</b></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Branded native widget -->
+    <div class="side brand">
+      <div class="side-tag"><span class="st-dot"></span>Your brand · native</div>
+      <div class="widget">
+        <div class="brand-head">
+          <div class="brand-mark">P</div>
+          <div class="brand-info">
+            <div class="brand-name">Petit Atelier Concierge</div>
+            <div class="brand-status">Always online</div>
+          </div>
+          <div class="brand-dots">⋯</div>
+        </div>
+        <div class="brand-body">
+          <div class="brand-msg">
+            <div class="brand-avatar">✦</div>
+            <div class="brand-bubble">Welcome back, Sarah. Ready to size up to <b>3–6 Months</b>?</div>
+          </div>
+          <div class="brand-quick">
+            <button>Show me</button>
+            <button>Save for later</button>
+          </div>
+        </div>
+        <div class="brand-input">
+          <div class="brand-input-pill">Reply to Petit Atelier…</div>
+          <div class="brand-send">↑</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-footer">We own the design. The assistant feels native to your brand — not a third-party plugin.</div>
+</div>
+</body>
+</html>
