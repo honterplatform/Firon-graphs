@@ -77,8 +77,8 @@
   .panel-title .pt-dot {
     width: 6px; height: 6px;
     border-radius: 50%;
-    background: #4BC882;
-    box-shadow: 0 0 5px rgba(75,200,130,0.7);
+    background: #FB3B24;
+    box-shadow: 0 0 5px rgba(251,59,36,0.7);
     animation: pulse 1.4s ease-in-out infinite;
   }
   @keyframes pulse {
@@ -123,7 +123,7 @@
   }
   .log-row.show { opacity: 1; transform: translateY(0); }
   .log-row.executing { border-color: rgba(230,180,60,0.4); }
-  .log-row.success { border-color: rgba(75,200,130,0.35); background: rgba(75,200,130,0.025); }
+  .log-row.success { border-color: rgba(251,59,36,0.35); background: rgba(251,59,36,0.025); }
 
   .log-method {
     font-size: clamp(8.5px, 1vh, 10px);
@@ -165,7 +165,7 @@
     flex-shrink: 0;
   }
   .log-row.executing .log-status .ls-text { color: #E6B43C; }
-  .log-row.success .log-status .ls-text { color: #4BC882; }
+  .log-row.success .log-status .ls-text { color: #FB3B24; }
   .ls-spinner {
     width: 8px; height: 8px;
     border-radius: 50%;
@@ -181,8 +181,8 @@
   .ls-check {
     width: 12px; height: 12px;
     border-radius: 50%;
-    background: #4BC882;
-    color: #08200F;
+    background: #FB3B24;
+    color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -292,7 +292,7 @@
     transition: color 0.3s;
   }
   .summary-row.discount {
-    color: #4BC882;
+    color: #FB3B24;
     opacity: 0;
     height: 0;
     overflow: hidden;
@@ -309,8 +309,8 @@
     margin-top: 2px;
   }
   .checkout-btn {
-    background: rgba(75,200,130,0.08);
-    border: 1px solid rgba(75,200,130,0.25);
+    background: rgba(251,59,36,0.08);
+    border: 1px solid rgba(251,59,36,0.25);
     color: rgba(255,255,255,0.4);
     padding: clamp(8px, 1.2vh, 11px);
     border-radius: 6px;
@@ -322,10 +322,10 @@
     transition: all 0.4s;
   }
   .checkout-btn.ready {
-    background: #4BC882;
-    color: #08200F;
-    border-color: #4BC882;
-    box-shadow: 0 0 14px rgba(75,200,130,0.35);
+    background: #FB3B24;
+    color: #fff;
+    border-color: #FB3B24;
+    box-shadow: 0 0 14px rgba(251,59,36,0.35);
   }
 
   .card-footer {
