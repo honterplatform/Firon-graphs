@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Technical Comparison · Fabric Analysis</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0F0F0F;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+  }
+
+  .card {
+    width: 100%;
+    height: 100%;
+    background: #0F0F0F;
+    padding: clamp(16px, 3vh, 28px) clamp(16px, 3vw, 32px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 1.6vh, 16px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-label {
+    font-size: clamp(11px, 1.5vh, 14px);
+    font-weight: 700;
+    color: #FB3B24;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    flex-shrink: 0;
+  }
+
+  /* --- Compare container --- */
+  .compare-card {
+    flex: 1;
+    min-height: 0;
+    background: #161616;
+    border: 1px solid #232323;
+    border-radius: clamp(10px, 1.6vh, 14px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 16px 36px -16px rgba(0,0,0,0.5);
+  }
+
+  /* Query header */
+  .query-head {
+    padding: clamp(10px, 1.5vh, 13px) clamp(12px, 1.6vw, 16px);
+    border-bottom: 1px solid #232323;
+    background: #181818;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .q-avatar {
+    width: clamp(24px, 3.3vh, 28px);
+    height: clamp(24px, 3.3vh, 28px);
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(11px, 1.4vh, 13px);
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .q-text {
+    font-size: clamp(12px, 1.5vh, 14px);
+    color: rgba(255,255,255,0.88);
+    font-weight: 500;
+    flex: 1;
+    min-width: 0;
+    line-height: 1.25;
+    letter-spacing: -0.1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .q-text b { color: #FB3B24; font-weight: 800; }
+  .vs-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: clamp(9px, 1.1vh, 11px);
+    font-weight: 800;
+    color: #FB3B24;
+    background: rgba(251,59,36,0.08);
+    border: 1px solid rgba(251,59,36,0.3);
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    flex-shrink: 0;
+  }
+
+  /* Two-material split */
+  .compare-body {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    position: relative;
+  }
+  .material {
+    padding: clamp(10px, 1.5vh, 13px) clamp(11px, 1.5vw, 15px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(7px, 1.1vh, 10px);
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .material + .material {
+    border-left: 1px dashed #2A2A2A;
+  }
+  .vs-divider {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #161616;
+    color: rgba(255,255,255,0.4);
+    font-size: clamp(9px, 1.1vh, 11px);
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    padding: 3px 7px;
+    border: 1px solid #2A2A2A;
+    border-radius: 4px;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .mat-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .mat-swatch {
+    width: clamp(28px, 3.8vh, 34px);
+    height: clamp(28px, 3.8vh, 34px);
+    border-radius: 5px;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .mat-swatch.merino {
+    background:
+      repeating-linear-gradient(45deg, #C8B098 0px, #C8B098 2px, #B49677 2px, #B49677 4px),
+      #B49677;
+  }
+  .mat-swatch.cotton {
+    background:
+      radial-gradient(circle at 30% 30%, #fff 0%, transparent 30%),
+      radial-gradient(circle at 70% 70%, #F5F0E6 0%, transparent 40%),
+      linear-gradient(135deg, #F5F0E6 0%, #E0D9C8 100%);
+  }
+  .mat-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+    flex: 1;
+  }
+  .mat-name {
+    font-size: clamp(12px, 1.5vh, 14px);
+    font-weight: 800;
+    color: rgba(255,255,255,0.95);
+    line-height: 1.1;
+    letter-spacing: -0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .mat-spec {
+    font-size: clamp(9px, 1.1vh, 10.5px);
+    font-weight: 600;
+    color: rgba(255,255,255,0.4);
+    font-family: ui-monospace, monospace;
+  }
+
+  /* Spec rows */
+  .specs {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(5px, 0.9vh, 8px);
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .spec-row {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+  .spec-name {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: clamp(9.5px, 1.2vh, 11px);
+    font-weight: 600;
+    color: rgba(255,255,255,0.55);
+  }
+  .spec-name span.val {
+    color: rgba(255,255,255,0.85);
+    font-weight: 700;
+    font-family: ui-monospace, monospace;
+    font-size: 0.95em;
+  }
+  .spec-name span.val.winner {
+    color: #4BC882;
+  }
+  .spec-bar {
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .spec-fill {
+    height: 100%;
+    background: rgba(255,255,255,0.35);
+    width: 0;
+    transition: width 0.9s cubic-bezier(.2,.8,.2,1);
+    border-radius: 2px;
+  }
+  .spec-fill.winner {
+    background: linear-gradient(90deg, #4BC882 0%, rgba(75,200,130,0.6) 100%);
+    box-shadow: 0 0 6px rgba(75,200,130,0.35);
+  }
+
+  /* AI summary footer */
+  .ai-summary {
+    border-top: 1px solid #232323;
+    padding: clamp(9px, 1.4vh, 12px) clamp(12px, 1.6vw, 16px);
+    background: #171717;
+    display: flex;
+    align-items: flex-start;
+    gap: clamp(8px, 1.2vw, 11px);
+    flex-shrink: 0;
+  }
+  .ai-mark {
+    width: clamp(22px, 3vh, 26px);
+    height: clamp(22px, 3vh, 26px);
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(251,59,36,0.25) 0%, rgba(251,59,36,0.08) 100%);
+    border: 1px solid rgba(251,59,36,0.35);
+    color: #FB3B24;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(10px, 1.3vh, 12px);
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .ai-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .ai-label {
+    font-size: clamp(8.5px, 1vh, 10px);
+    font-weight: 700;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .ai-recommend {
+    font-size: clamp(11px, 1.4vh, 12.5px);
+    color: rgba(255,255,255,0.92);
+    line-height: 1.4;
+    font-weight: 500;
+  }
+  .ai-recommend b {
+    color: #FB3B24;
+    font-weight: 800;
+  }
+  .ai-recommend .cursor {
+    display: inline-block;
+    width: 1.5px;
+    height: 1em;
+    background: #FB3B24;
+    margin-left: 1px;
+    vertical-align: middle;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 0%,50% {opacity:1;} 51%,100% {opacity:0;} }
+
+  .card-footer {
+    font-size: clamp(11px, 1.5vh, 14px);
+    color: rgba(255,255,255,0.55);
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  /* === MOBILE === */
+  @media (max-aspect-ratio: 1/1) {
+    .card {
+      padding: clamp(11px, 1.8vh, 16px) clamp(14px, 4vw, 22px);
+      gap: clamp(7px, 1vh, 10px);
+    }
+    .card-label {
+      font-size: clamp(10px, 1.3vh, 12px);
+      letter-spacing: 1.1px;
+    }
+    .query-head {
+      padding: clamp(8px, 1.2vh, 11px) clamp(11px, 1.4vw, 13px);
+      gap: 7px;
+    }
+    .q-avatar { width: clamp(20px, 2.7vh, 23px); height: clamp(20px, 2.7vh, 23px); font-size: clamp(10px, 1.2vh, 11.5px); }
+    .q-text { font-size: clamp(11px, 1.3vh, 12.5px); }
+    .vs-pill { display: none; }
+    .compare-body {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr 1fr;
+    }
+    .material + .material {
+      border-left: none;
+      border-top: 1px dashed #2A2A2A;
+    }
+    .material {
+      padding: clamp(8px, 1.2vh, 11px) clamp(11px, 1.4vw, 13px);
+      gap: clamp(5px, 0.8vh, 7px);
+    }
+    .vs-divider {
+      transform: translate(-50%, -50%);
+    }
+    .mat-swatch { width: clamp(24px, 3.2vh, 28px); height: clamp(24px, 3.2vh, 28px); }
+    .mat-name { font-size: clamp(11px, 1.4vh, 12.5px); }
+    .mat-spec { font-size: clamp(8.5px, 1vh, 10px); }
+    .specs { gap: clamp(4px, 0.7vh, 6px); }
+    .spec-name { font-size: clamp(9px, 1.1vh, 10.5px); }
+    /* Hide 4th spec row on mobile */
+    .specs > .spec-row:nth-child(n+4) { display: none; }
+    .ai-summary {
+      padding: clamp(7px, 1vh, 10px) clamp(11px, 1.4vw, 13px);
+      gap: clamp(7px, 1vw, 9px);
+    }
+    .ai-mark { width: clamp(18px, 2.4vh, 22px); height: clamp(18px, 2.4vh, 22px); font-size: clamp(9px, 1.1vh, 11px); }
+    .ai-label { font-size: clamp(8px, 0.95vh, 9.5px); }
+    .ai-recommend { font-size: clamp(10px, 1.25vh, 11.5px); line-height: 1.35; }
+    .card-footer {
+      font-size: clamp(10px, 1.3vh, 12px);
+      line-height: 1.35;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-label">Technical Comparison · Fabric Analysis</div>
+
+  <div class="compare-card">
+    <div class="query-head">
+      <div class="q-avatar">U</div>
+      <div class="q-text">"<b>Merino</b> vs <b>Organic Cotton</b> for a newborn sleeper?"</div>
+      <div class="vs-pill">A · B</div>
+    </div>
+
+    <div class="compare-body">
+      <div class="vs-divider">VS</div>
+      <!-- Material A: Merino -->
+      <div class="material">
+        <div class="mat-head">
+          <div class="mat-swatch merino"></div>
+          <div class="mat-info">
+            <div class="mat-name">Merino Wool</div>
+            <div class="mat-spec">100% Merino · 180 gsm</div>
+          </div>
+        </div>
+        <div class="specs">
+          <div class="spec-row" data-key="warmth-a">
+            <div class="spec-name">Warmth <span class="val winner">9/10</span></div>
+            <div class="spec-bar"><div class="spec-fill winner" data-target="90"></div></div>
+          </div>
+          <div class="spec-row" data-key="breath-a">
+            <div class="spec-name">Breathability <span class="val">8/10</span></div>
+            <div class="spec-bar"><div class="spec-fill" data-target="80"></div></div>
+          </div>
+          <div class="spec-row" data-key="weight-a">
+            <div class="spec-name">Weight <span class="val">180 gsm</span></div>
+            <div class="spec-bar"><div class="spec-fill" data-target="55"></div></div>
+          </div>
+          <div class="spec-row" data-key="care-a">
+            <div class="spec-name">Care <span class="val">Hand wash</span></div>
+            <div class="spec-bar"><div class="spec-fill" data-target="60"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Material B: Organic Cotton -->
+      <div class="material">
+        <div class="mat-head">
+          <div class="mat-swatch cotton"></div>
+          <div class="mat-info">
+            <div class="mat-name">Organic Cotton</div>
+            <div class="mat-spec">100% GOTS · 220 gsm</div>
+          </div>
+        </div>
+        <div class="specs">
+          <div class="spec-row" data-key="warmth-b">
+            <div class="spec-name">Warmth <span class="val">5/10</span></div>
+            <div class="spec-bar"><div class="spec-fill" data-target="50"></div></div>
+          </div>
+          <div class="spec-row" data-key="breath-b">
+            <div class="spec-name">Breathability <span class="val winner">10/10</span></div>
+            <div class="spec-bar"><div class="spec-fill winner" data-target="100"></div></div>
+          </div>
+          <div class="spec-row" data-key="weight-b">
+            <div class="spec-name">Weight <span class="val">220 gsm</span></div>
+            <div class="spec-bar"><div class="spec-fill" data-target="70"></div></div>
+          </div>
+          <div class="spec-row" data-key="care-b">
+            <div class="spec-name">Care <span class="val winner">Machine wash</span></div>
+            <div class="spec-bar"><div class="spec-fill winner" data-target="95"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ai-summary">
+      <div class="ai-mark">✦</div>
+      <div class="ai-text">
+        <div class="ai-label">AI Recommendation</div>
+        <div class="ai-recommend" id="aiText"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-footer">No more buying hesitation — the AI explains the exact differences instantly.</div>
+</div>
+
+<script>
+var fills = document.querySelectorAll('.spec-fill');
+var aiText = document.getElementById('aiText');
+
+var AI_RECOMMENDATION = 'For an <b>October arrival</b>, choose <b>Merino</b> — superior warmth + breathability, and naturally moisture-wicking. Switch to <b>Organic Cotton</b> by spring for easier care.';
+
+function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+
+async function typeText(html) {
+  // Type text but keep <b> tags intact
+  aiText.innerHTML = '';
+  var tokens = [];
+  var i = 0;
+  while (i < html.length) {
+    if (html[i] === '<') {
+      var end = html.indexOf('>', i);
+      tokens.push(html.substring(i, end + 1));
+      i = end + 1;
+    } else {
+      tokens.push(html[i]);
+      i++;
+    }
+  }
+
+  var out = '';
+  for (var j = 0; j < tokens.length; j++) {
+    out += tokens[j];
+    aiText.innerHTML = out + '<span class="cursor"></span>';
+    // Slightly slower for visible characters
+    if (tokens[j].length === 1) await sleep(14 + Math.random() * 16);
+  }
+  // Remove cursor at end
+  aiText.innerHTML = out;
+}
+
+async function runCycle() {
+  // Reset
+  fills.forEach(function(f) { f.style.width = '0%'; });
+  aiText.innerHTML = '';
+
+  await sleep(600);
+
+  // Animate spec bars in pairs
+  for (var i = 0; i < 4; i++) {
+    fills[i].style.width = fills[i].dataset.target + '%';
+    fills[i + 4].style.width = fills[i + 4].dataset.target + '%';
+    await sleep(280);
+  }
+
+  await sleep(500);
+
+  // Type AI recommendation
+  await typeText(AI_RECOMMENDATION);
+
+  await sleep(5500);
+  runCycle();
+}
+
+window.addEventListener('load', function() { setTimeout(runCycle, 200); });
+</script>
+</body>
+</html>
