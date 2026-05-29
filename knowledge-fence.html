@@ -204,19 +204,23 @@
   /* Stack on narrow */
   @media (max-aspect-ratio: 1/1) {
     .card {
-      padding: clamp(14px, 2.5vh, 22px) clamp(14px, 4vw, 24px);
-      gap: clamp(8px, 1.4vh, 12px);
+      padding: clamp(12px, 2vh, 18px) clamp(14px, 4vw, 22px);
+      gap: clamp(6px, 1vh, 9px);
+    }
+    .card-label {
+      font-size: clamp(10px, 1.3vh, 12px);
+      letter-spacing: 1.1px;
     }
     .fence {
       grid-template-columns: 1fr;
       grid-template-rows: auto auto auto;
-      gap: clamp(8px, 1.4vh, 12px);
+      gap: clamp(6px, 1vh, 9px);
     }
     .fence-line { display: none; }
     .divider {
       flex-direction: row;
       padding: 0;
-      gap: 8px;
+      gap: 6px;
     }
     .divider::before, .divider::after {
       content: '';
@@ -225,32 +229,47 @@
       border-top: 1.5px dashed rgba(251,59,36,0.4);
     }
     .fence-label {
-      font-size: clamp(8px, 1vh, 10px);
-      padding: 4px 8px;
+      font-size: clamp(8px, 0.95vh, 9.5px);
+      padding: 3px 7px;
+      letter-spacing: 0.8px;
     }
-    /* Compact column items so all 4 still fit */
-    .col-head { gap: 1px; }
+    /* Put status pill + title on one row to save vertical space */
+    .col-head {
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
     .col-status {
-      font-size: clamp(9px, 1.1vh, 11px);
-      padding: 3px 8px;
+      font-size: clamp(9px, 1.1vh, 10.5px);
+      padding: 3px 7px;
     }
     .col-title {
-      font-size: clamp(12px, 1.6vh, 14px);
-      margin-top: 3px;
+      font-size: clamp(11px, 1.4vh, 13px);
+      margin-top: 0;
+      font-weight: 700;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: -0.1px;
     }
     .items { gap: clamp(3px, 0.5vh, 5px); }
     .item {
-      padding: clamp(5px, 0.8vh, 8px) clamp(8px, 1.1vh, 11px);
-      font-size: clamp(10px, 1.3vh, 12px);
+      padding: clamp(4px, 0.7vh, 7px) clamp(7px, 1vh, 10px);
+      font-size: clamp(10px, 1.2vh, 11.5px);
     }
     .item-icon {
-      width: clamp(14px, 1.8vh, 16px);
-      height: clamp(14px, 1.8vh, 16px);
-      font-size: clamp(8px, 1vh, 10px);
+      width: clamp(13px, 1.7vh, 15px);
+      height: clamp(13px, 1.7vh, 15px);
+      font-size: clamp(8px, 0.95vh, 9.5px);
+    }
+    /* Drop the 4th item per column on mobile — keeps content fitting */
+    .items > .item:nth-child(4) { display: none; }
+    .card-footer {
+      font-size: clamp(10px, 1.3vh, 12px);
+      line-height: 1.35;
     }
   }
   /* Extra-narrow / very short: scrollable as a safety net */
-  @media (max-aspect-ratio: 1/1) and (max-height: 560px) {
+  @media (max-aspect-ratio: 1/1) and (max-height: 480px) {
     .card { overflow-y: auto; scrollbar-width: none; }
     .card::-webkit-scrollbar { display: none; }
   }
