@@ -396,28 +396,77 @@
   /* Stack on narrow */
   @media (max-aspect-ratio: 1/1) {
     .card {
-      padding: clamp(12px, 2vh, 18px) clamp(14px, 4vw, 22px);
-      gap: clamp(8px, 1.2vh, 12px);
+      padding: clamp(11px, 1.8vh, 16px) clamp(14px, 4vw, 22px);
+      gap: clamp(7px, 1vh, 10px);
+    }
+    .card-label {
+      font-size: clamp(10px, 1.3vh, 12px);
+      letter-spacing: 1.1px;
     }
     .main {
       grid-template-columns: 1fr;
-      grid-template-rows: 1.3fr 1fr;
-      gap: clamp(8px, 1.2vh, 11px);
+      grid-template-rows: 1fr 1fr;
+      gap: clamp(7px, 1vh, 10px);
     }
     .mem-head, .sugg-head {
-      padding: clamp(8px, 1.2vh, 11px) clamp(10px, 1.4vw, 13px);
+      padding: clamp(7px, 1vh, 9px) clamp(9px, 1.3vw, 12px);
     }
+    .avatar {
+      width: clamp(26px, 3.6vh, 32px);
+      height: clamp(26px, 3.6vh, 32px);
+      font-size: clamp(11px, 1.4vh, 13px);
+    }
+    .cust-name { font-size: clamp(12px, 1.5vh, 13.5px); }
+    .cust-meta { font-size: clamp(8.5px, 1vh, 10px); }
     .mem-body, .sugg-body {
-      padding: clamp(8px, 1.2vh, 11px) clamp(10px, 1.4vw, 13px);
-      gap: clamp(6px, 1vh, 9px);
+      padding: clamp(7px, 1vh, 10px) clamp(9px, 1.3vw, 12px);
+      gap: clamp(5px, 0.8vh, 8px);
     }
-    /* Hide the third purchase on mobile to free up vertical space */
-    .purchases > .purchase:nth-child(3) { display: none; }
+    /* Compress sections */
+    .mem-label {
+      font-size: clamp(8.5px, 1vh, 10px);
+      letter-spacing: 0.5px;
+    }
+    .size-pill {
+      padding: clamp(4px, 0.6vh, 6px) clamp(4px, 0.5vw, 6px);
+      font-size: clamp(9px, 1.1vh, 11px);
+    }
+    .timeline-row {
+      font-size: clamp(9.5px, 1.2vh, 11px);
+    }
+    /* HIDE timeline section on mobile — purchase dates already imply timeline */
+    #sec2 { display: none; }
+    /* Show only the most recent purchase on mobile */
+    .purchases > .purchase:nth-child(n+2) { display: none; }
+    .purchase {
+      padding: clamp(4px, 0.6vh, 6px) clamp(6px, 0.9vh, 8px);
+    }
+    .purchase-img {
+      width: clamp(18px, 2.4vh, 22px);
+      height: clamp(18px, 2.4vh, 22px);
+    }
+    .purchase-name { font-size: clamp(9.5px, 1.2vh, 11px); }
+    .purchase-date { font-size: clamp(8px, 0.95vh, 9.5px); }
+    .purchase-price { font-size: clamp(9.5px, 1.2vh, 11px); }
+    /* Suggestion panel */
+    .sugg-title { font-size: clamp(10px, 1.3vh, 12px); }
+    .sugg-confidence { font-size: clamp(8.5px, 1vh, 10px); padding: 2px 6px; }
+    .prod-info { padding: clamp(6px, 0.9vh, 8px) clamp(8px, 1.1vw, 10px); }
+    .prod-name { font-size: clamp(11px, 1.4vh, 12.5px); }
+    .prod-size, .prod-price { font-size: clamp(9px, 1.2vh, 11px); }
+    /* Show only 2 reasoning bullets on mobile */
     .reasoning > .reason:nth-child(n+4) { display: none; }
+    .reasoning-label { font-size: clamp(8px, 0.95vh, 9.5px); }
+    .reason { font-size: clamp(9.5px, 1.15vh, 11px); }
     .card-footer {
-      font-size: clamp(10px, 1.3vh, 12px);
+      font-size: clamp(10px, 1.25vh, 12px);
       line-height: 1.35;
     }
+  }
+  /* Very tight: scrollable safety net */
+  @media (max-aspect-ratio: 1/1) and (max-height: 520px) {
+    .card { overflow-y: auto; scrollbar-width: none; }
+    .card::-webkit-scrollbar { display: none; }
   }
 </style>
 </head>
