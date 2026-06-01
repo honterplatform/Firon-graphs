@@ -244,11 +244,75 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    opacity: 0;
-    transform: translateY(14px);
-    transition: opacity 0.5s, transform 0.5s;
   }
-  .chat-window.show { opacity: 1; transform: translateY(0); }
+
+  /* Idle listening state shown until AI triggers */
+  .listening {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: clamp(12px, 2vh, 18px);
+    opacity: 1;
+    transition: opacity 0.4s ease;
+  }
+  .listening.hidden { opacity: 0; pointer-events: none; height: 0; padding: 0; }
+  .listen-ring {
+    width: clamp(38px, 5vh, 48px);
+    height: clamp(38px, 5vh, 48px);
+    border-radius: 50%;
+    background: rgba(251,59,36,0.08);
+    border: 1px solid rgba(251,59,36,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #FB3B24;
+    font-size: clamp(15px, 2vh, 18px);
+    font-weight: 800;
+    position: relative;
+  }
+  .listen-ring::before, .listen-ring::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 50%;
+    border: 1px solid rgba(251,59,36,0.35);
+    animation: listenPulse 2s ease-out infinite;
+  }
+  .listen-ring::after { animation-delay: 1s; }
+  @keyframes listenPulse {
+    0% { transform: scale(1); opacity: 0.7; }
+    100% { transform: scale(1.7); opacity: 0; }
+  }
+  .listen-text {
+    font-size: clamp(10px, 1.2vh, 11.5px);
+    color: rgba(255,255,255,0.55);
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: 0.1px;
+  }
+  .listen-text b { color: rgba(255,255,255,0.85); font-weight: 700; }
+  .listen-dots {
+    display: inline-flex;
+    gap: 3px;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+  .listen-dots span {
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: rgba(251,59,36,0.7);
+    animation: typingBlink 1.4s ease-in-out infinite;
+  }
+  .listen-dots span:nth-child(2) { animation-delay: 0.18s; }
+  .listen-dots span:nth-child(3) { animation-delay: 0.36s; }
+  @keyframes typingBlink {
+    0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+    30% { opacity: 1; transform: translateY(-1px); }
+  }
 
   .chat-header {
     display: flex;
@@ -319,7 +383,10 @@
     gap: clamp(7px, 1.1vh, 10px);
     overflow-y: auto;
     scrollbar-width: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
   }
+  .chat-body.show { opacity: 1; }
   .chat-body::-webkit-scrollbar { display: none; }
 
   .context-chip {
@@ -595,6 +662,13 @@
           </div>
           <div class="chat-x">×</div>
         </div>
+        <div class="listening" id="listening">
+          <div class="listen-ring">✦</div>
+          <div class="listen-text">
+            Listening to your catalog<span class="listen-dots"><span></span><span></span><span></span></span><br>
+            <b>Waiting for buyer intent</b>
+          </div>
+        </div>
         <div class="chat-body" id="chatBody">
           <div class="context-chip" id="ctxChip">
             <span class="cc-icon">⟁</span>
@@ -636,6 +710,8 @@
 var cursor = document.getElementById('cursor');
 var popLabel = document.getElementById('popLabel');
 var chatWindow = document.getElementById('chatWindow');
+var listening = document.getElementById('listening');
+var chatBody = document.getElementById('chatBody');
 var ctxChip = document.getElementById('ctxChip');
 var msg1 = document.getElementById('msg1');
 var suggCard = document.getElementById('suggCard');
@@ -654,10 +730,11 @@ function moveCursor(xPct, yPct) {
 }
 
 async function runCycle() {
-  // Reset
+  // Reset: chat WINDOW + LISTENING state stay visible the whole time so the right side is never empty
   cursor.classList.remove('show');
   popLabel.classList.remove('show');
-  chatWindow.classList.remove('show');
+  listening.classList.remove('hidden');
+  chatBody.classList.remove('show');
   ctxChip.classList.remove('show');
   msg1.classList.remove('show');
   suggCard.classList.remove('show');
@@ -665,46 +742,47 @@ async function runCycle() {
   ctaBtn.classList.remove('glow');
   qr.classList.remove('show');
 
-  await sleep(400);
+  await sleep(300);
 
-  // Phase 1: User browsing — cursor appears and roams over the product image
+  // Phase 1: User browsing — cursor roams quickly (~1.5s total)
   moveCursor(15, 30);
   cursor.classList.add('show');
-  await sleep(700);
-  moveCursor(30, 55);
-  await sleep(900);
+  await sleep(500);
+  moveCursor(30, 60);
+  await sleep(600);
   moveCursor(22, 70);
-  await sleep(900);
+  await sleep(500);
 
-  // Phase 2: AI triggers based on context
+  // Phase 2: AI triggers — listening state hides, chat body content begins
   popLabel.classList.add('show');
-  await sleep(250);
-  chatWindow.classList.add('show');
-  await sleep(450);
+  listening.classList.add('hidden');
+  await sleep(280);
+  chatBody.classList.add('show');
+  await sleep(200);
 
   // Context chip shows what AI detected
   ctxChip.classList.add('show');
-  await sleep(700);
+  await sleep(600);
 
   // AI message
   msg1.classList.add('show');
-  await sleep(1100);
+  await sleep(1000);
 
   // Suggested product slides in
   suggCard.classList.add('show');
-  await sleep(600);
+  await sleep(550);
 
   // CTA appears + starts pulsing glow
   ctaRow.classList.add('show');
   await sleep(150);
   ctaBtn.classList.add('glow');
-  await sleep(500);
+  await sleep(400);
 
   // Quick replies appear
   qr.classList.add('show');
 
   // Hold while glow pulses, then loop
-  await sleep(5500);
+  await sleep(5000);
   runCycle();
 }
 
