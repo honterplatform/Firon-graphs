@@ -17,549 +17,694 @@
     width: 100%;
     height: 100%;
     background: #0F0F0F;
-    padding: clamp(16px, 3vh, 28px) clamp(16px, 3vw, 32px);
+    padding: clamp(12px, 2vh, 18px);
     display: flex;
     flex-direction: column;
-    gap: clamp(10px, 1.6vh, 16px);
+    gap: clamp(8px, 1.4vh, 12px);
+    overflow: hidden;
+  }
+
+  /* --- Split layout: product page | chat overlay --- */
+  .split {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: clamp(8px, 1.2vw, 12px);
+    overflow: hidden;
+  }
+
+  /* === LEFT: Product page mockup === */
+  .page {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    position: relative;
+  }
+  .page-nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: clamp(8px, 1.2vh, 11px) clamp(11px, 1.4vw, 14px);
+    border-bottom: 1px solid #1E1E1E;
+    font-size: clamp(9px, 1.1vh, 11px);
+    color: #666;
+    font-weight: 500;
+    flex-shrink: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .page-logo {
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 1.5px;
+    margin-right: 6px;
+  }
+  .page-nav-sep { color: #333; }
+  .page-nav-active { color: #ccc; }
+
+  .page-content {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: clamp(8px, 1.2vw, 12px);
+    padding: clamp(10px, 1.4vh, 14px);
+    overflow: hidden;
+  }
+  .hero-img {
+    border-radius: 6px;
+    background:
+      linear-gradient(135deg, #1F2630 0%, #0E1218 100%);
+    background-image:
+      linear-gradient(rgba(0,0,0,0.15), rgba(0,0,0,0.35)),
+      url('https://images.unsplash.com/photo-1551028719-00167b16eac5?w=800&q=80&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+    min-width: 0;
+    min-height: 0;
     position: relative;
     overflow: hidden;
   }
+  .img-tag {
+    position: absolute;
+    top: clamp(7px, 1.1vh, 9px);
+    left: clamp(7px, 1.1vh, 9px);
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    font-size: clamp(8.5px, 1vh, 10px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 7px;
+    border-radius: 3px;
+  }
 
-  .card-label {
-    font-size: clamp(11px, 1.5vh, 14px);
+  .prod-meta {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(5px, 0.8vh, 7px);
+    min-width: 0;
+    overflow: hidden;
+  }
+  .prod-cat {
+    font-size: clamp(8.5px, 1vh, 10px);
     font-weight: 700;
     color: #FB3B24;
     text-transform: uppercase;
-    letter-spacing: 1.4px;
-    flex-shrink: 0;
+    letter-spacing: 0.8px;
+  }
+  .prod-title {
+    font-size: clamp(16px, 2.6vh, 24px);
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+    line-height: 1.05;
+  }
+  .prod-price {
+    font-size: clamp(13px, 1.8vh, 16px);
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    font-family: ui-monospace, monospace;
+    margin-top: 2px;
+  }
+  .prod-divider {
+    height: 1px;
+    background: #1E1E1E;
+    margin: 4px 0;
+  }
+  .size-label {
+    font-size: clamp(8.5px, 1vh, 10px);
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 3px;
+  }
+  .sizes {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .size-chip {
+    width: clamp(22px, 3vh, 26px);
+    height: clamp(22px, 3vh, 26px);
+    border-radius: 4px;
+    background: #0D0D0D;
+    border: 1px solid #2A2A2A;
+    color: rgba(255,255,255,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(10px, 1.3vh, 11.5px);
+    font-weight: 700;
+    font-family: ui-monospace, monospace;
+  }
+  .size-chip.selected {
+    background: rgba(255,255,255,0.1);
+    border-color: #fff;
+    color: #fff;
+  }
+  .page-add-btn {
+    margin-top: auto;
+    background: #1A1A1A;
+    border: 1px solid #2A2A2A;
+    color: rgba(255,255,255,0.85);
+    padding: clamp(7px, 1.1vh, 10px) clamp(10px, 1.4vw, 13px);
+    border-radius: 6px;
+    font-size: clamp(10px, 1.2vh, 11.5px);
+    font-weight: 700;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
-  /* --- Chat window --- */
+  /* Browsing cursor */
+  .cursor-indicator {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.4s, transform 0.6s cubic-bezier(.5,.1,.3,1);
+  }
+  .cursor-indicator.show { opacity: 1; }
+  .cursor-indicator svg {
+    width: 100%; height: 100%;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7));
+  }
+
+  /* === RIGHT: Chat popup === */
+  .chat-popup {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    position: relative;
+    justify-content: flex-end;
+  }
+  .pop-label {
+    font-size: clamp(8.5px, 1vh, 10.5px);
+    font-weight: 700;
+    color: #FB3B24;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: clamp(5px, 0.8vh, 7px);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.4s, transform 0.4s;
+  }
+  .pop-label.show { opacity: 1; transform: translateY(0); }
+  .pop-pulse {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #FB3B24;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% {opacity:1;} 50% {opacity:0.4;} }
+
   .chat-window {
     flex: 1;
     min-height: 0;
-    background: #161616;
-    border: 1px solid #232323;
-    border-radius: clamp(12px, 1.8vh, 18px);
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    box-shadow:
-      0 24px 60px -20px rgba(0,0,0,0.55),
-      0 0 0 1px rgba(255,255,255,0.02) inset;
-    max-width: 720px;
-    width: 100%;
-    margin: 0 auto;
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.5s, transform 0.5s;
   }
+  .chat-window.show { opacity: 1; transform: translateY(0); }
 
   .chat-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    padding: clamp(11px, 1.6vh, 15px) clamp(14px, 2vw, 18px);
-    border-bottom: 1px solid #232323;
+    gap: 10px;
+    padding: clamp(8px, 1.2vh, 11px) clamp(11px, 1.4vw, 13px);
+    border-bottom: 1px solid #1E1E1E;
     flex-shrink: 0;
-    background: #171717;
   }
   .brand {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     min-width: 0;
   }
   .brand-mark {
-    width: clamp(30px, 4vh, 38px);
-    height: clamp(30px, 4vh, 38px);
-    border-radius: 50%;
-    background: linear-gradient(135deg, #FB3B24 0%, #C72D19 100%);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: clamp(13px, 1.8vh, 16px);
-    font-weight: 800;
-    flex-shrink: 0;
-    position: relative;
-    box-shadow: 0 2px 8px rgba(251,59,36,0.3);
-  }
-  .brand-mark::after {
-    content: '';
-    position: absolute;
-    bottom: 1px; right: 1px;
-    width: 9px; height: 9px;
-    border-radius: 50%;
-    background: #4BC882;
-    border: 2px solid #171717;
-  }
-  .brand-info {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    min-width: 0;
-  }
-  .brand-name {
-    font-size: clamp(13px, 1.7vh, 15px);
-    font-weight: 700;
-    color: rgba(255,255,255,0.95);
-    letter-spacing: -0.2px;
-    line-height: 1.1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .brand-status {
-    font-size: clamp(10px, 1.2vh, 11px);
-    color: #4BC882;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .brand-status::before {
-    content: '';
-    width: 5px; height: 5px;
-    border-radius: 50%;
-    background: #4BC882;
-    box-shadow: 0 0 5px rgba(75,200,130,0.7);
-    animation: pulse 1.6s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
-  .chat-actions {
-    color: rgba(255,255,255,0.4);
-    font-size: clamp(14px, 2vh, 18px);
-    letter-spacing: 2px;
-    cursor: default;
-    flex-shrink: 0;
-  }
-
-  /* --- Chat body --- */
-  .chat-body {
-    flex: 1;
-    min-height: 0;
-    padding: clamp(12px, 1.8vh, 18px) clamp(14px, 2vw, 20px);
-    display: flex;
-    flex-direction: column;
-    gap: clamp(8px, 1.2vh, 12px);
-    overflow-y: auto;
-    scroll-behavior: smooth;
-    background: #161616;
-    background-image:
-      radial-gradient(circle at 20% 0%, rgba(251,59,36,0.04), transparent 50%);
-  }
-  /* Hide scrollbar for clean chat aesthetic */
-  .chat-body { scrollbar-width: none; -ms-overflow-style: none; }
-  .chat-body::-webkit-scrollbar { display: none; }
-
-  .memory-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    align-self: flex-start;
-    padding: clamp(5px, 0.8vh, 8px) clamp(9px, 1.2vw, 12px);
-    border-radius: 16px;
-    background: rgba(251,59,36,0.07);
-    border: 1px solid rgba(251,59,36,0.22);
-    font-size: clamp(10px, 1.2vh, 12px);
-    color: rgba(255,255,255,0.7);
-    opacity: 0;
-    transform: translateY(-4px);
-    transition: opacity 0.4s, transform 0.4s;
-    flex-shrink: 0;
-  }
-  .memory-chip.show { opacity: 1; transform: translateY(0); }
-  .mem-mark {
-    color: #FB3B24;
-    font-weight: 800;
-    font-size: 1.1em;
-  }
-  .memory-chip b {
-    color: rgba(255,255,255,0.95);
-    font-weight: 700;
-    font-family: ui-monospace, monospace;
-    font-size: 0.92em;
-  }
-
-  .msg {
-    display: flex;
-    gap: 9px;
-    align-items: flex-end;
-    opacity: 0;
-    transform: translateY(6px);
-    transition: opacity 0.35s, transform 0.35s;
-    max-width: 88%;
-  }
-  .msg.show { opacity: 1; transform: translateY(0); }
-  .msg.ai { align-self: flex-start; }
-
-  .avatar {
-    width: clamp(26px, 3.4vh, 32px);
-    height: clamp(26px, 3.4vh, 32px);
-    border-radius: 50%;
-    background: linear-gradient(135deg, rgba(251,59,36,0.25) 0%, rgba(251,59,36,0.08) 100%);
-    color: #FB3B24;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: clamp(11px, 1.5vh, 14px);
-    font-weight: 800;
-    flex-shrink: 0;
-    border: 1px solid rgba(251,59,36,0.3);
-  }
-
-  .bubble {
-    background: #1F1F1F;
-    border: 1px solid #2A2A2A;
-    border-radius: 4px clamp(14px, 1.6vh, 16px) clamp(14px, 1.6vh, 16px) clamp(14px, 1.6vh, 16px);
-    padding: clamp(9px, 1.2vh, 12px) clamp(12px, 1.5vw, 15px);
-    font-size: clamp(13px, 1.7vh, 15px);
-    color: rgba(255,255,255,0.92);
-    line-height: 1.5;
-    font-weight: 400;
-    letter-spacing: -0.1px;
-  }
-  .bubble b {
-    color: #FB3B24;
-    font-weight: 700;
-  }
-
-  .typing-bubble {
-    background: #1F1F1F;
-    border: 1px solid #2A2A2A;
-    border-radius: 4px 14px 14px 14px;
-    padding: 10px 14px;
-    display: inline-flex;
-    gap: 4px;
-  }
-  .typing-bubble span {
-    width: 5px; height: 5px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.45);
-    animation: typingBlink 1.2s ease-in-out infinite;
-  }
-  .typing-bubble span:nth-child(2) { animation-delay: 0.15s; }
-  .typing-bubble span:nth-child(3) { animation-delay: 0.3s; }
-  @keyframes typingBlink {
-    0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
-    30% { opacity: 1; transform: translateY(-2px); }
-  }
-
-  /* Product carousel inside chat */
-  .products-msg {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    align-items: flex-start;
-    align-self: flex-start;
-    max-width: 92%;
-    width: 100%;
-    margin-left: clamp(35px, 4.4vh, 41px);
-  }
-  .products {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: clamp(6px, 1vw, 10px);
-    width: 100%;
-  }
-  .product {
-    background: #1F1F1F;
-    border: 1px solid #2A2A2A;
-    border-radius: 10px;
-    overflow: hidden;
-    opacity: 0;
-    transform: translateY(6px);
-    transition: opacity 0.4s, transform 0.4s, border-color 0.3s;
-    cursor: pointer;
-    min-width: 0;
-  }
-  .product.show { opacity: 1; transform: translateY(0); }
-  .product:hover { border-color: rgba(251,59,36,0.4); }
-  .prod-img {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    position: relative;
-    overflow: hidden;
-  }
-  .prod-img.botanical {
-    background:
-      radial-gradient(circle at 30% 30%, #5C8E5C 0%, transparent 30%),
-      radial-gradient(circle at 70% 60%, #C0E0A6 0%, transparent 25%),
-      radial-gradient(circle at 50% 80%, #4A7849 0%, transparent 35%),
-      linear-gradient(135deg, #1E2A1C 0%, #2A3826 100%);
-  }
-  .prod-img.stripe {
-    background:
-      repeating-linear-gradient(180deg, #E8C99B 0px, #E8C99B 5px, #D4A876 5px, #D4A876 10px),
-      #B8915F;
-  }
-  .prod-img.constellation {
-    background:
-      radial-gradient(circle at 25% 35%, #fff 0%, transparent 1.2%),
-      radial-gradient(circle at 55% 20%, #fff 0%, transparent 0.8%),
-      radial-gradient(circle at 75% 45%, #fff 0%, transparent 1%),
-      radial-gradient(circle at 40% 65%, #fff 0%, transparent 0.9%),
-      radial-gradient(circle at 65% 80%, #fff 0%, transparent 1.1%),
-      radial-gradient(circle at 20% 80%, #fff 0%, transparent 0.7%),
-      linear-gradient(180deg, #1B2547 0%, #2C3A6E 100%);
-  }
-  .prod-info {
-    padding: clamp(6px, 1vh, 9px) clamp(7px, 1vw, 10px);
-  }
-  .prod-name {
-    font-size: clamp(10px, 1.3vh, 12px);
-    font-weight: 700;
-    color: rgba(255,255,255,0.92);
-    line-height: 1.25;
-    margin-bottom: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .prod-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 4px;
-    font-size: clamp(9px, 1.1vh, 10.5px);
-  }
-  .prod-size {
-    color: rgba(255,255,255,0.45);
-    font-weight: 600;
-    font-family: ui-monospace, monospace;
-  }
-  .prod-price {
-    color: #FB3B24;
-    font-weight: 700;
-    font-family: ui-monospace, monospace;
-  }
-
-  /* Quick replies */
-  .quick-replies {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-top: 2px;
-    align-self: flex-start;
-    margin-left: clamp(35px, 4.4vh, 41px);
-    opacity: 0;
-    transform: translateY(6px);
-    transition: opacity 0.4s, transform 0.4s;
-  }
-  .quick-replies.show { opacity: 1; transform: translateY(0); }
-  .qr {
-    font-size: clamp(11px, 1.4vh, 13px);
-    font-weight: 600;
-    color: rgba(255,255,255,0.85);
-    background: #1F1F1F;
-    border: 1px solid #2A2A2A;
-    border-radius: 14px;
-    padding: 5px 11px;
-    transition: background 0.2s, border-color 0.2s;
-  }
-  .qr:hover { background: #262626; border-color: #353535; }
-  .qr.primary {
-    background: rgba(251,59,36,0.12);
-    border-color: rgba(251,59,36,0.45);
-    color: #FB3B24;
-  }
-
-  /* Input bar */
-  .chat-input {
-    border-top: 1px solid #232323;
-    padding: clamp(10px, 1.4vh, 13px) clamp(14px, 2vw, 18px);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
-    background: #171717;
-  }
-  .input-pill {
-    flex: 1;
-    background: #1F1F1F;
-    border: 1px solid #2A2A2A;
-    border-radius: 20px;
-    padding: clamp(8px, 1.2vh, 11px) clamp(13px, 1.5vw, 16px);
-    font-size: clamp(12px, 1.5vh, 13px);
-    color: rgba(255,255,255,0.4);
-    min-width: 0;
-  }
-  .send-btn {
-    width: clamp(34px, 4.5vh, 40px);
-    height: clamp(34px, 4.5vh, 40px);
+    width: clamp(26px, 3.6vh, 30px);
+    height: clamp(26px, 3.6vh, 30px);
     border-radius: 50%;
     background: #FB3B24;
     color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: clamp(14px, 1.8vh, 16px);
-    font-weight: 700;
+    font-size: clamp(12px, 1.5vh, 14px);
+    font-weight: 800;
     flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(251,59,36,0.3);
+    position: relative;
+  }
+  .brand-mark::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #FB3B24;
+    border: 2px solid #141414;
+  }
+  .brand-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .brand-name {
+    font-size: clamp(12px, 1.5vh, 13px);
+    font-weight: 700;
+    color: rgba(255,255,255,0.95);
+    line-height: 1.1;
+    letter-spacing: -0.1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .brand-status {
+    font-size: clamp(8.5px, 1vh, 10px);
+    color: rgba(255,255,255,0.45);
+    font-weight: 500;
+  }
+  .chat-x {
+    color: rgba(255,255,255,0.4);
+    font-size: clamp(14px, 1.8vh, 16px);
+    flex-shrink: 0;
   }
 
-  .card-footer {
-    font-size: clamp(11px, 1.5vh, 14px);
-    color: rgba(255,255,255,0.55);
+  .chat-body {
+    flex: 1;
+    min-height: 0;
+    padding: clamp(9px, 1.3vh, 12px) clamp(11px, 1.4vw, 13px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(7px, 1.1vh, 10px);
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .chat-body::-webkit-scrollbar { display: none; }
+
+  .context-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-start;
+    background: rgba(251,59,36,0.08);
+    border: 1px solid rgba(251,59,36,0.25);
+    color: rgba(255,255,255,0.8);
+    font-size: clamp(9.5px, 1.15vh, 11px);
     font-weight: 500;
+    padding: 4px 9px;
+    border-radius: 14px;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity 0.35s, transform 0.35s;
     flex-shrink: 0;
-    text-align: center;
+  }
+  .context-chip.show { opacity: 1; transform: translateY(0); }
+  .cc-icon { color: #FB3B24; font-weight: 800; }
+  .cc-bold { color: #fff; font-weight: 700; }
+
+  .msg {
+    display: flex;
+    gap: 7px;
+    align-items: flex-end;
+    max-width: 95%;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.35s, transform 0.35s;
+  }
+  .msg.show { opacity: 1; transform: translateY(0); }
+  .avatar {
+    width: clamp(22px, 3vh, 26px);
+    height: clamp(22px, 3vh, 26px);
+    border-radius: 50%;
+    background: rgba(251,59,36,0.15);
+    border: 1px solid rgba(251,59,36,0.35);
+    color: #FB3B24;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(11px, 1.3vh, 13px);
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .bubble {
+    background: #1A1A1A;
+    border: 1px solid #262626;
+    border-radius: 4px 12px 12px 12px;
+    padding: clamp(7px, 1vh, 9px) clamp(10px, 1.3vw, 12px);
+    font-size: clamp(11px, 1.35vh, 12.5px);
+    color: rgba(255,255,255,0.92);
+    line-height: 1.45;
+    letter-spacing: -0.1px;
+  }
+  .bubble b { color: #FB3B24; font-weight: 700; }
+
+  /* Suggested product card inside the chat */
+  .suggest-card {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-left: clamp(27px, 3.6vh, 32px);
+    background: #0D0D0D;
+    border: 1px solid #1F1F1F;
+    border-radius: 8px;
+    padding: clamp(5px, 0.8vh, 7px);
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.4s, transform 0.4s;
+  }
+  .suggest-card.show { opacity: 1; transform: translateX(0); }
+  .suggest-img {
+    width: clamp(44px, 6vh, 56px);
+    height: clamp(44px, 6vh, 56px);
+    border-radius: 5px;
+    background:
+      linear-gradient(135deg, #2A2520 0%, #1A1612 100%);
+    background-image: url('https://images.unsplash.com/photo-1577578047395-77ea0ce21048?w=400&q=80&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+    flex-shrink: 0;
+  }
+  .suggest-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .suggest-name {
+    font-size: clamp(11px, 1.35vh, 12.5px);
+    font-weight: 700;
+    color: rgba(255,255,255,0.95);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .suggest-meta {
+    font-size: clamp(9px, 1.1vh, 10.5px);
+    color: rgba(255,255,255,0.45);
+    font-family: ui-monospace, monospace;
+  }
+  .suggest-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-top: 3px;
+    font-size: clamp(8px, 0.95vh, 9.5px);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #FB3B24;
+  }
+  .suggest-price {
+    font-size: clamp(12px, 1.4vh, 13.5px);
+    font-weight: 800;
+    color: rgba(255,255,255,0.95);
+    font-family: ui-monospace, monospace;
+    flex-shrink: 0;
+  }
+
+  /* GLOWING Add to bag — the hero CTA */
+  .cta-row {
+    margin-left: clamp(27px, 3.6vh, 32px);
+    margin-right: clamp(0px, 0.5vw, 4px);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.4s, transform 0.4s;
+  }
+  .cta-row.show { opacity: 1; transform: translateY(0); }
+  .cta-btn {
+    width: 100%;
+    background: linear-gradient(180deg, #FB3B24 0%, #DC2D17 100%);
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    padding: clamp(8px, 1.2vh, 11px) clamp(11px, 1.4vw, 14px);
+    font-size: clamp(11px, 1.35vh, 12.5px);
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    position: relative;
+  }
+  .cta-btn.glow {
+    animation: ctaGlow 2s ease-in-out infinite;
+  }
+  @keyframes ctaGlow {
+    0%, 100% {
+      box-shadow:
+        0 0 0 0 rgba(251,59,36,0),
+        0 4px 14px rgba(251,59,36,0.3);
+    }
+    50% {
+      box-shadow:
+        0 0 0 6px rgba(251,59,36,0.1),
+        0 0 24px 4px rgba(251,59,36,0.45),
+        0 4px 14px rgba(251,59,36,0.3);
+    }
+  }
+  .cta-save {
+    font-size: 0.85em;
+    font-weight: 600;
+    opacity: 0.85;
+    margin-left: 4px;
+  }
+  .cta-arrow {
+    font-size: 1.1em;
+  }
+
+  .quick-replies {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-left: clamp(27px, 3.6vh, 32px);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .quick-replies.show { opacity: 1; }
+  .qr {
+    background: transparent;
+    border: 1px solid #2A2A2A;
+    color: rgba(255,255,255,0.7);
+    font-size: clamp(10px, 1.2vh, 11px);
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 14px;
+  }
+
+  /* === MOBILE === */
+  @media (max-aspect-ratio: 1/1) {
+    .card { padding: clamp(10px, 1.6vh, 14px); gap: clamp(7px, 1vh, 10px); }
+    .split {
+      grid-template-columns: 1fr;
+      grid-template-rows: 0.85fr 1.1fr;
+      gap: clamp(7px, 1vh, 10px);
+    }
+    .page-content { grid-template-columns: 0.8fr 1fr; gap: clamp(7px, 1vw, 10px); padding: clamp(8px, 1.2vh, 11px); }
+    .prod-title { font-size: clamp(13px, 2vh, 18px); }
+    .prod-price { font-size: clamp(11px, 1.5vh, 13px); }
+    .page-add-btn { padding: clamp(6px, 0.9vh, 8px) clamp(8px, 1.2vw, 11px); font-size: clamp(9.5px, 1.15vh, 10.5px); }
+    .size-chip { width: clamp(20px, 2.7vh, 23px); height: clamp(20px, 2.7vh, 23px); font-size: clamp(9px, 1.15vh, 10.5px); }
+    .chat-header { padding: clamp(7px, 1vh, 9px) clamp(10px, 1.3vw, 12px); }
+    .chat-body { padding: clamp(8px, 1.1vh, 10px) clamp(10px, 1.3vw, 12px); gap: clamp(6px, 0.9vh, 8px); }
+    .quick-replies { display: none; }
+    .pop-label { font-size: clamp(8px, 0.95vh, 10px); }
   }
 </style>
 </head>
 <body>
 <div class="card">
-  <div class="card-label">Custom AI · Proactive Concierge</div>
-
-  <div class="chat-window">
-    <div class="chat-header">
-      <div class="brand">
-        <div class="brand-mark">P</div>
-        <div class="brand-info">
-          <div class="brand-name">Petit Atelier</div>
-          <div class="brand-status">AI Concierge · Online</div>
+  <div class="split">
+    <!-- LEFT: Product page being browsed -->
+    <div class="page">
+      <div class="page-nav">
+        <span class="page-logo">STAGDALE</span>
+        <span class="page-nav-sep">›</span>
+        <span>Outerwear</span>
+        <span class="page-nav-sep">›</span>
+        <span class="page-nav-active">Alpine Parka</span>
+      </div>
+      <div class="page-content">
+        <div class="hero-img">
+          <div class="img-tag">−25°C rated</div>
+        </div>
+        <div class="prod-meta">
+          <div class="prod-cat">Outerwear</div>
+          <div class="prod-title">Alpine Parka</div>
+          <div class="prod-price">£495</div>
+          <div class="prod-divider"></div>
+          <div>
+            <div class="size-label">Size</div>
+            <div class="sizes">
+              <div class="size-chip">S</div>
+              <div class="size-chip selected">M</div>
+              <div class="size-chip">L</div>
+              <div class="size-chip">XL</div>
+            </div>
+          </div>
+          <div class="page-add-btn">Add to bag</div>
         </div>
       </div>
-      <div class="chat-actions">⋯</div>
-    </div>
-
-    <div class="chat-body" id="chatBody">
-      <div class="memory-chip" id="memChip">
-        <span class="mem-mark">⟁</span>
-        <span>Returning · <b>last visit 6 weeks ago</b> · daughter sized 0–3M</span>
+      <div class="cursor-indicator" id="cursor">
+        <svg viewBox="0 0 16 18" xmlns="http://www.w3.org/2000/svg">
+          <path d="M1 1 L1 13 L4.5 10 L7 15 L9 14 L6.5 9 L11 9 Z"
+                fill="#fff" stroke="#000" stroke-width="0.8" stroke-linejoin="round"/>
+        </svg>
       </div>
-      <!-- Messages get injected here -->
     </div>
 
-    <div class="chat-input">
-      <div class="input-pill">Reply to Petit Atelier…</div>
-      <div class="send-btn">↑</div>
+    <!-- RIGHT: AI chat popping up -->
+    <div class="chat-popup">
+      <div class="pop-label" id="popLabel">
+        <span class="pop-pulse"></span>
+        Concierge · triggered
+      </div>
+      <div class="chat-window" id="chatWindow">
+        <div class="chat-header">
+          <div class="brand">
+            <div class="brand-mark">S</div>
+            <div class="brand-info">
+              <div class="brand-name">Stagdale Concierge</div>
+              <div class="brand-status">Online · context-aware</div>
+            </div>
+          </div>
+          <div class="chat-x">×</div>
+        </div>
+        <div class="chat-body" id="chatBody">
+          <div class="context-chip" id="ctxChip">
+            <span class="cc-icon">⟁</span>
+            Detected: viewing <span class="cc-bold">Alpine Parka</span> · <span class="cc-bold">3 min</span>
+          </div>
+          <div class="msg ai" id="msg1">
+            <div class="avatar">✦</div>
+            <div class="bubble">
+              I see you're looking at the <b>Alpine Parka</b>. It pairs perfectly with our merino-lined thermal gloves — most customers grab both for sub-zero trips.
+            </div>
+          </div>
+          <div class="suggest-card" id="suggCard">
+            <div class="suggest-img"></div>
+            <div class="suggest-info">
+              <div class="suggest-name">Merino Thermal Gloves</div>
+              <div class="suggest-meta">Touchscreen · −20°C</div>
+              <div class="suggest-tag">Bundle save £30</div>
+            </div>
+            <div class="suggest-price">£68</div>
+          </div>
+          <div class="cta-row" id="ctaRow">
+            <button class="cta-btn" id="ctaBtn">
+              <span>Add bundle to bag</span>
+              <span class="cta-save">· save £30</span>
+              <span class="cta-arrow">→</span>
+            </button>
+          </div>
+          <div class="quick-replies" id="qr">
+            <button class="qr">Show more pairings</button>
+            <button class="qr">Save for later</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-
-  <div class="card-footer">On-site AI built on your catalog and customer memory.</div>
 </div>
 
 <script>
-var chatBody = document.getElementById('chatBody');
-var memChip = document.getElementById('memChip');
+var cursor = document.getElementById('cursor');
+var popLabel = document.getElementById('popLabel');
+var chatWindow = document.getElementById('chatWindow');
+var ctxChip = document.getElementById('ctxChip');
+var msg1 = document.getElementById('msg1');
+var suggCard = document.getElementById('suggCard');
+var ctaRow = document.getElementById('ctaRow');
+var ctaBtn = document.getElementById('ctaBtn');
+var qr = document.getElementById('qr');
+var pageEl = document.querySelector('.page');
 
 function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
 
-function scrollChatToBottom() {
-  // Defer to next frame so newly added DOM has measurable height
-  requestAnimationFrame(function() {
-    requestAnimationFrame(function() {
-      chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: 'smooth' });
-    });
-  });
-}
-
-function addMessage(html) {
-  var m = document.createElement('div');
-  m.className = 'msg ai';
-  m.innerHTML = '<div class="avatar">✦</div><div class="bubble">' + html + '</div>';
-  chatBody.appendChild(m);
-  requestAnimationFrame(function() {
-    requestAnimationFrame(function() { m.classList.add('show'); });
-  });
-  scrollChatToBottom();
-  return m;
-}
-
-function addTyping() {
-  var t = document.createElement('div');
-  t.className = 'msg ai';
-  t.innerHTML = '<div class="avatar">✦</div><div class="typing-bubble"><span></span><span></span><span></span></div>';
-  chatBody.appendChild(t);
-  requestAnimationFrame(function() {
-    requestAnimationFrame(function() { t.classList.add('show'); });
-  });
-  scrollChatToBottom();
-  return t;
-}
-
-function addProductsRow() {
-  var wrap = document.createElement('div');
-  wrap.className = 'products-msg';
-  wrap.innerHTML =
-    '<div class="products">' +
-      '<div class="product"><div class="prod-img botanical"></div>' +
-        '<div class="prod-info"><div class="prod-name">Botanical Bloom Romper</div>' +
-        '<div class="prod-meta"><span class="prod-size">3-6M</span><span class="prod-price">£42</span></div></div></div>' +
-      '<div class="product"><div class="prod-img stripe"></div>' +
-        '<div class="prod-info"><div class="prod-name">Sand Stripe Onesie</div>' +
-        '<div class="prod-meta"><span class="prod-size">3-6M</span><span class="prod-price">£28</span></div></div></div>' +
-      '<div class="product"><div class="prod-img constellation"></div>' +
-        '<div class="prod-info"><div class="prod-name">Constellation Sleeper</div>' +
-        '<div class="prod-meta"><span class="prod-size">3-6M</span><span class="prod-price">£38</span></div></div></div>' +
-    '</div>';
-  chatBody.appendChild(wrap);
-  scrollChatToBottom();
-  return wrap;
-}
-
-function addQuickReplies() {
-  var qr = document.createElement('div');
-  qr.className = 'quick-replies';
-  qr.innerHTML =
-    '<button class="qr primary">Add favourites to bag</button>' +
-    '<button class="qr">Show more prints</button>' +
-    '<button class="qr">Save for later</button>';
-  chatBody.appendChild(qr);
-  scrollChatToBottom();
-  return qr;
+function moveCursor(xPct, yPct) {
+  var rect = pageEl.getBoundingClientRect();
+  var x = (rect.width * xPct) / 100;
+  var y = (rect.height * yPct) / 100;
+  cursor.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
 }
 
 async function runCycle() {
   // Reset
-  chatBody.querySelectorAll('.msg, .products-msg, .quick-replies').forEach(function(el) {
-    el.remove();
-  });
-  memChip.classList.remove('show');
+  cursor.classList.remove('show');
+  popLabel.classList.remove('show');
+  chatWindow.classList.remove('show');
+  ctxChip.classList.remove('show');
+  msg1.classList.remove('show');
+  suggCard.classList.remove('show');
+  ctaRow.classList.remove('show');
+  ctaBtn.classList.remove('glow');
+  qr.classList.remove('show');
 
-  await sleep(500);
+  await sleep(400);
 
-  // Memory chip
-  memChip.classList.add('show');
+  // Phase 1: User browsing — cursor appears and roams over the product image
+  moveCursor(15, 30);
+  cursor.classList.add('show');
   await sleep(700);
-
-  // Typing → first message
-  var t1 = addTyping();
-  await sleep(1100);
-  t1.remove();
-  addMessage('Welcome back! Based on your last visit, it might be time to <b>size up to 3–6 Months</b>.');
-  await sleep(1200);
-
-  // Typing → second message
-  var t2 = addTyping();
+  moveCursor(30, 55);
   await sleep(900);
-  t2.remove();
-  addMessage('Here are our newest prints in that size:');
+  moveCursor(22, 70);
+  await sleep(900);
+
+  // Phase 2: AI triggers based on context
+  popLabel.classList.add('show');
+  await sleep(250);
+  chatWindow.classList.add('show');
   await sleep(450);
 
-  // Product cards
-  var prodWrap = addProductsRow();
-  var cards = prodWrap.querySelectorAll('.product');
-  for (var i = 0; i < cards.length; i++) {
-    (function(idx) {
-      setTimeout(function() { cards[idx].classList.add('show'); }, idx * 180);
-    })(i);
-  }
-  await sleep(180 * cards.length + 200);
+  // Context chip shows what AI detected
+  ctxChip.classList.add('show');
+  await sleep(700);
 
-  // Quick replies
-  var qr = addQuickReplies();
-  requestAnimationFrame(function() {
-    requestAnimationFrame(function() { qr.classList.add('show'); });
-  });
+  // AI message
+  msg1.classList.add('show');
+  await sleep(1100);
 
-  // Hold
+  // Suggested product slides in
+  suggCard.classList.add('show');
+  await sleep(600);
+
+  // CTA appears + starts pulsing glow
+  ctaRow.classList.add('show');
+  await sleep(150);
+  ctaBtn.classList.add('glow');
+  await sleep(500);
+
+  // Quick replies appear
+  qr.classList.add('show');
+
+  // Hold while glow pulses, then loop
   await sleep(5500);
-
   runCycle();
 }
 
