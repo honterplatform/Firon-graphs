@@ -82,16 +82,27 @@
     flex: 1;
     min-height: 0;
     border-radius: 6px;
-    background:
-      linear-gradient(135deg, #1F2630 0%, #0E1218 100%);
+    background: linear-gradient(135deg, #1F2630 0%, #0E1218 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  /* Image as a pseudo-element extended beyond the container so it crops
+     symmetrically at top and bottom without distortion. */
+  .hero-img::before {
+    content: '';
+    position: absolute;
+    top: -14%;
+    bottom: -14%;
+    left: 0;
+    right: 0;
     background-image:
       linear-gradient(rgba(0,0,0,0.15), rgba(0,0,0,0.35)),
       url('https://images.unsplash.com/photo-1624548140150-108c3287f551?fm=jpg&q=80&w=1000&auto=format&fit=crop');
     background-size: cover;
-    background-position: center top;
-    position: relative;
-    overflow: hidden;
+    background-position: center center;
+    z-index: 0;
   }
+  .hero-img > * { position: relative; z-index: 1; }
   .img-tag {
     position: absolute;
     top: clamp(7px, 1.1vh, 9px);
