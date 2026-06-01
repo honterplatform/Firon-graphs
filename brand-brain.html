@@ -51,6 +51,9 @@
     opacity: 0;
     transform: translateX(-6px);
     transition: opacity 0.4s ease, transform 0.4s ease;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
   }
   .input-node.show { opacity: 1; transform: translateX(0); }
 
@@ -64,8 +67,9 @@
     align-items: center;
     justify-content: center;
     color: rgba(255,255,255,0.7);
-    transition: border-color 0.4s, color 0.4s, background 0.4s;
+    transition: border-color 0.3s, color 0.3s, background 0.3s, box-shadow 0.3s, transform 0.15s;
     flex-shrink: 0;
+    position: relative;
   }
   .node-icon svg {
     width: 50%;
@@ -75,6 +79,24 @@
     border-color: rgba(251,59,36,0.45);
     background: rgba(251,59,36,0.04);
     color: #FB3B24;
+  }
+  .input-node:hover:not(.disabled) .node-icon {
+    border-color: rgba(251,59,36,0.7);
+    box-shadow: 0 0 14px rgba(251,59,36,0.25);
+    transform: translateY(-1px);
+  }
+  .input-node.disabled .node-icon {
+    border-color: #1A1A1A;
+    background: #0B0B0B;
+    color: #444;
+    opacity: 0.7;
+  }
+  .input-node.disabled:hover .node-icon {
+    border-color: #2A2A2A;
+    color: #666;
+    opacity: 0.9;
+    box-shadow: none;
+    transform: none;
   }
 
   .node-label {
@@ -86,6 +108,12 @@
     transition: color 0.3s;
   }
   .input-node.firing .node-label { color: rgba(255,255,255,0.95); }
+  .input-node.disabled .node-label {
+    color: #555;
+    text-decoration: line-through;
+    text-decoration-color: rgba(255,255,255,0.15);
+  }
+  .input-node:hover:not(.disabled) .node-label { color: #fff; }
 
   /* === MIDDLE: SVG connectors === */
   .conn-svg {
@@ -109,6 +137,17 @@
     stroke-width: 1.2;
     stroke-dasharray: 4 6;
     animation: dashFlow 1.6s linear infinite;
+  }
+  .conn-path.highlight {
+    stroke: #FF6B5C;
+    stroke-width: 1.8;
+    stroke-dasharray: 5 5;
+    animation: dashFlow 0.7s linear infinite;
+    filter: drop-shadow(0 0 4px rgba(251,59,36,0.55));
+  }
+  .conn-path.muted {
+    stroke: rgba(255,255,255,0.05);
+    animation: none;
   }
   @keyframes dashFlow {
     to { stroke-dashoffset: -20; }
@@ -212,14 +251,53 @@
     align-items: center;
     gap: 5px;
     font-weight: 700;
+    transition: color 0.3s;
   }
+  .erow.status .er-val.partial { color: #E6B43C; }
+  .erow.status .er-val.idle { color: #666; }
   .erow.status .er-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  .erow.status .er-val.idle .er-dot { animation: none; }
+  .erow b {
+    transition: color 0.3s;
+  }
+  .engine:not(.alive) .engine-mark { background: rgba(255,255,255,0.04); color: #666; }
+  .engine:not(.alive) .engine-title span { color: #888; }
+  @keyframes pulse { 0%,100% {opacity:1;} 50% {opacity:0.4;} }
+
+  /* Hint badge */
+  .hint {
+    position: absolute;
+    top: clamp(12px, 2vh, 18px);
+    right: clamp(14px, 2.5vw, 22px);
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: #555;
+    background: #141414;
+    border: 1px solid #232323;
+    padding: 4px 9px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    z-index: 3;
+  }
+  .hint.show { opacity: 1; }
+  .hint-pulse {
     width: 5px; height: 5px;
     border-radius: 50%;
     background: #FB3B24;
     animation: pulse 1.4s ease-in-out infinite;
   }
-  @keyframes pulse { 0%,100% {opacity:1;} 50% {opacity:0.4;} }
 
   /* === MOBILE === */
   @media (max-aspect-ratio: 1/1) {
@@ -248,6 +326,7 @@
 </head>
 <body>
 <div class="card">
+  <div class="hint" id="hint"><span class="hint-pulse"></span>Click sources to toggle</div>
   <div class="stage" id="stage">
     <!-- SVG connectors. Paths start just past the input nodes (x=15) and converge
          into the left edge of the engine card (x=67 — third grid column begins at
@@ -318,9 +397,9 @@
           </div>
         </div>
         <div class="engine-rows">
-          <div class="erow"><span>Sources</span><b>4 / 4</b></div>
-          <div class="erow"><span>Edges</span><b>1,829</b></div>
-          <div class="erow status"><span>Status</span><span class="er-val"><span class="er-dot"></span>Ingesting</span></div>
+          <div class="erow"><span>Sources</span><b id="sourcesVal">4 / 4</b></div>
+          <div class="erow"><span>Edges</span><b id="edgesVal">1,829</b></div>
+          <div class="erow status"><span>Status</span><span class="er-val" id="statusVal"><span class="er-dot"></span>Ingesting</span></div>
         </div>
       </div>
     </div>
@@ -336,16 +415,103 @@ var paths = [
   document.getElementById('p3')
 ];
 var engine = document.getElementById('engine');
+var hint = document.getElementById('hint');
+var sourcesVal = document.getElementById('sourcesVal');
+var edgesVal = document.getElementById('edgesVal');
+var statusVal = document.getElementById('statusVal');
+
+// Each source contributes some edges to the knowledge graph (totals to 1,829)
+var EDGES_PER_SOURCE = [812, 354, 226, 437];
+var enabled = [true, true, true, true];
 
 function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
 
-async function runCycle() {
-  nodes.forEach(function(n) { n.classList.remove('show', 'firing'); });
-  paths.forEach(function(p) { p.classList.remove('flowing'); });
+function tween(from, to, dur, cb) {
+  var start = Date.now();
+  function step() {
+    var t = Math.min(1, (Date.now() - start) / dur);
+    var v = from + (to - from) * (1 - Math.pow(1 - t, 3));
+    cb(v);
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function totalEdges() {
+  var sum = 0;
+  for (var i = 0; i < enabled.length; i++) {
+    if (enabled[i]) sum += EDGES_PER_SOURCE[i];
+  }
+  return sum;
+}
+
+function updateEngine() {
+  var active = enabled.filter(Boolean).length;
+  var edges = totalEdges();
+
+  sourcesVal.textContent = active + ' / 4';
+
+  // Smooth tween edges count
+  var prev = parseInt(edgesVal.textContent.replace(/,/g, ''), 10) || 0;
+  tween(prev, edges, 350, function(v) {
+    edgesVal.textContent = Math.round(v).toLocaleString();
+  });
+
+  if (active === 0) {
+    engine.classList.remove('alive');
+    statusVal.className = 'er-val idle';
+    statusVal.innerHTML = '<span class="er-dot"></span>Idle';
+  } else if (active < 4) {
+    engine.classList.add('alive');
+    statusVal.className = 'er-val partial';
+    statusVal.innerHTML = '<span class="er-dot"></span>Partial';
+  } else {
+    engine.classList.add('alive');
+    statusVal.className = 'er-val';
+    statusVal.innerHTML = '<span class="er-dot"></span>Ingesting';
+  }
+}
+
+function toggleSource(idx) {
+  enabled[idx] = !enabled[idx];
+  if (enabled[idx]) {
+    nodes[idx].classList.add('firing');
+    nodes[idx].classList.remove('disabled');
+    paths[idx].classList.add('flowing');
+    paths[idx].classList.remove('muted');
+  } else {
+    nodes[idx].classList.remove('firing');
+    nodes[idx].classList.add('disabled');
+    paths[idx].classList.remove('flowing', 'highlight');
+    paths[idx].classList.add('muted');
+  }
+  updateEngine();
+}
+
+function attachInteractions() {
+  nodes.forEach(function(node, idx) {
+    node.addEventListener('click', function() {
+      toggleSource(idx);
+    });
+    node.addEventListener('mouseenter', function() {
+      if (enabled[idx]) paths[idx].classList.add('highlight');
+    });
+    node.addEventListener('mouseleave', function() {
+      paths[idx].classList.remove('highlight');
+    });
+  });
+}
+
+async function initialReveal() {
+  // Reset state
+  nodes.forEach(function(n) { n.classList.remove('show', 'firing', 'disabled'); });
+  paths.forEach(function(p) { p.classList.remove('flowing', 'muted', 'highlight'); });
   engine.classList.remove('show', 'alive');
+  hint.classList.remove('show');
 
   await sleep(400);
 
+  // Nodes appear top-to-bottom
   for (var i = 0; i < nodes.length; i++) {
     nodes[i].classList.add('show');
     await sleep(160);
@@ -353,9 +519,11 @@ async function runCycle() {
 
   await sleep(250);
 
+  // Engine appears
   engine.classList.add('show');
   await sleep(450);
 
+  // Sources fire and lines start flowing
   for (var i = 0; i < nodes.length; i++) {
     nodes[i].classList.add('firing');
     paths[i].classList.add('flowing');
@@ -365,11 +533,14 @@ async function runCycle() {
   await sleep(400);
   engine.classList.add('alive');
 
-  await sleep(5000);
-  runCycle();
+  await sleep(800);
+  hint.classList.add('show');
 }
 
-window.addEventListener('load', function() { setTimeout(runCycle, 200); });
+window.addEventListener('load', function() {
+  attachInteractions();
+  setTimeout(initialReveal, 200);
+});
 </script>
 </body>
 </html>
