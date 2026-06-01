@@ -41,6 +41,7 @@
     justify-content: space-around;
     gap: clamp(6px, 1.2vh, 12px);
     padding: clamp(4px, 1vh, 8px) 0;
+    position: relative;
     z-index: 2;
   }
   .input-node {
@@ -117,9 +118,10 @@
   .engine-wrap {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: stretch;
     padding-left: clamp(4px, 1vw, 10px);
     z-index: 2;
+    position: relative;
   }
   .engine {
     background: #141414;
@@ -134,7 +136,6 @@
     transform: translateX(-4px);
     transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.4s;
     width: 100%;
-    max-width: clamp(180px, 22vw, 240px);
   }
   .engine.show { opacity: 1; transform: translateX(0); }
   .engine.alive { border-color: rgba(251,59,36,0.4); }
@@ -248,13 +249,14 @@
 <body>
 <div class="card">
   <div class="stage" id="stage">
-    <!-- SVG connectors layered behind. Paths end at x=66 so they meet the left edge
-         of the engine card (third grid column) instead of continuing to the stage edge. -->
+    <!-- SVG connectors. Paths start just past the input nodes (x≈15) and end at
+         the left edge of the engine card (x≈58 — first 2 columns are 1fr + 1.2fr
+         of total 3.3fr ≈ 66%). -->
     <svg class="conn-svg" id="connSvg" viewBox="0 0 100 100" preserveAspectRatio="none">
-      <path class="conn-path" id="p0" d="M 0 12.5 C 28 12.5, 50 50, 66 50"></path>
-      <path class="conn-path" id="p1" d="M 0 37.5 C 28 37.5, 50 50, 66 50"></path>
-      <path class="conn-path" id="p2" d="M 0 62.5 C 28 62.5, 50 50, 66 50"></path>
-      <path class="conn-path" id="p3" d="M 0 87.5 C 28 87.5, 50 50, 66 50"></path>
+      <path class="conn-path" id="p0" d="M 15 12.5 C 32 12.5, 48 50, 58 50"></path>
+      <path class="conn-path" id="p1" d="M 15 37.5 C 32 37.5, 48 50, 58 50"></path>
+      <path class="conn-path" id="p2" d="M 15 62.5 C 32 62.5, 48 50, 58 50"></path>
+      <path class="conn-path" id="p3" d="M 15 87.5 C 32 87.5, 48 50, 58 50"></path>
     </svg>
 
     <!-- LEFT: 4 floating nodes -->
