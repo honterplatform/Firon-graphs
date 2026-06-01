@@ -597,23 +597,76 @@
     border-radius: 14px;
   }
 
-  /* === MOBILE === */
+  /* === MOBILE — compact product banner + full chat === */
   @media (max-aspect-ratio: 1/1) {
-    .card { padding: clamp(10px, 1.6vh, 14px); gap: clamp(7px, 1vh, 10px); }
+    .card { padding: 10px; gap: 8px; }
+
     .split {
       grid-template-columns: 1fr;
-      grid-template-rows: 0.85fr 1.1fr;
-      gap: clamp(7px, 1vh, 10px);
+      grid-template-rows: auto 1fr;
+      gap: 8px;
     }
-    .page-content { grid-template-columns: 0.8fr 1fr; gap: clamp(7px, 1vw, 10px); padding: clamp(8px, 1.2vh, 11px); }
-    .prod-title { font-size: clamp(13px, 2vh, 18px); }
-    .prod-price { font-size: clamp(11px, 1.5vh, 13px); }
-    .page-add-btn { padding: clamp(6px, 0.9vh, 8px) clamp(8px, 1.2vw, 11px); font-size: clamp(9.5px, 1.15vh, 10.5px); }
-    .size-chip { width: clamp(20px, 2.7vh, 23px); height: clamp(20px, 2.7vh, 23px); font-size: clamp(9px, 1.15vh, 10.5px); }
-    .chat-header { padding: clamp(7px, 1vh, 9px) clamp(10px, 1.3vw, 12px); }
-    .chat-body { padding: clamp(8px, 1.1vh, 10px) clamp(10px, 1.3vw, 12px); gap: clamp(6px, 0.9vh, 8px); }
+
+    /* Product becomes a slim horizontal banner */
+    .page-nav {
+      padding: 6px 10px;
+      font-size: 9.5px;
+    }
+    .page-content {
+      flex-direction: row;
+      align-items: center;
+      padding: 8px 10px;
+      gap: 10px;
+    }
+    .hero-img {
+      flex: 0 0 auto;
+      width: 56px;
+      height: 56px;
+      border-radius: 5px;
+    }
+    .hero-img::before { top: -8%; bottom: -8%; }
+    .img-tag { display: none; }
+    .prod-meta {
+      flex: 1;
+      gap: 8px;
+      align-items: center;
+      min-width: 0;
+    }
+    .prod-info-block { gap: 0; min-width: 0; }
+    .prod-cat { font-size: 8px; letter-spacing: 0.6px; }
+    .prod-title { font-size: 13px; }
+    .prod-price { font-size: 11px; margin-top: 1px; }
+    .sizes { display: none; }
+    .page-add-btn { display: none; }
+    .cursor-indicator { display: none; }
+
+    /* Chat takes the rest, skip the listening state and pop label */
+    .pop-label { display: none; }
+    .listening { display: none !important; }
+    .chat-body { display: flex !important; opacity: 1 !important; }
+
+    .chat-header {
+      padding: 8px 11px;
+    }
+    .brand-mark { width: 26px; height: 26px; font-size: 12px; }
+    .brand-name { font-size: 12px; }
+    .brand-status { font-size: 9.5px; }
+    .chat-body {
+      padding: 9px 11px;
+      gap: 7px;
+    }
+    .context-chip { font-size: 10px; padding: 3px 8px; }
+    .bubble { font-size: 11.5px; padding: 7px 10px; line-height: 1.4; }
+    .avatar { width: 22px; height: 22px; font-size: 11px; }
+    .suggest-card { margin-left: 28px; padding: 5px; gap: 8px; }
+    .suggest-img { width: 38px; height: 38px; }
+    .suggest-name { font-size: 11px; }
+    .suggest-meta { font-size: 9.5px; }
+    .suggest-tag { font-size: 8.5px; }
+    .suggest-price { font-size: 11.5px; }
+    .cta-row { margin-left: 28px; }
+    .cta-btn { padding: 8px 12px; font-size: 11px; }
     .quick-replies { display: none; }
-    .pop-label { font-size: clamp(8px, 0.95vh, 10px); }
   }
 </style>
 </head>
