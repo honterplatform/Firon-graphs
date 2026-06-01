@@ -17,7 +17,7 @@
     width: 100%;
     height: 100%;
     background: #0F0F0F;
-    padding: clamp(16px, 3vh, 28px) clamp(16px, 3vw, 32px);
+    padding: clamp(16px, 3vh, 26px) clamp(16px, 3vw, 28px);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -28,7 +28,7 @@
     flex: 1;
     min-height: 0;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.1fr);
     gap: 0;
     align-items: stretch;
     position: relative;
@@ -39,52 +39,49 @@
     display: flex;
     flex-direction: column;
     justify-content: space-around;
-    gap: clamp(8px, 1.5vh, 16px);
+    gap: clamp(6px, 1.2vh, 12px);
     padding: clamp(4px, 1vh, 8px) 0;
     z-index: 2;
   }
   .input-node {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 10px;
     opacity: 0;
     transform: translateX(-6px);
-    transition: opacity 0.5s ease, transform 0.5s ease;
+    transition: opacity 0.4s ease, transform 0.4s ease;
   }
   .input-node.show { opacity: 1; transform: translateX(0); }
 
   .node-icon {
-    width: clamp(46px, 6.5vh, 60px);
-    height: clamp(46px, 6.5vh, 60px);
-    border-radius: 14px;
+    width: clamp(34px, 4.8vh, 42px);
+    height: clamp(34px, 4.8vh, 42px);
+    border-radius: 8px;
     background: #141414;
     border: 1px solid #232323;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255,255,255,0.85);
-    transition: border-color 0.4s, box-shadow 0.4s, background 0.4s;
-    position: relative;
+    color: rgba(255,255,255,0.7);
+    transition: border-color 0.4s, color 0.4s, background 0.4s;
+    flex-shrink: 0;
   }
   .node-icon svg {
     width: 50%;
     height: 50%;
   }
   .input-node.firing .node-icon {
-    border-color: rgba(251,59,36,0.5);
-    background: linear-gradient(135deg, #141414 0%, rgba(251,59,36,0.08) 100%);
-    box-shadow: 0 0 18px rgba(251,59,36,0.25);
+    border-color: rgba(251,59,36,0.45);
+    background: rgba(251,59,36,0.04);
+    color: #FB3B24;
   }
-  .input-node.firing .node-icon svg { color: #FB3B24; }
 
   .node-label {
-    font-size: clamp(10px, 1.3vh, 12px);
+    font-size: clamp(10.5px, 1.3vh, 12px);
     font-weight: 600;
     color: rgba(255,255,255,0.65);
-    text-align: center;
-    line-height: 1.2;
-    max-width: clamp(80px, 12vw, 130px);
+    line-height: 1.25;
+    min-width: 0;
     transition: color 0.3s;
   }
   .input-node.firing .node-label { color: rgba(255,255,255,0.95); }
@@ -100,183 +97,158 @@
   }
   .conn-path {
     fill: none;
-    stroke: rgba(255,255,255,0.12);
-    stroke-width: 1.2;
-    stroke-dasharray: 4 6;
+    stroke: rgba(255,255,255,0.1);
+    stroke-width: 1;
+    stroke-dasharray: 3 5;
     vector-effect: non-scaling-stroke;
+    transition: stroke 0.4s;
   }
   .conn-path.flowing {
     stroke: #FB3B24;
-    stroke-width: 1.4;
-    stroke-dasharray: 6 8;
-    animation: dashFlow 1.4s linear infinite;
-    filter: drop-shadow(0 0 4px rgba(251,59,36,0.6));
+    stroke-width: 1.2;
+    stroke-dasharray: 4 6;
+    animation: dashFlow 1.6s linear infinite;
   }
   @keyframes dashFlow {
-    to { stroke-dashoffset: -28; }
+    to { stroke-dashoffset: -20; }
   }
-
   .conn-junction {
-    fill: rgba(255,255,255,0.2);
+    fill: rgba(255,255,255,0.18);
     transition: fill 0.4s;
   }
   .conn-junction.active {
     fill: #FB3B24;
-    filter: drop-shadow(0 0 6px rgba(251,59,36,0.8));
   }
 
   /* === RIGHT: Firon AI Engine === */
   .engine-wrap {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    padding-left: clamp(4px, 1vw, 10px);
     z-index: 2;
   }
   .engine {
-    width: 100%;
-    max-width: clamp(180px, 22vw, 240px);
     background: #141414;
     border: 1px solid #232323;
-    border-radius: 16px;
-    padding: clamp(14px, 2.2vh, 20px) clamp(14px, 2vw, 22px);
+    border-radius: 8px;
+    padding: clamp(12px, 1.8vh, 16px) clamp(14px, 1.8vw, 18px);
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: clamp(8px, 1.4vh, 12px);
+    gap: clamp(8px, 1.2vh, 11px);
     position: relative;
     opacity: 0;
-    transform: scale(0.94);
-    transition: opacity 0.6s ease, transform 0.6s ease, border-color 0.6s ease, box-shadow 0.6s ease;
+    transform: translateX(-4px);
+    transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.4s;
+    width: 100%;
+    max-width: clamp(180px, 22vw, 240px);
   }
-  .engine.show { opacity: 1; transform: scale(1); }
-  .engine.alive {
-    border-color: rgba(251,59,36,0.4);
-    box-shadow:
-      0 0 0 1px rgba(251,59,36,0.15),
-      0 0 40px rgba(251,59,36,0.18),
-      0 16px 36px -16px rgba(0,0,0,0.55);
-    animation: engineBreathe 3s ease-in-out infinite;
-  }
-  @keyframes engineBreathe {
-    0%, 100% {
-      box-shadow:
-        0 0 0 1px rgba(251,59,36,0.15),
-        0 0 28px rgba(251,59,36,0.18),
-        0 16px 36px -16px rgba(0,0,0,0.55);
-    }
-    50% {
-      box-shadow:
-        0 0 0 1px rgba(251,59,36,0.3),
-        0 0 50px rgba(251,59,36,0.32),
-        0 16px 36px -16px rgba(0,0,0,0.55);
-    }
-  }
+  .engine.show { opacity: 1; transform: translateX(0); }
+  .engine.alive { border-color: rgba(251,59,36,0.4); }
 
-  .engine-orb {
-    width: clamp(46px, 6.5vh, 60px);
-    height: clamp(46px, 6.5vh, 60px);
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #FB3B24 0%, #C72D17 70%, #8B1D0C 100%);
-    color: #fff;
+  .engine-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: clamp(7px, 1.1vh, 10px);
+    border-bottom: 1px solid #1E1E1E;
+    flex-shrink: 0;
+  }
+  .engine-mark {
+    width: clamp(22px, 3vh, 26px);
+    height: clamp(22px, 3vh, 26px);
+    border-radius: 6px;
+    background: rgba(251,59,36,0.12);
+    color: #FB3B24;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: clamp(22px, 3.2vh, 30px);
-    font-weight: 800;
-    position: relative;
     flex-shrink: 0;
+    transition: background 0.4s;
   }
-  .engine-orb::before {
-    content: '';
-    position: absolute;
-    inset: -6px;
-    border-radius: 50%;
-    border: 1px solid rgba(251,59,36,0.4);
-    animation: orbPulse 2.4s ease-out infinite;
+  .engine.alive .engine-mark { background: rgba(251,59,36,0.2); }
+  .engine-mark svg {
+    width: 55%;
+    height: 55%;
   }
-  .engine-orb::after {
-    content: '';
-    position: absolute;
-    inset: -6px;
-    border-radius: 50%;
-    border: 1px solid rgba(251,59,36,0.4);
-    animation: orbPulse 2.4s ease-out 1.2s infinite;
+  .engine-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
   }
-  @keyframes orbPulse {
-    0% { transform: scale(1); opacity: 0.7; }
-    100% { transform: scale(1.45); opacity: 0; }
-  }
-  .engine.show .engine-orb svg { width: 55%; height: 55%; }
-
-  .engine-name {
-    font-size: clamp(13px, 1.7vh, 16px);
-    font-weight: 800;
-    color: #fff;
-    text-align: center;
-    letter-spacing: -0.2px;
+  .engine-title {
+    font-size: clamp(12px, 1.5vh, 13.5px);
+    font-weight: 700;
+    color: rgba(255,255,255,0.92);
+    letter-spacing: -0.15px;
     line-height: 1.1;
   }
-  .engine-name span {
-    color: #FB3B24;
+  .engine-title span { color: #FB3B24; }
+  .engine-sub {
+    font-size: clamp(8.5px, 1vh, 10px);
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-family: ui-monospace, monospace;
   }
-  .engine-status {
+
+  .engine-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+  .erow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: clamp(9px, 1.1vh, 10.5px);
+    color: rgba(255,255,255,0.55);
+    font-family: ui-monospace, monospace;
+  }
+  .erow b {
+    color: rgba(255,255,255,0.85);
+    font-weight: 700;
+  }
+  .erow.status .er-val {
+    color: #FB3B24;
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    font-size: clamp(9px, 1.1vh, 10.5px);
     font-weight: 700;
-    color: rgba(255,255,255,0.6);
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
   }
-  .engine-status-dot {
-    width: 6px; height: 6px;
+  .erow.status .er-dot {
+    width: 5px; height: 5px;
     border-radius: 50%;
     background: #FB3B24;
     animation: pulse 1.4s ease-in-out infinite;
   }
   @keyframes pulse { 0%,100% {opacity:1;} 50% {opacity:0.4;} }
-  .engine-meta {
-    font-size: clamp(9px, 1vh, 10px);
-    color: #555;
-    font-family: ui-monospace, monospace;
-    letter-spacing: 0.3px;
-    text-align: center;
-  }
-  .engine-meta b { color: rgba(255,255,255,0.7); font-weight: 700; }
 
-  /* === MOBILE: keep horizontal flow but compress === */
+  /* === MOBILE === */
   @media (max-aspect-ratio: 1/1) {
-    .card { padding: 14px 12px; }
+    .card { padding: 12px 11px; }
     .stage {
-      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 0.95fr);
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr) minmax(0, 1fr);
     }
-    .nodes-col {
-      gap: 4px;
-      padding: 0;
-    }
+    .nodes-col { gap: 5px; padding: 0; }
+    .input-node { gap: 7px; }
     .node-icon {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
     }
-    .node-label {
-      font-size: 9.5px;
-      max-width: 100px;
-    }
+    .node-label { font-size: 10px; }
     .engine {
-      padding: 12px 10px;
-      gap: 6px;
-      max-width: 100%;
+      padding: 10px 11px;
+      gap: 7px;
     }
-    .engine-orb {
-      width: 38px;
-      height: 38px;
-      font-size: 18px;
-    }
-    .engine-name { font-size: 12px; }
-    .engine-status { font-size: 8.5px; }
-    .engine-meta { font-size: 8.5px; }
+    .engine-mark { width: 22px; height: 22px; }
+    .engine-title { font-size: 11.5px; }
+    .engine-sub { font-size: 8.5px; }
+    .erow { font-size: 9px; }
   }
 </style>
 </head>
@@ -289,7 +261,7 @@
       <path class="conn-path" id="p1" d="M 0 37.5 C 35 37.5, 65 50, 100 50"></path>
       <path class="conn-path" id="p2" d="M 0 62.5 C 35 62.5, 65 50, 100 50"></path>
       <path class="conn-path" id="p3" d="M 0 87.5 C 35 87.5, 65 50, 100 50"></path>
-      <circle class="conn-junction" id="junction" cx="100" cy="50" r="1.4"></circle>
+      <circle class="conn-junction" id="junction" cx="100" cy="50" r="1.2"></circle>
     </svg>
 
     <!-- LEFT: 4 floating nodes -->
@@ -323,33 +295,38 @@
       <div class="input-node" data-i="3">
         <div class="node-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 19l7-7 3 3-7 7-3-3z"/>
-            <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
-            <path d="M2 2l7.586 7.586"/>
-            <circle cx="11" cy="11" r="2"/>
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="8" y1="13" x2="16" y2="13"/>
+            <line x1="8" y1="17" x2="14" y2="17"/>
           </svg>
         </div>
         <div class="node-label">Blogs &amp; Sizing Guides</div>
       </div>
     </div>
 
-    <!-- MIDDLE: spacer (the SVG draws over this) -->
+    <!-- MIDDLE: spacer (SVG draws over) -->
     <div></div>
 
     <!-- RIGHT: Firon AI Engine -->
     <div class="engine-wrap">
       <div class="engine" id="engine">
-        <div class="engine-orb">
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2l1.8 5.6L19.4 6 17 11l5 1.5L17 14l2.4 5-5.6-1.6L12 23l-1.8-5.6L4.6 19 7 14l-5-1.5L7 11 4.6 6l5.6 1.6L12 2z"/>
-          </svg>
+        <div class="engine-head">
+          <div class="engine-mark">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 3l1.6 5L19 9.6l-4 3.3 1.3 5.4L12 15l-4.3 3.3 1.3-5.4-4-3.3L10.4 8 12 3z"/>
+            </svg>
+          </div>
+          <div class="engine-title-group">
+            <div class="engine-title">The <span>Firon</span> AI Engine</div>
+            <div class="engine-sub">Unified · indexed</div>
+          </div>
         </div>
-        <div class="engine-name">The <span>Firon</span> AI Engine</div>
-        <div class="engine-status">
-          <span class="engine-status-dot"></span>
-          Live · ingesting
+        <div class="engine-rows">
+          <div class="erow"><span>Sources</span><b>4 / 4</b></div>
+          <div class="erow"><span>Edges</span><b>1,829</b></div>
+          <div class="erow status"><span>Status</span><span class="er-val"><span class="er-dot"></span>Ingesting</span></div>
         </div>
-        <div class="engine-meta">4 sources · <b>synced</b></div>
       </div>
     </div>
   </div>
@@ -369,7 +346,6 @@ var engine = document.getElementById('engine');
 function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
 
 async function runCycle() {
-  // Reset
   nodes.forEach(function(n) { n.classList.remove('show', 'firing'); });
   paths.forEach(function(p) { p.classList.remove('flowing'); });
   junction.classList.remove('active');
@@ -377,35 +353,29 @@ async function runCycle() {
 
   await sleep(400);
 
-  // Nodes appear with stagger from top to bottom
   for (var i = 0; i < nodes.length; i++) {
     nodes[i].classList.add('show');
-    await sleep(180);
+    await sleep(160);
   }
 
-  await sleep(300);
+  await sleep(250);
 
-  // Engine fades in
   engine.classList.add('show');
-  await sleep(550);
+  await sleep(450);
 
-  // Data starts flowing: nodes fire, connections animate, junction lights up
   for (var i = 0; i < nodes.length; i++) {
     nodes[i].classList.add('firing');
     paths[i].classList.add('flowing');
     if (i === 0) {
-      // Junction lights as soon as first stream reaches it
       setTimeout(function() { junction.classList.add('active'); }, 700);
     }
-    await sleep(220);
+    await sleep(200);
   }
 
-  // Engine comes alive once all inputs are flowing
-  await sleep(500);
+  await sleep(400);
   engine.classList.add('alive');
 
-  // Hold ingestion state
-  await sleep(5200);
+  await sleep(5000);
   runCycle();
 }
 
