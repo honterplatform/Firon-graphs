@@ -4,19 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Proactive AI Concierge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 100%; height: 100%; overflow: hidden; }
   body {
-    background: #0F0F0F;
-    font-family: system-ui, -apple-system, sans-serif;
-    color: #fff;
+    background: #EDE5D2;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: #2A2521;
   }
 
   .card {
     width: 100%;
     height: 100%;
-    background: #0F0F0F;
+    background: #EDE5D2;
     padding: clamp(12px, 2vh, 18px);
     display: flex;
     flex-direction: column;
@@ -36,8 +39,8 @@
 
   /* === LEFT: Product page mockup === */
   .page {
-    background: #141414;
-    border: 1px solid #222;
+    background: #FAF6EE;
+    border: 1px solid #E8DFCC;
     border-radius: 8px;
     overflow: hidden;
     display: flex;
@@ -51,9 +54,9 @@
     align-items: center;
     gap: 6px;
     padding: clamp(8px, 1.2vh, 11px) clamp(11px, 1.4vw, 14px);
-    border-bottom: 1px solid #1E1E1E;
+    border-bottom: 1px solid #E8DFCC;
     font-size: clamp(9px, 1.1vh, 11px);
-    color: #666;
+    color: #8A7F6E;
     font-weight: 500;
     flex-shrink: 0;
     overflow: hidden;
@@ -61,13 +64,15 @@
     text-overflow: ellipsis;
   }
   .page-logo {
-    font-weight: 800;
-    color: #fff;
-    letter-spacing: 1.5px;
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-weight: 400;
+    color: #2A2521;
+    letter-spacing: 0.5px;
     margin-right: 6px;
+    font-size: 1.15em;
   }
-  .page-nav-sep { color: #333; }
-  .page-nav-active { color: #ccc; }
+  .page-nav-sep { color: #C9BDA3; }
+  .page-nav-active { color: #2A2521; font-weight: 600; }
 
   .page-content {
     flex: 1;
@@ -82,12 +87,10 @@
     flex: 1;
     min-height: 0;
     border-radius: 6px;
-    background: linear-gradient(135deg, #1F2630 0%, #0E1218 100%);
+    background: linear-gradient(135deg, #E8DFCC 0%, #D9CDB1 100%);
     position: relative;
     overflow: hidden;
   }
-  /* Image as a pseudo-element extended beyond the container so it crops
-     symmetrically at top and bottom without distortion. */
   .hero-img::before {
     content: '';
     position: absolute;
@@ -96,7 +99,6 @@
     left: 0;
     right: 0;
     background-image:
-      linear-gradient(rgba(0,0,0,0.15), rgba(0,0,0,0.35)),
       url('https://images.unsplash.com/photo-1624548140150-108c3287f551?fm=jpg&q=80&w=1000&auto=format&fit=crop');
     background-size: cover;
     background-position: center center;
@@ -107,13 +109,14 @@
     position: absolute;
     top: clamp(7px, 1.1vh, 9px);
     left: clamp(7px, 1.1vh, 9px);
-    background: rgba(0,0,0,0.55);
-    backdrop-filter: blur(8px);
-    color: #fff;
+    background: rgba(250, 246, 238, 0.92);
+    backdrop-filter: blur(6px);
+    color: #2A2521;
+    font-family: 'Inter', sans-serif;
     font-size: clamp(8.5px, 1vh, 10px);
-    font-weight: 700;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.6px;
     padding: 3px 7px;
     border-radius: 3px;
   }
@@ -133,28 +136,30 @@
     flex: 1;
   }
   .prod-cat {
+    font-family: 'Inter', sans-serif;
     font-size: clamp(8.5px, 1vh, 10px);
-    font-weight: 700;
+    font-weight: 600;
     color: #FB3B24;
     text-transform: uppercase;
     letter-spacing: 0.8px;
   }
   .prod-title {
-    font-size: clamp(14px, 2vh, 18px);
-    font-weight: 800;
-    color: #fff;
-    letter-spacing: -0.4px;
-    line-height: 1.1;
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: clamp(15px, 2.2vh, 20px);
+    font-weight: 400;
+    color: #2A2521;
+    letter-spacing: -0.3px;
+    line-height: 1.05;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .prod-price {
+    font-family: 'Inter', sans-serif;
     font-size: clamp(11px, 1.4vh, 13px);
-    font-weight: 700;
-    color: rgba(255,255,255,0.65);
-    font-family: ui-monospace, monospace;
-    margin-top: 1px;
+    font-weight: 600;
+    color: #8A7F6E;
+    margin-top: 2px;
   }
   .sizes {
     display: flex;
@@ -165,29 +170,30 @@
     width: clamp(22px, 3vh, 26px);
     height: clamp(22px, 3vh, 26px);
     border-radius: 4px;
-    background: #0D0D0D;
-    border: 1px solid #2A2A2A;
-    color: rgba(255,255,255,0.7);
+    background: transparent;
+    border: 1px solid #D9CDB1;
+    color: #8A7F6E;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-family: 'Inter', sans-serif;
     font-size: clamp(10px, 1.3vh, 11.5px);
-    font-weight: 700;
-    font-family: ui-monospace, monospace;
+    font-weight: 600;
   }
   .size-chip.selected {
-    background: rgba(255,255,255,0.1);
-    border-color: #fff;
-    color: #fff;
+    background: #2A2521;
+    border-color: #2A2521;
+    color: #FAF6EE;
   }
   .page-add-btn {
-    background: #1A1A1A;
-    border: 1px solid #2A2A2A;
-    color: rgba(255,255,255,0.85);
+    background: transparent;
+    border: 1px solid #2A2521;
+    color: #2A2521;
     padding: clamp(7px, 1.1vh, 10px) clamp(12px, 1.6vw, 16px);
-    border-radius: 6px;
+    border-radius: 100px;
+    font-family: 'Inter', sans-serif;
     font-size: clamp(10px, 1.2vh, 11.5px);
-    font-weight: 700;
+    font-weight: 600;
     text-align: center;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -208,7 +214,7 @@
   .cursor-indicator.show { opacity: 1; }
   .cursor-indicator svg {
     width: 100%; height: 100%;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7));
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
   }
 
   /* === RIGHT: Chat popup === */
@@ -220,6 +226,7 @@
     position: relative;
   }
   .pop-label {
+    font-family: 'Inter', sans-serif;
     font-size: clamp(8.5px, 1vh, 10.5px);
     font-weight: 700;
     color: #FB3B24;
@@ -246,15 +253,15 @@
   .chat-window {
     flex: 1;
     min-height: 0;
-    background: #141414;
-    border: 1px solid #222;
+    background: #FAF6EE;
+    border: 1px solid #E8DFCC;
     border-radius: 8px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
   }
 
-  /* Idle listening state shown until AI triggers */
+  /* Idle listening state */
   .listening {
     flex: 1;
     min-height: 0;
@@ -273,13 +280,14 @@
     height: clamp(38px, 5vh, 48px);
     border-radius: 50%;
     background: rgba(251,59,36,0.08);
-    border: 1px solid rgba(251,59,36,0.25);
+    border: 1px solid rgba(251,59,36,0.3);
     display: flex;
     align-items: center;
     justify-content: center;
     color: #FB3B24;
     font-size: clamp(15px, 2vh, 18px);
-    font-weight: 800;
+    font-weight: 400;
+    font-family: 'DM Serif Display', Georgia, serif;
     position: relative;
   }
   .listen-ring::before, .listen-ring::after {
@@ -287,7 +295,7 @@
     position: absolute;
     inset: -1px;
     border-radius: 50%;
-    border: 1px solid rgba(251,59,36,0.35);
+    border: 1px solid rgba(251,59,36,0.4);
     animation: listenPulse 2s ease-out infinite;
   }
   .listen-ring::after { animation-delay: 1s; }
@@ -296,13 +304,14 @@
     100% { transform: scale(1.7); opacity: 0; }
   }
   .listen-text {
+    font-family: 'Inter', sans-serif;
     font-size: clamp(10px, 1.2vh, 11.5px);
-    color: rgba(255,255,255,0.55);
-    font-weight: 600;
+    color: #8A7F6E;
+    font-weight: 500;
     text-align: center;
     letter-spacing: 0.1px;
   }
-  .listen-text b { color: rgba(255,255,255,0.85); font-weight: 700; }
+  .listen-text b { color: #2A2521; font-weight: 700; }
   .listen-dots {
     display: inline-flex;
     gap: 3px;
@@ -327,66 +336,72 @@
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    padding: clamp(8px, 1.2vh, 11px) clamp(11px, 1.4vw, 13px);
-    border-bottom: 1px solid #1E1E1E;
+    padding: clamp(10px, 1.4vh, 13px) clamp(12px, 1.6vw, 15px);
+    border-bottom: 1px solid #E8DFCC;
     flex-shrink: 0;
   }
   .brand {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     min-width: 0;
   }
   .brand-mark {
-    width: clamp(26px, 3.6vh, 30px);
-    height: clamp(26px, 3.6vh, 30px);
+    width: clamp(28px, 3.8vh, 34px);
+    height: clamp(28px, 3.8vh, 34px);
     border-radius: 50%;
-    background: #FB3B24;
-    color: #fff;
+    background: #2A2521;
+    color: #FAF6EE;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: clamp(12px, 1.5vh, 14px);
-    font-weight: 800;
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: clamp(13px, 1.7vh, 16px);
+    font-weight: 400;
     flex-shrink: 0;
     position: relative;
+    letter-spacing: -0.5px;
   }
   .brand-mark::after {
     content: '';
     position: absolute;
     bottom: 0; right: 0;
-    width: 7px; height: 7px;
+    width: 8px; height: 8px;
     border-radius: 50%;
     background: #FB3B24;
-    border: 2px solid #141414;
+    border: 2px solid #FAF6EE;
   }
   .brand-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
   .brand-name {
-    font-size: clamp(12px, 1.5vh, 13px);
-    font-weight: 700;
-    color: rgba(255,255,255,0.95);
-    line-height: 1.1;
-    letter-spacing: -0.1px;
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: clamp(14px, 1.8vh, 17px);
+    font-weight: 400;
+    color: #2A2521;
+    line-height: 1.05;
+    letter-spacing: -0.3px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .brand-status {
+    font-family: 'Inter', sans-serif;
     font-size: clamp(8.5px, 1vh, 10px);
-    color: rgba(255,255,255,0.45);
+    color: #8A7F6E;
     font-weight: 500;
+    letter-spacing: 0.2px;
   }
   .chat-x {
-    color: rgba(255,255,255,0.4);
+    color: #8A7F6E;
     font-size: clamp(14px, 1.8vh, 16px);
     flex-shrink: 0;
+    font-weight: 300;
   }
 
   .chat-body {
     display: none;
     flex: 1;
     min-height: 0;
-    padding: clamp(9px, 1.3vh, 12px) clamp(11px, 1.4vw, 13px);
+    padding: clamp(10px, 1.4vh, 13px) clamp(12px, 1.6vw, 15px);
     flex-direction: column;
     gap: clamp(7px, 1.1vh, 10px);
     overflow-y: auto;
@@ -407,9 +422,10 @@
     align-items: center;
     gap: 6px;
     align-self: flex-start;
-    background: rgba(251,59,36,0.08);
+    background: rgba(251,59,36,0.06);
     border: 1px solid rgba(251,59,36,0.25);
-    color: rgba(255,255,255,0.8);
+    color: #2A2521;
+    font-family: 'Inter', sans-serif;
     font-size: clamp(9.5px, 1.15vh, 11px);
     font-weight: 500;
     padding: 4px 9px;
@@ -421,7 +437,7 @@
   }
   .context-chip.show { opacity: 1; transform: translateY(0); }
   .cc-icon { color: #FB3B24; font-weight: 800; }
-  .cc-bold { color: #fff; font-weight: 700; }
+  .cc-bold { color: #2A2521; font-weight: 700; }
 
   .msg {
     display: flex;
@@ -437,27 +453,35 @@
     width: clamp(22px, 3vh, 26px);
     height: clamp(22px, 3vh, 26px);
     border-radius: 50%;
-    background: rgba(251,59,36,0.15);
-    border: 1px solid rgba(251,59,36,0.35);
-    color: #FB3B24;
+    background: #2A2521;
+    color: #FAF6EE;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-family: 'DM Serif Display', Georgia, serif;
     font-size: clamp(11px, 1.3vh, 13px);
-    font-weight: 800;
+    font-weight: 400;
     flex-shrink: 0;
   }
   .bubble {
-    background: #1A1A1A;
-    border: 1px solid #262626;
-    border-radius: 4px 12px 12px 12px;
-    padding: clamp(7px, 1vh, 9px) clamp(10px, 1.3vw, 12px);
-    font-size: clamp(11px, 1.35vh, 12.5px);
-    color: rgba(255,255,255,0.92);
-    line-height: 1.45;
+    background: #fff;
+    border: 1px solid #ECE3D0;
+    border-radius: 8px;
+    padding: clamp(8px, 1.1vh, 10px) clamp(11px, 1.4vw, 13px);
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(11px, 1.4vh, 12.5px);
+    color: #2A2521;
+    line-height: 1.5;
     letter-spacing: -0.1px;
+    font-weight: 400;
   }
-  .bubble b { color: #FB3B24; font-weight: 700; }
+  .bubble b {
+    color: #FB3B24;
+    font-weight: 400;
+    font-style: italic;
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 1.05em;
+  }
 
   /* Suggested product card inside the chat */
   .suggest-card {
@@ -465,8 +489,8 @@
     align-items: center;
     gap: 9px;
     margin-left: clamp(27px, 3.6vh, 32px);
-    background: #0D0D0D;
-    border: 1px solid #1F1F1F;
+    background: #fff;
+    border: 1px solid #ECE3D0;
     border-radius: 8px;
     padding: clamp(5px, 0.8vh, 7px);
     opacity: 0;
@@ -479,7 +503,7 @@
     height: clamp(44px, 6vh, 56px);
     border-radius: 5px;
     background:
-      linear-gradient(135deg, #2A2520 0%, #1A1612 100%);
+      linear-gradient(135deg, #E8DFCC 0%, #D9CDB1 100%);
     background-image: url('https://images.unsplash.com/photo-1577578047395-77ea0ce21048?w=400&q=80&auto=format&fit=crop');
     background-size: cover;
     background-position: center;
@@ -493,39 +517,42 @@
     gap: 1px;
   }
   .suggest-name {
+    font-family: 'Inter', sans-serif;
     font-size: clamp(11px, 1.35vh, 12.5px);
     font-weight: 700;
-    color: rgba(255,255,255,0.95);
+    color: #2A2521;
     line-height: 1.2;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .suggest-meta {
+    font-family: 'Inter', sans-serif;
     font-size: clamp(9px, 1.1vh, 10.5px);
-    color: rgba(255,255,255,0.45);
-    font-family: ui-monospace, monospace;
+    color: #8A7F6E;
+    font-weight: 500;
   }
   .suggest-tag {
     display: inline-flex;
     align-items: center;
     gap: 3px;
     margin-top: 3px;
+    font-family: 'Inter', sans-serif;
     font-size: clamp(8px, 0.95vh, 9.5px);
-    font-weight: 800;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.4px;
     color: #FB3B24;
   }
   .suggest-price {
+    font-family: 'Inter', sans-serif;
     font-size: clamp(12px, 1.4vh, 13.5px);
-    font-weight: 800;
-    color: rgba(255,255,255,0.95);
-    font-family: ui-monospace, monospace;
+    font-weight: 700;
+    color: #2A2521;
     flex-shrink: 0;
   }
 
-  /* GLOWING Add to bag — the hero CTA */
+  /* GLOWING Add to bag — hero CTA */
   .cta-row {
     margin-left: clamp(27px, 3.6vh, 32px);
     margin-right: clamp(0px, 0.5vw, 4px);
@@ -539,12 +566,12 @@
     background: linear-gradient(180deg, #FB3B24 0%, #DC2D17 100%);
     color: #fff;
     border: none;
-    border-radius: 7px;
-    padding: clamp(8px, 1.2vh, 11px) clamp(11px, 1.4vw, 14px);
+    border-radius: 100px;
+    padding: clamp(9px, 1.3vh, 12px) clamp(13px, 1.6vw, 16px);
+    font-family: 'Inter', sans-serif;
     font-size: clamp(11px, 1.35vh, 12.5px);
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: 0.3px;
-    text-transform: uppercase;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -559,19 +586,19 @@
     0%, 100% {
       box-shadow:
         0 0 0 0 rgba(251,59,36,0),
-        0 4px 14px rgba(251,59,36,0.3);
+        0 4px 14px rgba(251,59,36,0.25);
     }
     50% {
       box-shadow:
-        0 0 0 6px rgba(251,59,36,0.1),
-        0 0 24px 4px rgba(251,59,36,0.45),
+        0 0 0 8px rgba(251,59,36,0.08),
+        0 0 28px 4px rgba(251,59,36,0.4),
         0 4px 14px rgba(251,59,36,0.3);
     }
   }
   .cta-save {
     font-size: 0.85em;
     font-weight: 600;
-    opacity: 0.85;
+    opacity: 0.9;
     margin-left: 4px;
   }
   .cta-arrow {
@@ -580,7 +607,7 @@
 
   .quick-replies {
     display: flex;
-    gap: 5px;
+    gap: 6px;
     flex-wrap: wrap;
     margin-left: clamp(27px, 3.6vh, 32px);
     opacity: 0;
@@ -589,12 +616,14 @@
   .quick-replies.show { opacity: 1; }
   .qr {
     background: transparent;
-    border: 1px solid #2A2A2A;
-    color: rgba(255,255,255,0.7);
+    border: 1px solid #2A2521;
+    color: #2A2521;
+    font-family: 'Inter', sans-serif;
     font-size: clamp(10px, 1.2vh, 11px);
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 14px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 100px;
+    letter-spacing: 0.2px;
   }
 
   /* === MOBILE — compact product banner + full chat === */
@@ -607,7 +636,6 @@
       gap: 8px;
     }
 
-    /* Product becomes a slim horizontal banner */
     .page-nav {
       padding: 6px 10px;
       font-size: 9.5px;
@@ -634,13 +662,12 @@
     }
     .prod-info-block { gap: 0; min-width: 0; }
     .prod-cat { font-size: 8px; letter-spacing: 0.6px; }
-    .prod-title { font-size: 13px; }
+    .prod-title { font-size: 14px; }
     .prod-price { font-size: 11px; margin-top: 1px; }
     .sizes { display: none; }
     .page-add-btn { display: none; }
     .cursor-indicator { display: none; }
 
-    /* Chat takes the rest, skip the listening state and pop label */
     .pop-label { display: none; }
     .listening { display: none !important; }
     .chat-body { display: flex !important; opacity: 1 !important; }
@@ -648,8 +675,8 @@
     .chat-header {
       padding: 8px 11px;
     }
-    .brand-mark { width: 26px; height: 26px; font-size: 12px; }
-    .brand-name { font-size: 12px; }
+    .brand-mark { width: 26px; height: 26px; font-size: 13px; }
+    .brand-name { font-size: 13px; }
     .brand-status { font-size: 9.5px; }
     .chat-body {
       padding: 9px 11px;
@@ -676,7 +703,7 @@
     <!-- LEFT: Product page being browsed -->
     <div class="page">
       <div class="page-nav">
-        <span class="page-logo">STAGDALE</span>
+        <span class="page-logo">Stagdale</span>
         <span class="page-nav-sep">›</span>
         <span>Outerwear</span>
         <span class="page-nav-sep">›</span>
@@ -704,7 +731,7 @@
       <div class="cursor-indicator" id="cursor">
         <svg viewBox="0 0 16 18" xmlns="http://www.w3.org/2000/svg">
           <path d="M1 1 L1 13 L4.5 10 L7 15 L9 14 L6.5 9 L11 9 Z"
-                fill="#fff" stroke="#000" stroke-width="0.8" stroke-linejoin="round"/>
+                fill="#2A2521" stroke="#FAF6EE" stroke-width="0.8" stroke-linejoin="round"/>
         </svg>
       </div>
     </div>
@@ -794,7 +821,6 @@ function moveCursor(xPct, yPct) {
 }
 
 async function runCycle() {
-  // Reset: chat WINDOW + LISTENING state stay visible the whole time so the right side is never empty
   cursor.classList.remove('show');
   popLabel.classList.remove('show');
   listening.classList.remove('hidden');
@@ -808,7 +834,6 @@ async function runCycle() {
 
   await sleep(300);
 
-  // Phase 1: User browsing — cursor roams quickly (~1.5s total)
   moveCursor(15, 30);
   cursor.classList.add('show');
   await sleep(500);
@@ -817,35 +842,28 @@ async function runCycle() {
   moveCursor(22, 70);
   await sleep(500);
 
-  // Phase 2: AI triggers — listening state hides, chat body content begins
   popLabel.classList.add('show');
   listening.classList.add('hidden');
   await sleep(280);
   chatBody.classList.add('show');
   await sleep(200);
 
-  // Context chip shows what AI detected
   ctxChip.classList.add('show');
   await sleep(600);
 
-  // AI message
   msg1.classList.add('show');
   await sleep(1000);
 
-  // Suggested product slides in
   suggCard.classList.add('show');
   await sleep(550);
 
-  // CTA appears + starts pulsing glow
   ctaRow.classList.add('show');
   await sleep(150);
   ctaBtn.classList.add('glow');
   await sleep(400);
 
-  // Quick replies appear
   qr.classList.add('show');
 
-  // Hold while glow pulses, then loop
   await sleep(5000);
   runCycle();
 }
