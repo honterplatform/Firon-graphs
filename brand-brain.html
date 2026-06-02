@@ -299,28 +299,68 @@
     animation: pulse 1.4s ease-in-out infinite;
   }
 
-  /* === MOBILE === */
+  /* === MOBILE — vertical flow: nodes row on top → lines down → engine at bottom === */
   @media (max-aspect-ratio: 1/1) {
-    .card { padding: 12px 11px; }
+    .card { padding: 14px 12px; }
+
     .stage {
-      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 1fr auto;
+      gap: 0;
     }
-    .nodes-col { gap: 5px; padding: 0; }
-    .input-node { gap: 7px; }
+
+    /* Nodes become a horizontal row at the top */
+    .nodes-col {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 4px;
+      padding: 0 0 8px 0;
+    }
+    .input-node {
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      text-align: center;
+      flex: 1;
+      min-width: 0;
+      transform: translateY(-6px);
+    }
+    .input-node.show { transform: translateY(0); }
     .node-icon {
-      width: 30px;
-      height: 30px;
-      border-radius: 6px;
+      width: 38px;
+      height: 38px;
+      border-radius: 7px;
     }
-    .node-label { font-size: 10px; }
+    .node-label {
+      font-size: 9px;
+      text-align: center;
+      line-height: 1.15;
+      letter-spacing: -0.1px;
+      max-width: 100%;
+    }
+    .input-node:hover:not(.disabled) .node-icon { transform: translateY(-2px); }
+
+    /* Engine wrap fills bottom, full width */
+    .engine-wrap {
+      padding-left: 0;
+      padding-top: 8px;
+      justify-content: stretch;
+    }
     .engine {
-      padding: 10px 11px;
+      width: 100%;
+      padding: 10px 12px;
       gap: 7px;
+      transform: translateY(4px);
     }
-    .engine-mark { width: 22px; height: 22px; }
-    .engine-title { font-size: 11.5px; }
+    .engine.show { transform: translateY(0); }
+    .engine-mark { width: 24px; height: 24px; }
+    .engine-title { font-size: 12px; }
     .engine-sub { font-size: 8.5px; }
-    .erow { font-size: 9px; }
+    .erow { font-size: 9.5px; }
+
+    /* Hide the click-hint on mobile — cursor on tap is enough */
+    .hint { display: none; }
   }
 </style>
 </head>
@@ -419,6 +459,28 @@ var hint = document.getElementById('hint');
 var sourcesVal = document.getElementById('sourcesVal');
 var edgesVal = document.getElementById('edgesVal');
 var statusVal = document.getElementById('statusVal');
+
+// SVG path geometry per layout. Desktop: horizontal flow left→right.
+// Mobile: vertical flow top→down with nodes across the top and engine at bottom.
+var DESKTOP_PATHS = [
+  'M 15 12.5 C 38 12.5, 55 50, 67 50',
+  'M 15 37.5 C 38 37.5, 55 50, 67 50',
+  'M 15 62.5 C 38 62.5, 55 50, 67 50',
+  'M 15 87.5 C 38 87.5, 55 50, 67 50'
+];
+var MOBILE_PATHS = [
+  'M 12.5 10 C 12.5 45, 50 60, 50 82',
+  'M 37.5 10 C 37.5 45, 50 60, 50 82',
+  'M 62.5 10 C 62.5 45, 50 60, 50 82',
+  'M 87.5 10 C 87.5 45, 50 60, 50 82'
+];
+function updateSvgPaths() {
+  var isMobile = window.matchMedia('(max-aspect-ratio: 1/1)').matches;
+  var d = isMobile ? MOBILE_PATHS : DESKTOP_PATHS;
+  for (var i = 0; i < paths.length; i++) {
+    paths[i].setAttribute('d', d[i]);
+  }
+}
 
 // Each source contributes some edges to the knowledge graph (totals to 1,829)
 var EDGES_PER_SOURCE = [812, 354, 226, 437];
@@ -538,9 +600,11 @@ async function initialReveal() {
 }
 
 window.addEventListener('load', function() {
+  updateSvgPaths();
   attachInteractions();
   setTimeout(initialReveal, 200);
 });
+window.addEventListener('resize', updateSvgPaths);
 </script>
 </body>
 </html>
