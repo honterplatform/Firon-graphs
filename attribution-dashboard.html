@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unified Attribution Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0F0F0F;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #fff;
+  }
+  .card {
+    width: 100%;
+    height: 100%;
+    background: #0F0F0F;
+    padding: clamp(12px, 2vh, 18px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1.2vh, 11px);
+    overflow: hidden;
+  }
+
+  /* --- Top bar --- */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .tb-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+  .tb-title {
+    font-size: clamp(13px, 1.7vh, 15px);
+    font-weight: 700;
+    color: rgba(255,255,255,0.92);
+    letter-spacing: -0.1px;
+  }
+  .tb-sub {
+    font-size: 10px;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .tb-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .range-chip {
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.6);
+    background: #141414;
+    border: 1px solid #232323;
+    padding: 4px 9px;
+    border-radius: 4px;
+    font-family: ui-monospace, monospace;
+  }
+  .live-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #FB3B24;
+    background: rgba(251,59,36,0.08);
+    border: 1px solid rgba(251,59,36,0.3);
+    padding: 4px 9px;
+    border-radius: 4px;
+  }
+  .live-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #FB3B24;
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% {opacity:1;} 50% {opacity:0.4;} }
+
+  /* --- KPI row --- */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(6px, 1vw, 10px);
+    flex-shrink: 0;
+  }
+  .kpi {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(9px, 1.3vh, 12px) clamp(10px, 1.4vw, 13px);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .kpi.show { opacity: 1; transform: translateY(0); }
+  .kpi.hero {
+    background: linear-gradient(135deg, #141414 0%, rgba(251,59,36,0.06) 100%);
+    border-color: rgba(251,59,36,0.3);
+  }
+  .kpi-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .kpi-value {
+    font-size: clamp(16px, 2.4vh, 22px);
+    font-weight: 800;
+    color: rgba(255,255,255,0.95);
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, monospace;
+    line-height: 1.05;
+    letter-spacing: -0.4px;
+  }
+  .kpi.hero .kpi-value { color: #FB3B24; }
+  .kpi-delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #4BC882;
+    margin-top: 2px;
+  }
+  .kpi-delta::before { content: '↑'; }
+  .kpi-spark {
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 50%; height: 30%;
+    opacity: 0.6;
+    pointer-events: none;
+  }
+  .kpi { position: relative; overflow: hidden; }
+
+  /* --- Main row: chart + side panel --- */
+  .main {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 2.2fr 1fr;
+    gap: clamp(8px, 1.2vw, 12px);
+  }
+
+  .chart-panel,
+  .table-panel {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: clamp(9px, 1.3vh, 12px) clamp(10px, 1.4vw, 13px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 1vh, 9px);
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .chart-panel.show, .table-panel.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-shrink: 0;
+  }
+  .panel-h-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+  }
+  .panel-h-meta {
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: ui-monospace, monospace;
+  }
+
+  /* --- Legend --- */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(8px, 1.4vw, 14px);
+    flex-shrink: 0;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.7);
+  }
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+  }
+  .legend-dot.geo { background: #FB3B24; box-shadow: 0 0 6px rgba(251,59,36,0.5); }
+  .legend-dot.paid-search { background: #5C8CE6; }
+  .legend-dot.paid-social { background: #B478DC; }
+  .legend-dot.organic { background: #4BC882; }
+
+  /* --- Chart canvas --- */
+  .chart-area {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+  }
+  .chart-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .grid-line {
+    stroke: #1A1A1A;
+    stroke-width: 1;
+    stroke-dasharray: 3 4;
+  }
+  .axis-label {
+    fill: #555;
+    font-size: 9px;
+    font-family: ui-monospace, monospace;
+    font-weight: 600;
+  }
+  .series-line {
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .series-area {
+    opacity: 0.18;
+  }
+  .series-line.geo { stroke: #FB3B24; filter: drop-shadow(0 0 4px rgba(251,59,36,0.3)); }
+  .series-line.paid-search { stroke: #5C8CE6; opacity: 0.85; }
+  .series-line.paid-social { stroke: #B478DC; opacity: 0.85; }
+  .series-line.organic { stroke: #4BC882; opacity: 0.85; }
+  .series-area.geo { fill: #FB3B24; }
+  .end-dot {
+    fill: #FB3B24;
+  }
+  .end-pulse {
+    fill: none;
+    stroke: #FB3B24;
+    stroke-width: 1;
+    opacity: 0.6;
+  }
+
+  /* --- Table panel: channel breakdown --- */
+  .table-rows {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    overflow: hidden;
+  }
+  .trow {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 7px;
+    background: #0D0D0D;
+    border: 1px solid #1E1E1E;
+    border-radius: 5px;
+    transition: border-color 0.4s, background 0.4s;
+  }
+  .trow.geo {
+    border-color: rgba(251,59,36,0.4);
+    background: linear-gradient(135deg, #0D0D0D 0%, rgba(251,59,36,0.04) 100%);
+  }
+  .tr-mark {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .tr-mark.geo { background: #FB3B24; box-shadow: 0 0 6px rgba(251,59,36,0.5); }
+  .tr-mark.paid-search { background: #5C8CE6; }
+  .tr-mark.paid-social { background: #B478DC; }
+  .tr-mark.organic { background: #4BC882; }
+  .tr-mark.direct { background: rgba(255,255,255,0.4); }
+  .tr-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+  .tr-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.88);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .trow.geo .tr-name { color: #fff; }
+  .tr-meta {
+    font-size: 9px;
+    font-weight: 600;
+    color: #555;
+    font-family: ui-monospace, monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tr-val {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+    flex-shrink: 0;
+  }
+  .tr-num {
+    font-size: 11.5px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.9);
+    font-family: ui-monospace, monospace;
+    line-height: 1;
+  }
+  .trow.geo .tr-num { color: #FB3B24; }
+  .tr-pct {
+    font-size: 9px;
+    font-weight: 700;
+    color: #4BC882;
+    font-family: ui-monospace, monospace;
+  }
+  .tr-pct.down { color: #FB3B24; }
+
+  /* === MOBILE === */
+  @media (max-aspect-ratio: 1/1) {
+    .card { padding: 10px; gap: 7px; }
+    .tb-title { font-size: 12.5px; }
+    .tb-sub { font-size: 8.5px; }
+    .range-chip, .live-pill { font-size: 8.5px; padding: 3px 7px; }
+    .kpi-row { grid-template-columns: repeat(2, 1fr); gap: 5px; }
+    .kpi { padding: 7px 9px; }
+    .kpi-label { font-size: 8.5px; }
+    .kpi-value { font-size: 15px; }
+    .kpi-delta { font-size: 9px; }
+    .main {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1.4fr 1fr;
+      gap: 6px;
+    }
+    .chart-panel, .table-panel { padding: 8px 9px; gap: 5px; }
+    .panel-h-title { font-size: 10px; }
+    .panel-h-meta { font-size: 8.5px; }
+    .legend-item { font-size: 9px; }
+    .legend-dot { width: 7px; height: 7px; }
+    .trow { padding: 5px 6px; gap: 7px; }
+    .tr-name { font-size: 10px; }
+    .tr-meta { font-size: 8.5px; }
+    .tr-num { font-size: 10.5px; }
+    .tr-pct { font-size: 8.5px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="tb-title-group">
+      <div class="tb-title">Unified Attribution · Live</div>
+      <div class="tb-sub">All channels · single source of truth</div>
+    </div>
+    <div class="tb-right">
+      <div class="range-chip">Last 30 days</div>
+      <div class="live-pill"><span class="live-dot"></span>Synced</div>
+    </div>
+  </div>
+
+  <!-- KPI row -->
+  <div class="kpi-row">
+    <div class="kpi hero" data-i="0">
+      <div class="kpi-label">GEO / AI revenue</div>
+      <div class="kpi-value" id="kpi0">£487K</div>
+      <div class="kpi-delta">142% YoY</div>
+    </div>
+    <div class="kpi" data-i="1">
+      <div class="kpi-label">Total revenue</div>
+      <div class="kpi-value" id="kpi1">£2.14M</div>
+      <div class="kpi-delta">38% YoY</div>
+    </div>
+    <div class="kpi" data-i="2">
+      <div class="kpi-label">LLM citations</div>
+      <div class="kpi-value" id="kpi2">14,287</div>
+      <div class="kpi-delta">68% MoM</div>
+    </div>
+    <div class="kpi" data-i="3">
+      <div class="kpi-label">Blended ROAS</div>
+      <div class="kpi-value" id="kpi3">4.6x</div>
+      <div class="kpi-delta">0.8 pt</div>
+    </div>
+  </div>
+
+  <!-- Main row -->
+  <div class="main">
+    <!-- Chart panel -->
+    <div class="chart-panel" id="chartPanel">
+      <div class="panel-head">
+        <div class="panel-h-title">Revenue by channel · 30-day trend</div>
+        <div class="panel-h-meta">£ thousands</div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot geo"></div>GEO / AI</div>
+        <div class="legend-item"><div class="legend-dot paid-search"></div>Paid Search</div>
+        <div class="legend-item"><div class="legend-dot paid-social"></div>Paid Social</div>
+        <div class="legend-item"><div class="legend-dot organic"></div>Organic</div>
+      </div>
+      <div class="chart-area">
+        <svg class="chart-svg" id="chartSvg" preserveAspectRatio="none"></svg>
+      </div>
+    </div>
+
+    <!-- Channel breakdown table -->
+    <div class="table-panel" id="tablePanel">
+      <div class="panel-head">
+        <div class="panel-h-title">Channel breakdown</div>
+        <div class="panel-h-meta">Last 30d</div>
+      </div>
+      <div class="table-rows">
+        <div class="trow geo">
+          <div class="tr-mark geo"></div>
+          <div class="tr-info">
+            <div class="tr-name">GEO / AI</div>
+            <div class="tr-meta">ChatGPT · PPLX · Claude · Gemini</div>
+          </div>
+          <div class="tr-val">
+            <div class="tr-num">£487K</div>
+            <div class="tr-pct">+142%</div>
+          </div>
+        </div>
+        <div class="trow">
+          <div class="tr-mark paid-search"></div>
+          <div class="tr-info">
+            <div class="tr-name">Paid Search</div>
+            <div class="tr-meta">Google · Bing</div>
+          </div>
+          <div class="tr-val">
+            <div class="tr-num">£612K</div>
+            <div class="tr-pct">+12%</div>
+          </div>
+        </div>
+        <div class="trow">
+          <div class="tr-mark paid-social"></div>
+          <div class="tr-info">
+            <div class="tr-name">Paid Social</div>
+            <div class="tr-meta">Meta · TikTok</div>
+          </div>
+          <div class="tr-val">
+            <div class="tr-num">£428K</div>
+            <div class="tr-pct">+8%</div>
+          </div>
+        </div>
+        <div class="trow">
+          <div class="tr-mark organic"></div>
+          <div class="tr-info">
+            <div class="tr-name">Organic</div>
+            <div class="tr-meta">SEO · referral</div>
+          </div>
+          <div class="tr-val">
+            <div class="tr-num">£392K</div>
+            <div class="tr-pct">+22%</div>
+          </div>
+        </div>
+        <div class="trow">
+          <div class="tr-mark direct"></div>
+          <div class="tr-info">
+            <div class="tr-name">Direct</div>
+            <div class="tr-meta">Brand · loyalty</div>
+          </div>
+          <div class="tr-val">
+            <div class="tr-num">£221K</div>
+            <div class="tr-pct">+4%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Generate 30 days of synthetic per-channel data
+function gen(seed, base, growth, noise) {
+  var data = [];
+  var v = base;
+  for (var i = 0; i < 30; i++) {
+    v += growth + (Math.sin(i * seed) * noise) + (Math.cos(i * seed * 0.7) * noise * 0.6);
+    data.push(Math.max(0, v));
+  }
+  return data;
+}
+
+var SERIES = [
+  { name: 'geo',          data: gen(0.7, 3, 0.6, 1.2) },   // rising fast
+  { name: 'paid-search',  data: gen(0.5, 18, 0.1, 1.8) },  // flat-ish
+  { name: 'paid-social',  data: gen(0.4, 13, 0.08, 1.6) }, // flat-ish
+  { name: 'organic',      data: gen(0.9, 10, 0.15, 1.4) }  // slow rise
+];
+
+function drawChart() {
+  var svg = document.getElementById('chartSvg');
+  if (!svg) return;
+  var rect = svg.getBoundingClientRect();
+  var W = rect.width, H = rect.height;
+  if (W < 5 || H < 5) return;
+
+  var padL = 28, padR = 8, padT = 8, padB = 18;
+  var iw = W - padL - padR;
+  var ih = H - padT - padB;
+
+  // Determine max across all series
+  var maxV = 0;
+  SERIES.forEach(function(s) {
+    s.data.forEach(function(v) { if (v > maxV) maxV = v; });
+  });
+  maxV = Math.ceil(maxV / 5) * 5;
+  if (maxV < 10) maxV = 10;
+
+  var n = SERIES[0].data.length;
+  var xs = [];
+  for (var i = 0; i < n; i++) xs.push(padL + (i / (n - 1)) * iw);
+
+  // Grid lines + y labels
+  var grid = '';
+  var ticks = [0, Math.round(maxV * 0.5), maxV];
+  ticks.forEach(function(t) {
+    var y = padT + ih - (t / maxV) * ih;
+    grid += '<line class="grid-line" x1="' + padL + '" x2="' + (W - padR) + '" y1="' + y + '" y2="' + y + '"/>';
+    grid += '<text class="axis-label" x="' + (padL - 5) + '" y="' + (y + 3) + '" text-anchor="end">£' + t + 'k</text>';
+  });
+
+  // X labels (Day 1, 15, 30)
+  [0, 14, 29].forEach(function(idx) {
+    var x = xs[idx];
+    var label = idx === 0 ? 'Day 1' : idx === 14 ? 'Day 15' : 'Day 30';
+    grid += '<text class="axis-label" x="' + x + '" y="' + (H - 4) + '" text-anchor="middle">' + label + '</text>';
+  });
+
+  // Series paths
+  var seriesSvg = '';
+  SERIES.forEach(function(s) {
+    var coords = s.data.map(function(v, i) {
+      return { x: xs[i], y: padT + ih - (v / maxV) * ih };
+    });
+    var d = '';
+    coords.forEach(function(c, i) {
+      if (i === 0) d += 'M ' + c.x.toFixed(1) + ' ' + c.y.toFixed(1);
+      else {
+        var prev = coords[i-1];
+        var mx = (prev.x + c.x) / 2;
+        d += ' Q ' + mx.toFixed(1) + ' ' + prev.y.toFixed(1) + ' ' + mx.toFixed(1) + ' ' + ((prev.y + c.y)/2).toFixed(1);
+        d += ' Q ' + mx.toFixed(1) + ' ' + c.y.toFixed(1) + ' ' + c.x.toFixed(1) + ' ' + c.y.toFixed(1);
+      }
+    });
+
+    // Area fill for GEO series
+    if (s.name === 'geo') {
+      var areaD = d + ' L ' + coords[coords.length-1].x.toFixed(1) + ' ' + (padT + ih).toFixed(1) +
+                  ' L ' + coords[0].x.toFixed(1) + ' ' + (padT + ih).toFixed(1) + ' Z';
+      seriesSvg += '<path class="series-area geo" d="' + areaD + '"/>';
+    }
+    seriesSvg += '<path class="series-line ' + s.name + '" d="' + d + '"/>';
+
+    if (s.name === 'geo') {
+      var last = coords[coords.length - 1];
+      seriesSvg += '<circle class="end-dot" cx="' + last.x.toFixed(1) + '" cy="' + last.y.toFixed(1) + '" r="3"/>';
+      seriesSvg +=
+        '<circle class="end-pulse" cx="' + last.x.toFixed(1) + '" cy="' + last.y.toFixed(1) + '" r="5">' +
+        '<animate attributeName="r" values="4;9;4" dur="2s" repeatCount="indefinite"/>' +
+        '<animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite"/>' +
+        '</circle>';
+    }
+  });
+
+  svg.innerHTML = grid + seriesSvg;
+}
+
+function sleep(ms) { return new Promise(function(r){ setTimeout(r, ms); }); }
+
+async function reveal() {
+  var kpis = document.querySelectorAll('.kpi');
+  for (var i = 0; i < kpis.length; i++) {
+    kpis[i].classList.add('show');
+    await sleep(120);
+  }
+  await sleep(150);
+  document.getElementById('chartPanel').classList.add('show');
+  document.getElementById('tablePanel').classList.add('show');
+  await sleep(180);
+  drawChart();
+}
+
+window.addEventListener('load', function() {
+  setTimeout(reveal, 150);
+});
+window.addEventListener('resize', function() {
+  setTimeout(drawChart, 60);
+});
+</script>
+</body>
+</html>
