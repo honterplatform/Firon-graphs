@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hero Scan · 60-Second GEO Audit</title>
+<title>Hero Scan · GEO Demo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -23,433 +23,383 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 8px;
+    padding: 10px;
   }
 
-  /* The only surface: F2F2F2 container */
-  .scan-card {
+  /* The shell: no fill, dashed hairline */
+  .shell {
     width: 100%;
-    max-width: 460px;
-    background: #F2F2F2;
-    border: 1px solid rgba(0,0,0,0.08);
-    border-radius: 12px;
-    padding: 20px;
-  }
-
-  .sr-only {
-    position: absolute;
-    width: 1px; height: 1px;
-    clip: rect(0 0 0 0);
-    overflow: hidden;
-    white-space: nowrap;
-  }
-
-  /* --- Input row --- */
-  .input-row { display: flex; gap: 8px; }
-  .input-wrap { position: relative; flex: 1; min-width: 0; }
-  #urlInput {
-    width: 100%;
-    height: 44px;
-    border: 1px solid rgba(0,0,0,0.08);
+    max-width: 640px;
+    background: transparent;
+    border: 1.5px dashed #BABABA;
     border-radius: 8px;
-    padding: 0 14px;
-    font-family: 'Geist', sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    color: #000;
-    background: #FFFFFF;
-    outline: none;
-    caret-color: #000;
-  }
-  #urlInput::placeholder { color: rgba(0,0,0,0.35); font-weight: 400; }
-  #urlInput:focus-visible { outline: 2px solid #2540FF; outline-offset: 2px; }
-  .fake-caret {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 1.5px;
-    height: 16px;
-    background: #000;
-    left: 15px;
-    pointer-events: none;
-    opacity: 0;
-  }
-  .fake-caret.on { animation: blink 1.06s steps(1) infinite; }
-  @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
-  .mirror {
-    position: absolute;
-    visibility: hidden;
-    white-space: pre;
-    font-family: 'Geist', sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-  }
-  .scan-btn {
-    height: 44px;
-    padding: 0 20px;
-    background: #000;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    font-family: 'Geist', sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: opacity 0.2s ease;
-  }
-  .scan-btn:focus-visible { outline: 2px solid #2540FF; outline-offset: 2px; }
-  .scan-btn.pulse { animation: btnPulse 0.28s ease; }
-  @keyframes btnPulse { 0% { transform: scale(1); } 45% { transform: scale(0.955); } 100% { transform: scale(1); } }
-  .scan-btn.busy { opacity: 0.62; }
-
-  /* --- Engine tabs --- */
-  .tabs {
     display: flex;
-    gap: 6px;
-    margin-top: 12px;
+    flex-direction: column;
+    overflow: hidden;
   }
+
+  /* === Top bar: engine tabs (model picker) === */
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px dashed #BABABA;
+  }
+  .tabs { display: flex; gap: 6px; }
   .tab {
-    flex: 1;
     display: inline-flex;
     align-items: center;
-    justify-content: center;
     gap: 7px;
-    height: 38px;
-    padding: 0 10px;
-    background: #FFFFFF;
-    border: 1px solid rgba(0,0,0,0.08);
-    border-radius: 999px;
+    height: 34px;
+    padding: 0 13px;
+    background: #F2F2F2;
+    border: 1px solid transparent;
+    border-radius: 6px;
     font-family: 'Geist', sans-serif;
     font-size: 12.5px;
     font-weight: 500;
     letter-spacing: -0.01em;
-    color: #000;
+    color: rgba(0,0,0,0.45);
     cursor: pointer;
-    opacity: 0.45;
-    transition: opacity 0.25s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-    min-width: 0;
+    transition: color 0.18s ease, border-color 0.18s ease;
     white-space: nowrap;
   }
-  .tab:focus-visible { outline: 2px solid #2540FF; outline-offset: 2px; }
-  .tabs.ready .tab { opacity: 1; }
-  .tabs.scanning .tab { opacity: 1; cursor: default; }
-  .tab[aria-selected="true"] {
-    background: #000;
-    color: #fff;
-    border-color: #000;
-  }
-  .tab .logo { width: 15px; height: 15px; flex-shrink: 0; }
+  .tab .logo { width: 14px; height: 14px; flex-shrink: 0; opacity: 0.55; transition: opacity 0.18s ease; }
   .tab .logo path { fill: currentColor; }
-  .tab .state {
-    width: 12px; height: 12px;
-    position: relative;
-    flex-shrink: 0;
-    display: none;
+  .tab[aria-selected="true"] {
+    color: #000;
+    border-color: #2540FF;
   }
-  .tabs.scanning .tab .state, .tab.done .state { display: inline-block; }
-  .tab .spinner {
-    position: absolute; inset: 0;
-    border: 1.5px solid rgba(0,0,0,0.15);
-    border-top-color: #2540FF;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-  }
-  .tab[aria-selected="true"] .spinner { border-color: rgba(255,255,255,0.25); border-top-color: #fff; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .tab .check { position: absolute; inset: 0; display: none; }
-  .tab.done .spinner { display: none; }
-  .tab.done .check { display: block; }
+  .tab[aria-selected="true"] .logo { opacity: 1; }
+  .tab:hover { color: #000; }
+  .tab:hover .logo { opacity: 1; }
+  .tab:focus-visible { outline: 2px solid #2540FF; outline-offset: 2px; }
 
-  /* --- Response surface --- */
-  .response {
-    margin-top: 12px;
-    background: #FFFFFF;
-    border: 1px solid rgba(0,0,0,0.08);
-    border-radius: 10px;
-    padding: 16px;
-    position: relative;
-    overflow: hidden;
-  }
-  .pbar {
-    position: absolute;
-    top: 0; left: 0;
-    height: 2px;
-    width: 0%;
-    background: #2540FF;
-    opacity: 0;
-  }
-  .pbar.on { opacity: 1; width: 100%; transition: width 1.9s linear; }
-  .pbar.off { opacity: 0; transition: opacity 0.4s ease; }
-
-  .query {
+  .bar-tag {
     font-family: 'Geist Mono', ui-monospace, monospace;
-    font-size: 13px;
+    font-size: 10.5px;
     font-weight: 400;
-    color: rgba(0,0,0,0.55);
+    color: rgba(0,0,0,0.4);
     letter-spacing: 0;
-    min-height: 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
   }
-  .qcaret {
-    display: inline-block;
-    width: 7px; height: 13px;
-    background: rgba(0,0,0,0.4);
+  .bar-tag .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #2540FF;
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% {opacity:1;} 50% {opacity:0.35;} }
+
+  /* === Conversation === */
+  .convo {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .u-row {
+    display: flex;
+    justify-content: flex-end;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .u-row.on { opacity: 1; transform: translateY(0); }
+  .u-bubble {
+    background: #F2F2F2;
+    border-radius: 6px;
+    padding: 9px 13px;
+    font-size: 14px;
+    font-weight: 500;
+    max-width: 75%;
+  }
+
+  .a-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .avatar {
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    background: #F2F2F2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .avatar svg { width: 14px; height: 14px; display: none; }
+  .avatar svg.on { display: block; }
+  .avatar svg path { fill: #000; }
+
+  .a-body { flex: 1; min-width: 0; }
+
+  .thinking {
+    display: none;
+    gap: 4px;
+    padding: 6px 0;
+  }
+  .thinking.on { display: inline-flex; }
+  .thinking span {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.3);
+    animation: think 1s ease-in-out infinite;
+  }
+  .thinking span:nth-child(2) { animation-delay: 0.14s; }
+  .thinking span:nth-child(3) { animation-delay: 0.28s; }
+  @keyframes think {
+    0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
+    30% { opacity: 1; transform: translateY(-2px); }
+  }
+
+  .a-text {
+    font-size: 14.5px;
+    font-weight: 400;
+    line-height: 1.55;
+    color: #000;
+    min-height: 68px;
+  }
+  .a-text strong { font-weight: 600; color: #2540FF; }
+  .cursor {
+    display: none;
+    width: 7px; height: 15px;
+    background: rgba(0,0,0,0.75);
     vertical-align: -2px;
     margin-left: 2px;
   }
-  .qcaret.on { animation: blink 1.06s steps(1) infinite; }
-  .qcaret.hidden { display: none; }
+  .cursor.on { display: inline-block; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
 
-  .answer {
-    margin-top: 10px;
-    font-size: 14.5px;
-    font-weight: 500;
-    line-height: 1.5;
-    color: #000;
-    min-height: 66px;
-  }
-  .answer strong { font-weight: 600; color: #2540FF; }
-
-  .divider {
-    height: 1px;
-    background: rgba(0,0,0,0.08);
-    margin: 13px 0;
-  }
-
-  /* --- Share of voice block --- */
-  .sov { opacity: 0; transition: opacity 0.35s ease; }
-  .sov.on { opacity: 1; }
-  .sov-head {
+  /* Receipt: share of voice */
+  .receipt {
+    margin-top: 12px;
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 8px;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    opacity: 0;
+    transition: opacity 0.35s ease;
   }
-  .sov-label {
-    font-size: 11px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: rgba(0,0,0,0.55);
-  }
-  .sov-pct {
-    font-family: 'Geist Mono', ui-monospace, monospace;
-    font-size: 20px;
-    font-weight: 500;
-    color: #2540FF;
-    letter-spacing: -0.02em;
-  }
-  .sov-pct .arrow { font-family: 'Geist', sans-serif; font-size: 14px; }
+  .receipt.on { opacity: 1; }
   .meter {
-    margin-top: 9px;
     display: flex;
     gap: 3px;
-    height: 8px;
+    width: 84px;
+    height: 6px;
+    flex-shrink: 0;
   }
   .seg {
     height: 100%;
-    border-radius: 999px;
-    transition: width 0.55s cubic-bezier(.3,.7,.3,1), transform 0.15s ease;
-    cursor: default;
+    border-radius: 2px;
+    transition: width 0.5s cubic-bezier(.3,.7,.3,1), transform 0.15s ease;
   }
   .seg.you { background: #2540FF; }
-  .seg.a { background: rgba(0,0,0,0.28); }
+  .seg.a { background: rgba(0,0,0,0.3); }
   .seg.b { background: rgba(0,0,0,0.13); }
-  .seg.hot { transform: scaleY(1.5); }
-  .legend {
-    margin-top: 9px;
-    display: flex;
-    gap: 14px;
+  .seg.hot { transform: scaleY(1.6); }
+  .pct {
     font-family: 'Geist Mono', ui-monospace, monospace;
-    font-size: 10.5px;
-    color: rgba(0,0,0,0.55);
+    font-size: 13px;
+    font-weight: 500;
+    color: #2540FF;
     letter-spacing: 0;
-  }
-  .lg {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    transition: color 0.15s ease;
-    cursor: default;
     white-space: nowrap;
   }
-  .lg .dot { width: 7px; height: 7px; border-radius: 2px; flex-shrink: 0; }
-  .lg.you .dot { background: #2540FF; }
-  .lg.a .dot { background: rgba(0,0,0,0.28); }
-  .lg.b .dot { background: rgba(0,0,0,0.13); }
-  .lg.hot { color: #000; }
-  .lg.you { color: #2540FF; }
-
-  /* --- Footer hint --- */
-  .foot {
-    margin-top: 12px;
+  .meta {
     font-family: 'Geist Mono', ui-monospace, monospace;
-    font-size: 10.5px;
-    color: rgba(0,0,0,0.4);
+    font-size: 11px;
+    font-weight: 400;
+    color: rgba(0,0,0,0.45);
     letter-spacing: 0;
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
+    white-space: nowrap;
   }
-  .foot .hint { color: rgba(0,0,0,0.55); opacity: 0; transition: opacity 0.4s ease; }
-  .foot .hint.on { opacity: 1; }
+  .meta .mk { transition: color 0.15s ease; }
+  .meta .mk.hot { color: #000; }
 
-  /* --- Loop fade --- */
-  .scan-card.resetting .response,
-  .scan-card.resetting .tabs,
-  .scan-card.resetting .foot .hint {
+  /* === Composer (display only) === */
+  .composer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 18px 18px;
+    background: #F2F2F2;
+    border-radius: 8px;
+    padding: 12px 8px 12px 15px;
+    pointer-events: none;
+  }
+  .c-field {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+  }
+  .c-ph { color: rgba(0,0,0,0.35); font-weight: 400; }
+  .c-ph.hidden { display: none; }
+  .c-caret {
+    width: 1.5px; height: 16px;
+    background: #000;
+    margin-left: 1px;
+    flex-shrink: 0;
+    opacity: 0;
+  }
+  .c-caret.on { animation: blink 1.06s steps(1) infinite; }
+  .send {
+    width: 34px; height: 34px;
+    border-radius: 6px;
+    background: #2540FF;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.15s ease, opacity 0.2s ease;
+    opacity: 0.5;
+  }
+  .send.ready { opacity: 1; }
+  .send.pulse { animation: sendPulse 0.3s ease; }
+  @keyframes sendPulse {
+    0% { transform: scale(1); }
+    45% { transform: scale(0.88); }
+    100% { transform: scale(1); }
+  }
+  .send svg { width: 15px; height: 15px; }
+
+  /* Loop fade */
+  .shell.resetting .convo,
+  .shell.resetting .composer {
     opacity: 0;
     transition: opacity 0.4s ease;
   }
 
-  @media (max-width: 480px) {
-    .scan-card { padding: 16px; }
-    .scan-btn { padding: 0 16px; }
-    .tab { font-size: 11.5px; gap: 5px; padding: 0 6px; }
-    .answer { font-size: 13.5px; min-height: 82px; }
-    .legend { gap: 10px; font-size: 10px; }
+  @media (max-width: 520px) {
+    .bar { padding: 10px 12px; }
+    .bar-tag { display: none; }
+    .tab { padding: 0 10px; font-size: 11.5px; height: 32px; }
+    .convo { padding: 14px; gap: 11px; }
+    .a-text { font-size: 13.5px; min-height: 84px; }
+    .u-bubble { font-size: 13px; max-width: 88%; }
+    .composer { margin: 0 14px 14px; }
+    .meta { white-space: normal; }
   }
 </style>
 </head>
 <body>
 <main class="stage">
-  <div class="scan-card" id="card">
-    <label class="sr-only" for="urlInput">Your store URL</label>
-    <div class="input-row">
-      <div class="input-wrap">
-        <input id="urlInput" type="text" placeholder="yourbrand.com" autocomplete="off" spellcheck="false" inputmode="url">
-        <span class="fake-caret" id="fakeCaret" aria-hidden="true"></span>
-        <span class="mirror" id="mirror" aria-hidden="true"></span>
+  <section class="shell" id="card">
+    <!-- Top bar: model picker -->
+    <header class="bar">
+      <div class="tabs" role="tablist" aria-label="AI engines">
+        <button class="tab" id="tab0" role="tab" aria-selected="true" aria-controls="convo">
+          <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg>
+          <span>ChatGPT</span>
+        </button>
+        <button class="tab" id="tab1" role="tab" aria-selected="false" aria-controls="convo">
+          <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 24A14.304 14.304 0 0 0 0 12 14.304 14.304 0 0 0 12 0a14.305 14.305 0 0 0 12 12 14.305 14.305 0 0 0-12 12"/></svg>
+          <span>Gemini</span>
+        </button>
+        <button class="tab" id="tab2" role="tab" aria-selected="false" aria-controls="convo">
+          <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.785 0v7.272H22.5V17.62h-2.935V24l-7.037-6.194v6.145h-1.091v-6.152L4.399 24v-6.465H1.5V7.188h2.808V0l7.129 6.135V.11h1.091v6.036L19.785 0Zm-7.257 9.044v7.319l5.946 5.234V14.44l-5.946-5.397Zm-1.099-.03-5.946 5.398v7.174l5.946-5.234V9.015ZM2.59 8.28v8.264h1.809v-4.489l4.11-3.775H2.59Zm13.652 0 4.11 3.775v4.489h1.057V8.28h-5.167ZM5.49 2.476v4.796h5.29L5.49 2.476Zm13.204 0L13.42 7.272h5.274V2.476Z"/></svg>
+          <span>Perplexity</span>
+        </button>
       </div>
-      <button class="scan-btn" id="scanBtn" type="button">Scan</button>
-    </div>
+      <span class="bar-tag"><span class="dot"></span>live scan</span>
+    </header>
 
-    <div class="tabs" id="tabs" role="tablist" aria-label="AI engines">
-      <button class="tab" id="tab0" role="tab" aria-selected="false" aria-controls="panel">
-        <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg>
-        <span>ChatGPT</span>
-        <span class="state" aria-hidden="true">
-          <span class="spinner"></span>
-          <svg class="check" viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2 5 8.7l4.5-5" stroke="#2540FF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </span>
-      </button>
-      <button class="tab" id="tab1" role="tab" aria-selected="false" aria-controls="panel">
-        <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 24A14.304 14.304 0 0 0 0 12 14.304 14.304 0 0 0 12 0a14.305 14.305 0 0 0 12 12 14.305 14.305 0 0 0-12 12"/></svg>
-        <span>Gemini</span>
-        <span class="state" aria-hidden="true">
-          <span class="spinner"></span>
-          <svg class="check" viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2 5 8.7l4.5-5" stroke="#2540FF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </span>
-      </button>
-      <button class="tab" id="tab2" role="tab" aria-selected="false" aria-controls="panel">
-        <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.785 0v7.272H22.5V17.62h-2.935V24l-7.037-6.194v6.145h-1.091v-6.152L4.399 24v-6.465H1.5V7.188h2.808V0l7.129 6.135V.11h1.091v6.036L19.785 0Zm-7.257 9.044v7.319l5.946 5.234V14.44l-5.946-5.397Zm-1.099-.03-5.946 5.398v7.174l5.946-5.234V9.015ZM2.59 8.28v8.264h1.809v-4.489l4.11-3.775H2.59Zm13.652 0 4.11 3.775v4.489h1.057V8.28h-5.167ZM5.49 2.476v4.796h5.29L5.49 2.476Zm13.204 0L13.42 7.272h5.274V2.476Z"/></svg>
-        <span>Perplexity</span>
-        <span class="state" aria-hidden="true">
-          <span class="spinner"></span>
-          <svg class="check" viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2 5 8.7l4.5-5" stroke="#2540FF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </span>
-      </button>
-    </div>
-
-    <div class="response" id="panel" role="tabpanel" aria-live="polite">
-      <div class="pbar" id="pbar"></div>
-      <div class="query">
-        <span id="queryText">&gt; </span><span class="qcaret on" id="qcaret"></span>
+    <!-- Conversation -->
+    <div class="convo" id="convo" aria-live="polite">
+      <div class="u-row" id="uRow">
+        <div class="u-bubble">Best clean protein subscription?</div>
       </div>
-      <div class="answer" id="answer"><span id="aPre"></span><strong id="aBrand"></strong><span id="aPost"></span></div>
-      <div class="divider"></div>
-      <div class="sov" id="sov">
-        <div class="sov-head">
-          <div class="sov-label">AI Share of Voice</div>
-          <div class="sov-pct"><span class="arrow">&#8599;</span> <span id="sovPct">0</span>%</div>
+      <div class="a-row">
+        <div class="avatar" id="avatar">
+          <svg viewBox="0 0 24 24" data-m="0" class="on" aria-hidden="true"><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg>
+          <svg viewBox="0 0 24 24" data-m="1" aria-hidden="true"><path d="M12 24A14.304 14.304 0 0 0 0 12 14.304 14.304 0 0 0 12 0a14.305 14.305 0 0 0 12 12 14.305 14.305 0 0 0-12 12"/></svg>
+          <svg viewBox="0 0 24 24" data-m="2" aria-hidden="true"><path d="M19.785 0v7.272H22.5V17.62h-2.935V24l-7.037-6.194v6.145h-1.091v-6.152L4.399 24v-6.465H1.5V7.188h2.808V0l7.129 6.135V.11h1.091v6.036L19.785 0Zm-7.257 9.044v7.319l5.946 5.234V14.44l-5.946-5.397Zm-1.099-.03-5.946 5.398v7.174l5.946-5.234V9.015ZM2.59 8.28v8.264h1.809v-4.489l4.11-3.775H2.59Zm13.652 0 4.11 3.775v4.489h1.057V8.28h-5.167ZM5.49 2.476v4.796h5.29L5.49 2.476Zm13.204 0L13.42 7.272h5.274V2.476Z"/></svg>
         </div>
-        <div class="meter" id="meter">
-          <div class="seg you" data-k="0" style="width:34%"></div>
-          <div class="seg a" data-k="1" style="width:33%"></div>
-          <div class="seg b" data-k="2" style="width:33%"></div>
-        </div>
-        <div class="legend" id="legend">
-          <span class="lg you" data-k="0"><span class="dot"></span><span id="lgYou">You 0%</span></span>
-          <span class="lg a" data-k="1"><span class="dot"></span><span id="lgA">Comp A 0%</span></span>
-          <span class="lg b" data-k="2"><span class="dot"></span><span id="lgB">Comp B 0%</span></span>
+        <div class="a-body">
+          <div class="thinking" id="thinking"><span></span><span></span><span></span></div>
+          <div class="a-text" id="aText"><span id="aPre"></span><strong id="aBrand"></strong><span id="aPost"></span><span class="cursor" id="cursor"></span></div>
+          <div class="receipt" id="receipt">
+            <div class="meter">
+              <div class="seg you" data-k="0" style="width:68%"></div>
+              <div class="seg a" data-k="1" style="width:21%"></div>
+              <div class="seg b" data-k="2" style="width:11%"></div>
+            </div>
+            <span class="pct">&#8599; <span id="pctVal">68</span>%</span>
+            <span class="meta"><span class="mk" data-k="0" id="mkYou">You 68%</span> &#183; <span class="mk" data-k="1" id="mkA">Comp A 21%</span> &#183; <span class="mk" data-k="2" id="mkB">Comp B 11%</span></span>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="foot">
-      <span>42 prompts &#183; 3 engines &#183; hourly</span>
-      <span class="hint" id="hint">tap an engine to compare &#8594;</span>
-    </div>
-  </div>
+    <!-- Composer: display-only -->
+    <footer class="composer" aria-hidden="true">
+      <div class="c-field">
+        <span id="cText"></span>
+        <span class="c-caret" id="cCaret"></span>
+        <span class="c-ph" id="cPh">Ask anything&#8230;</span>
+      </div>
+      <div class="send" id="send">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </footer>
+  </section>
 </main>
 
 <script>
 (function () {
-  var DEFAULT_URL = 'vitalblend.com';
-  var QUERY = 'Best clean protein subscription?';
+  var QUESTION = 'Best clean protein subscription?';
+  var BRAND = 'VitalBlend';
   var CANCEL = {};
 
   var MODELS = [
-    { name: 'ChatGPT',
-      answer: '1. {b} — the one I’d recommend for clean sourcing and transparent labels.',
+    { answer: 'I’d go with {b} — third-party tested, transparent labels, and sourcing you can trace to the farm. Competitor A and Competitor B trail on all three.',
       sov: 68, a: 21, b: 11 },
-    { name: 'Gemini',
-      answer: '{b} stands out for third-party testing and traceable ingredients — the strongest option in this category.',
+    { answer: '{b} leads this category: verified sourcing and the only subscription with full label transparency. Runners-up: Competitor A, then Competitor B.',
       sov: 54, a: 29, b: 17 },
-    { name: 'Perplexity',
-      answer: 'Top result: {b} [1] — cited across 12 sources for label transparency and verified sourcing.',
+    { answer: 'Top result: {b} [1][3] — cited across 12 sources for label transparency and verified sourcing. Competitor A [2] follows at a distance.',
       sov: 61, a: 24, b: 15 }
   ];
 
   var card = document.getElementById('card');
-  var input = document.getElementById('urlInput');
-  var fakeCaret = document.getElementById('fakeCaret');
-  var mirror = document.getElementById('mirror');
-  var btn = document.getElementById('scanBtn');
-  var tabsEl = document.getElementById('tabs');
   var tabs = [document.getElementById('tab0'), document.getElementById('tab1'), document.getElementById('tab2')];
-  var pbar = document.getElementById('pbar');
-  var queryText = document.getElementById('queryText');
-  var qcaret = document.getElementById('qcaret');
+  var avatarSvgs = document.querySelectorAll('#avatar svg');
+  var uRow = document.getElementById('uRow');
+  var thinking = document.getElementById('thinking');
   var aPre = document.getElementById('aPre');
   var aBrand = document.getElementById('aBrand');
   var aPost = document.getElementById('aPost');
-  var sov = document.getElementById('sov');
-  var sovPct = document.getElementById('sovPct');
-  var meterSegs = document.querySelectorAll('#meter .seg');
-  var legendEls = document.querySelectorAll('#legend .lg');
-  var lgYou = document.getElementById('lgYou');
-  var lgA = document.getElementById('lgA');
-  var lgB = document.getElementById('lgB');
-  var hint = document.getElementById('hint');
+  var cursor = document.getElementById('cursor');
+  var receipt = document.getElementById('receipt');
+  var pctVal = document.getElementById('pctVal');
+  var segs = document.querySelectorAll('.meter .seg');
+  var mkYou = document.getElementById('mkYou');
+  var mkA = document.getElementById('mkA');
+  var mkB = document.getElementById('mkB');
+  var cText = document.getElementById('cText');
+  var cCaret = document.getElementById('cCaret');
+  var cPh = document.getElementById('cPh');
+  var send = document.getElementById('send');
 
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var gen = 0;
   var paused = false;
-  var scanned = false;
-  var brand = 'VitalBlend';
   var idleTimer = null;
 
-  function deriveBrand(url) {
-    var d = (url || '').trim().toLowerCase()
-      .replace(/^https?:\/\//, '').replace(/^www\./, '')
-      .split('/')[0].split('.')[0];
-    if (!d) return 'YourBrand';
-    return d.split(/[-_]+/).map(function (w) {
-      return w ? w.charAt(0).toUpperCase() + w.slice(1) : '';
-    }).join('');
-  }
-
-  function positionCaret() {
-    mirror.textContent = input.value;
-    var w = mirror.getBoundingClientRect().width;
-    fakeCaret.style.left = (15 + Math.min(w, input.clientWidth - 30)) + 'px';
-  }
-
-  /* --- cancellable, pausable sleep + typing --- */
+  /* --- pausable, cancellable timing --- */
   function tSleep(ms, g) {
     return new Promise(function (resolve, reject) {
       var acc = 0, last = performance.now();
@@ -464,7 +414,7 @@
       })();
     });
   }
-  function typeInto(setter, text, dur, g) {
+  function typeChars(setter, text, dur, g) {
     return new Promise(function (resolve, reject) {
       var acc = 0, last = performance.now();
       (function tick() {
@@ -480,93 +430,115 @@
       })();
     });
   }
-
-  /* --- visual state helpers --- */
-  function setSov(m, animate) {
-    var vals = [m.sov, m.a, m.b];
-    var total = vals[0] + vals[1] + vals[2];
-    meterSegs[0].style.width = (vals[0] / total * 100) + '%';
-    meterSegs[1].style.width = (vals[1] / total * 100) + '%';
-    meterSegs[2].style.width = (vals[2] / total * 100) + '%';
-    lgYou.textContent = 'You ' + m.sov + '%';
-    lgA.textContent = 'Comp A ' + m.a + '%';
-    lgB.textContent = 'Comp B ' + m.b + '%';
-    if (!animate) { sovPct.textContent = m.sov; return; }
-    var from = parseInt(sovPct.textContent, 10) || 0;
-    var t0 = performance.now();
-    (function step(now) {
-      var p = Math.min(1, (now - t0) / 450);
-      sovPct.textContent = Math.round(from + (m.sov - from) * (1 - Math.pow(1 - p, 3)));
-      if (p < 1) requestAnimationFrame(step);
-    })(t0);
+  function streamWords(setter, text, g) {
+    var words = text.split(' ');
+    return new Promise(function (resolve, reject) {
+      var i = 0;
+      (function tick() {
+        if (g !== gen) return reject(CANCEL);
+        setTimeout(function () {
+          if (!paused) {
+            i++;
+            setter(words.slice(0, i).join(' ') + (i < words.length ? ' ' : ''));
+          }
+          if (i >= words.length) resolve(); else tick();
+        }, 42 + Math.random() * 46);
+      })();
+    });
   }
 
-  function fillAnswer(m) {
-    var parts = m.answer.split('{b}');
-    aPre.textContent = parts[0];
-    aBrand.textContent = brand;
-    aPost.textContent = parts[1] || '';
+  /* --- visual helpers --- */
+  function setAvatar(i) {
+    avatarSvgs.forEach(function (s) {
+      s.classList.toggle('on', s.getAttribute('data-m') == String(i));
+    });
   }
-
   function selectTab(i) {
     tabs.forEach(function (t, k) { t.setAttribute('aria-selected', k === i ? 'true' : 'false'); });
   }
-
-  async function activateModel(i, g, typeIt) {
-    selectTab(i);
-    var m = MODELS[i];
-    if (!typeIt) { fillAnswer(m); setSov(m, true); sov.classList.add('on'); return; }
-    var parts = m.answer.split('{b}');
+  function setSov(m, animate) {
+    var total = m.sov + m.a + m.b;
+    segs[0].style.width = (m.sov / total * 100) + '%';
+    segs[1].style.width = (m.a / total * 100) + '%';
+    segs[2].style.width = (m.b / total * 100) + '%';
+    mkYou.textContent = 'You ' + m.sov + '%';
+    mkA.textContent = 'Comp A ' + m.a + '%';
+    mkB.textContent = 'Comp B ' + m.b + '%';
+    if (!animate) { pctVal.textContent = m.sov; return; }
+    var from = parseInt(pctVal.textContent, 10) || 0;
+    var t0 = performance.now();
+    (function step(now) {
+      var p = Math.min(1, (now - t0) / 420);
+      pctVal.textContent = Math.round(from + (m.sov - from) * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) requestAnimationFrame(step);
+    })(t0);
+  }
+  function clearAnswer() {
     aPre.textContent = ''; aBrand.textContent = ''; aPost.textContent = '';
-    await typeInto(function (s) { aPre.textContent = s; }, parts[0], parts[0].length * 9, g);
-    await typeInto(function (s) { aBrand.textContent = s; }, brand, brand.length * 22, g);
-    await typeInto(function (s) { aPost.textContent = s; }, parts[1] || '', (parts[1] || '').length * 7, g);
-    sov.classList.add('on');
+  }
+  function fillAnswer(m) {
+    var parts = m.answer.split('{b}');
+    aPre.textContent = parts[0];
+    aBrand.textContent = BRAND;
+    aPost.textContent = parts[1] || '';
+  }
+  function resetComposer() {
+    cText.textContent = '';
+    cPh.classList.remove('hidden');
+    cCaret.classList.remove('on');
+    send.classList.remove('ready', 'pulse');
+  }
+  function resetAll() {
+    card.classList.remove('resetting');
+    uRow.classList.remove('on');
+    thinking.classList.remove('on');
+    clearAnswer();
+    cursor.classList.remove('on');
+    receipt.classList.remove('on');
+    resetComposer();
+    selectTab(0);
+    setAvatar(0);
+  }
+
+  /* --- stream one model's answer (shared) --- */
+  async function streamModel(i, g, fast) {
+    selectTab(i);
+    setAvatar(i);
+    clearAnswer();
+    cursor.classList.remove('on');
+    receipt.classList.remove('on');
+    thinking.classList.add('on');
+    await tSleep(fast ? 420 : 760, g);
+    thinking.classList.remove('on');
+    cursor.classList.add('on');
+    var m = MODELS[i];
+    var parts = m.answer.split('{b}');
+    await streamWords(function (s) { aPre.textContent = s; }, parts[0].trimEnd(), g);
+    aPre.textContent = parts[0];
+    aBrand.textContent = BRAND;
+    await tSleep(120, g);
+    await streamWords(function (s) { aPost.textContent = s; }, (parts[1] || '').trimStart(), g);
+    aPost.textContent = parts[1] || '';
+    cursor.classList.remove('on');
+    receipt.classList.add('on');
     setSov(m, true);
   }
 
-  function resetVisuals(clearInput) {
-    card.classList.remove('resetting');
-    btn.classList.remove('pulse', 'busy');
-    btn.textContent = 'Scan';
-    tabsEl.classList.remove('scanning', 'ready');
-    tabs.forEach(function (t) { t.classList.remove('done'); t.setAttribute('aria-selected', 'false'); });
-    pbar.classList.remove('on', 'off');
-    pbar.style.width = '0%';
-    queryText.innerHTML = '&gt; ';
-    qcaret.classList.remove('hidden');
-    qcaret.classList.add('on');
-    aPre.textContent = ''; aBrand.textContent = ''; aPost.textContent = '';
-    sov.classList.remove('on');
-    hint.classList.remove('on');
-    scanned = false;
-    if (clearInput) { input.value = ''; positionCaret(); }
-  }
-
-  /* --- scan phase (shared by auto + manual) --- */
-  async function scanPhase(g) {
-    btn.classList.add('pulse', 'busy');
-    btn.textContent = 'Scanning…';
-    fakeCaret.classList.remove('on');
-    tabsEl.classList.add('scanning');
-    pbar.classList.add('on');
-    await tSleep(120, g);
-    btn.classList.remove('pulse');
-    /* query types while engines spin */
-    typeInto(function (s) { queryText.textContent = '> ' + s; }, QUERY, 780, g).then(function(){
-      qcaret.classList.add('hidden');
-    }).catch(function(){});
-    await tSleep(900, g);  tabs[0].classList.add('done');
-    await tSleep(450, g);  tabs[1].classList.add('done');
-    await tSleep(450, g);  tabs[2].classList.add('done');
-    await tSleep(150, g);
-    pbar.classList.add('off');
-    btn.classList.remove('busy');
-    btn.textContent = 'Scan';
-    tabsEl.classList.remove('scanning');
-    tabsEl.classList.add('ready');
-    scanned = true;
-    hint.classList.add('on');
+  /* --- the composer ask (auto only) --- */
+  async function askPhase(g) {
+    cPh.classList.add('hidden');
+    cCaret.classList.add('on');
+    await tSleep(420, g);
+    await typeChars(function (s) {
+      cText.textContent = s;
+      if (s.length > 2) send.classList.add('ready');
+    }, QUESTION, 1250, g);
+    await tSleep(200, g);
+    cCaret.classList.remove('on');
+    send.classList.add('pulse');
+    await tSleep(240, g);
+    resetComposer();
+    uRow.classList.add('on');
   }
 
   /* --- auto demo loop --- */
@@ -574,33 +546,18 @@
     var g = ++gen;
     try {
       while (true) {
-        resetVisuals(true);
-        brand = deriveBrand(DEFAULT_URL);
-        fakeCaret.classList.add('on');
-        await tSleep(450, g);
-        await typeInto(function (s) { input.value = s; positionCaret(); }, DEFAULT_URL, 1150, g);
-        await tSleep(180, g);
-        await scanPhase(g);
-        await activateModel(0, g, true);
-        await tSleep(2050, g);
-        await activateModel(1, g, true);
-        await tSleep(2350, g);
+        resetAll();
+        await tSleep(420, g);
+        await askPhase(g);
+        await streamModel(0, g, false);
+        await tSleep(1900, g);
+        await streamModel(1, g, true);
+        await tSleep(1900, g);
+        await streamModel(2, g, true);
+        await tSleep(2300, g);
         card.classList.add('resetting');
-        await tSleep(480, g);
+        await tSleep(460, g);
       }
-    } catch (e) { if (e !== CANCEL) throw e; }
-  }
-
-  /* --- manual run (user's own URL) --- */
-  async function manualRun(url) {
-    var g = ++gen;
-    try {
-      resetVisuals(false);
-      brand = deriveBrand(url);
-      input.blur();
-      await scanPhase(g);
-      await activateModel(0, g, true);
-      pokeIdle();
     } catch (e) { if (e !== CANCEL) throw e; }
   }
 
@@ -609,86 +566,51 @@
     idleTimer = setTimeout(function () { autoLoop(); }, 14000);
   }
 
-  /* --- reduced motion: static final state, instant interactions --- */
+  /* --- reduced motion: static final state, instant tab switching --- */
   if (reduceMotion) {
-    input.value = DEFAULT_URL;
-    queryText.textContent = '> ' + QUERY;
-    qcaret.classList.add('hidden');
-    tabsEl.classList.add('ready');
-    tabs.forEach(function (t) { t.classList.add('done'); });
-    scanned = true;
-    fillAnswer(MODELS[0]); selectTab(0); setSov(MODELS[0], false);
-    sov.classList.add('on');
-    hint.classList.add('on');
+    uRow.classList.add('on');
+    fillAnswer(MODELS[0]);
+    receipt.classList.add('on');
+    setSov(MODELS[0], false);
     tabs.forEach(function (t, i) {
       t.addEventListener('click', function () {
-        selectTab(i); fillAnswer(MODELS[i]); setSov(MODELS[i], false);
+        selectTab(i); setAvatar(i); fillAnswer(MODELS[i]); setSov(MODELS[i], false);
       });
     });
-    function instantScan() {
-      var v = input.value.trim();
-      if (!v) { input.focus(); return; }
-      brand = deriveBrand(v);
-      fillAnswer(MODELS[0]); selectTab(0);
-    }
-    btn.addEventListener('click', instantScan);
-    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') instantScan(); });
-  } else {
-    /* --- interactions --- */
-    card.addEventListener('mouseenter', function () { paused = true; });
-    card.addEventListener('mouseleave', function () { paused = false; });
-
-    tabs.forEach(function (t, i) {
-      t.addEventListener('click', function () {
-        if (!scanned) return;
-        var g = ++gen;               // cancel any auto-advance
-        paused = false;
-        activateModel(i, g, false);
-        pokeIdle();
-      });
-    });
-
-    /* segment/legend hover pairing */
-    function wire(els) {
-      els.forEach(function (el) {
-        var k = el.getAttribute('data-k');
-        el.addEventListener('mouseenter', function () {
-          document.querySelectorAll('[data-k="' + k + '"]').forEach(function (x) { x.classList.add('hot'); });
-        });
-        el.addEventListener('mouseleave', function () {
-          document.querySelectorAll('[data-k="' + k + '"]').forEach(function (x) { x.classList.remove('hot'); });
-        });
-      });
-    }
-    wire(Array.prototype.slice.call(meterSegs));
-    wire(Array.prototype.slice.call(legendEls));
-
-    input.addEventListener('focus', function () {
-      ++gen;                          // halt demo
-      if (idleTimer) clearTimeout(idleTimer);
-      resetVisuals(true);
-      fakeCaret.classList.remove('on');
-      paused = false;
-    });
-    input.addEventListener('blur', function () {
-      if (!input.value.trim() && !scanned) {
-        if (idleTimer) clearTimeout(idleTimer);
-        idleTimer = setTimeout(function () { autoLoop(); }, 1400);
-      }
-    });
-    function fireScan() {
-      var v = input.value.trim();
-      if (!v) { input.focus(); return; }
-      manualRun(v);
-    }
-    btn.addEventListener('click', function () {
-      if (document.activeElement === input || input.value.trim()) fireScan();
-      else { ++gen; resetVisuals(true); input.focus(); }
-    });
-    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') fireScan(); });
-
-    autoLoop();
+    return;
   }
+
+  /* --- interactions --- */
+  card.addEventListener('mouseenter', function () { paused = true; });
+  card.addEventListener('mouseleave', function () { paused = false; });
+
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function () {
+      var g = ++gen;                 // take over from the demo
+      paused = false;
+      resetComposer();
+      uRow.classList.add('on');      // question stays asked
+      streamModel(i, g, true).catch(function (e) { if (e !== CANCEL) throw e; });
+      pokeIdle();
+    });
+  });
+
+  /* meter segment ↔ legend hover pairing */
+  function wire(els) {
+    els.forEach(function (el) {
+      var k = el.getAttribute('data-k');
+      el.addEventListener('mouseenter', function () {
+        document.querySelectorAll('[data-k="' + k + '"]').forEach(function (x) { x.classList.add('hot'); });
+      });
+      el.addEventListener('mouseleave', function () {
+        document.querySelectorAll('[data-k="' + k + '"]').forEach(function (x) { x.classList.remove('hot'); });
+      });
+    });
+  }
+  wire(Array.prototype.slice.call(segs));
+  wire(Array.prototype.slice.call(document.querySelectorAll('.meta .mk')));
+
+  autoLoop();
 })();
 </script>
 </body>
