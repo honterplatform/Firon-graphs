@@ -110,6 +110,27 @@
   }
   .sb-list::-webkit-scrollbar { display: none; }
 
+  .sb-foot {
+    margin-top: auto;
+    padding: 11px 15px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 10.5px;
+    color: rgba(0,0,0,0.45);
+    letter-spacing: 0;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .sb-foot .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #2540FF;
+    flex-shrink: 0;
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+
   .sb-item {
     text-align: left;
     background: transparent;
@@ -440,6 +461,7 @@
       <button class="sb-new" id="sbNew" type="button"><span class="plus">+</span> New scan</button>
       <div class="sb-label">Recent</div>
       <div class="sb-list" id="sbList" role="listbox" aria-label="Scan history"></div>
+      <div class="sb-foot"><span class="dot"></span>Live &#183; 42 prompts / hr</div>
     </aside>
 
     <!-- Main panel -->
@@ -457,7 +479,6 @@
           <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.785 0v7.272H22.5V17.62h-2.935V24l-7.037-6.194v6.145h-1.091v-6.152L4.399 24v-6.465H1.5V7.188h2.808V0l7.129 6.135V.11h1.091v6.036L19.785 0Zm-7.257 9.044v7.319l5.946 5.234V14.44l-5.946-5.397Zm-1.099-.03-5.946 5.398v7.174l5.946-5.234V9.015ZM2.59 8.28v8.264h1.809v-4.489l4.11-3.775H2.59Zm13.652 0 4.11 3.775v4.489h1.057V8.28h-5.167ZM5.49 2.476v4.796h5.29L5.49 2.476Zm13.204 0L13.42 7.272h5.274V2.476Z"/></svg>
           <span>Perplexity</span>
         </button>
-        <span class="p-meta"><span class="dot"></span>live &#183; 42 prompts</span>
       </div>
 
       <div class="convo" id="convo" aria-live="polite">
