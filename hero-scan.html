@@ -21,23 +21,34 @@
     width: 100%;
     height: 100%;
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: center;
     padding: 10px;
   }
 
-  /* App canvas: filled F2F2F2, portrait */
+  /* App canvas: filled F2F2F2, fills the iframe height */
   .shell {
     width: 100%;
     max-width: 470px;
+    height: 100%;
     background: #F2F2F2;
     border: 1px solid rgba(0,0,0,0.05);
     border-radius: 8px;
     padding: 16px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   /* === Deck: ghost scans peeking behind the live card === */
-  .deck { position: relative; padding-top: 58px; }
+  .deck {
+    position: relative;
+    padding-top: 58px;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
   .ghost {
     position: absolute;
     background: #FFFFFF;
@@ -67,6 +78,8 @@
   .panel {
     position: relative;
     z-index: 3;
+    flex: 1;
+    min-height: 0;
     background: #FFFFFF;
     border: 1px solid rgba(0,0,0,0.07);
     border-radius: 8px;
@@ -140,10 +153,13 @@
 
   /* === Conversation === */
   .convo {
+    flex: 1;
+    min-height: 0;
     padding: 16px;
     display: flex;
     flex-direction: column;
     gap: 14px;
+    overflow: hidden;
   }
   .u-row {
     display: flex;
