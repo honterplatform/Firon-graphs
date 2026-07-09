@@ -11,7 +11,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 100%; height: 100%; overflow: hidden; }
   body {
-    background: #F2F2F2;
+    background: transparent;
     font-family: 'Geist', -apple-system, system-ui, sans-serif;
     color: #000;
     letter-spacing: -0.01em;
@@ -23,16 +23,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 16px;
+    padding: 8px;
   }
 
+  /* The only surface: F2F2F2 container */
   .scan-card {
     width: 100%;
-    max-width: 440px;
-    background: #FFFFFF;
+    max-width: 460px;
+    background: #F2F2F2;
     border: 1px solid rgba(0,0,0,0.08);
     border-radius: 12px;
-    padding: 24px;
+    padding: 20px;
   }
 
   .sr-only {
@@ -44,15 +45,8 @@
   }
 
   /* --- Input row --- */
-  .input-row {
-    display: flex;
-    gap: 8px;
-  }
-  .input-wrap {
-    position: relative;
-    flex: 1;
-    min-width: 0;
-  }
+  .input-row { display: flex; gap: 8px; }
+  .input-wrap { position: relative; flex: 1; min-width: 0; }
   #urlInput {
     width: 100%;
     height: 44px;
@@ -64,15 +58,12 @@
     font-weight: 500;
     letter-spacing: -0.01em;
     color: #000;
-    background: #fff;
+    background: #FFFFFF;
     outline: none;
     caret-color: #000;
   }
   #urlInput::placeholder { color: rgba(0,0,0,0.35); font-weight: 400; }
-  #urlInput:focus-visible {
-    outline: 2px solid #2540FF;
-    outline-offset: 2px;
-  }
+  #urlInput:focus-visible { outline: 2px solid #2540FF; outline-offset: 2px; }
   .fake-caret {
     position: absolute;
     top: 50%;
@@ -81,13 +72,11 @@
     height: 16px;
     background: #000;
     left: 15px;
-    animation: caretBlink 1.06s steps(1) infinite;
     pointer-events: none;
     opacity: 0;
   }
-  .fake-caret.on { opacity: 1; }
-  @keyframes caretBlink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
-  .fake-caret.on { animation: caretBlink 1.06s steps(1) infinite; }
+  .fake-caret.on { animation: blink 1.06s steps(1) infinite; }
+  @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
   .mirror {
     position: absolute;
     visibility: hidden;
@@ -97,7 +86,6 @@
     font-weight: 500;
     letter-spacing: -0.01em;
   }
-
   .scan-btn {
     height: 44px;
     padding: 0 20px;
@@ -113,145 +101,216 @@
     flex-shrink: 0;
     transition: opacity 0.2s ease;
   }
-  .scan-btn:focus-visible {
-    outline: 2px solid #2540FF;
-    outline-offset: 2px;
-  }
+  .scan-btn:focus-visible { outline: 2px solid #2540FF; outline-offset: 2px; }
   .scan-btn.pulse { animation: btnPulse 0.28s ease; }
-  @keyframes btnPulse {
-    0% { transform: scale(1); }
-    45% { transform: scale(0.955); }
-    100% { transform: scale(1); }
-  }
+  @keyframes btnPulse { 0% { transform: scale(1); } 45% { transform: scale(0.955); } 100% { transform: scale(1); } }
   .scan-btn.busy { opacity: 0.62; }
 
-  /* --- Scan status: caption + model chips --- */
-  .scan-status { margin-top: 14px; }
-  .scan-caption {
-    font-size: 12px;
-    font-weight: 400;
-    color: rgba(0,0,0,0.55);
-    opacity: 0;
-    transition: opacity 0.25s ease;
-  }
-  .scan-caption.on { opacity: 1; }
-  .chips {
+  /* --- Engine tabs --- */
+  .tabs {
     display: flex;
     gap: 6px;
-    margin-top: 8px;
+    margin-top: 12px;
   }
-  .chip {
+  .tab {
+    flex: 1;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    height: 28px;
-    padding: 0 11px;
+    justify-content: center;
+    gap: 7px;
+    height: 38px;
+    padding: 0 10px;
+    background: #FFFFFF;
     border: 1px solid rgba(0,0,0,0.08);
     border-radius: 999px;
-    font-size: 12px;
+    font-family: 'Geist', sans-serif;
+    font-size: 12.5px;
     font-weight: 500;
-    color: rgba(0,0,0,0.55);
-    opacity: 0;
-    transform: translateY(3px);
-    transition: opacity 0.25s ease, transform 0.25s ease, color 0.25s ease;
+    letter-spacing: -0.01em;
+    color: #000;
+    cursor: pointer;
+    opacity: 0.45;
+    transition: opacity 0.25s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    min-width: 0;
+    white-space: nowrap;
   }
-  .chip.on { opacity: 1; transform: translateY(0); }
-  .chip.done { color: #000; }
-  .chip .ind {
-    width: 12px;
-    height: 12px;
+  .tab:focus-visible { outline: 2px solid #2540FF; outline-offset: 2px; }
+  .tabs.ready .tab { opacity: 1; }
+  .tabs.scanning .tab { opacity: 1; cursor: default; }
+  .tab[aria-selected="true"] {
+    background: #000;
+    color: #fff;
+    border-color: #000;
+  }
+  .tab .logo { width: 15px; height: 15px; flex-shrink: 0; }
+  .tab .logo path { fill: currentColor; }
+  .tab .state {
+    width: 12px; height: 12px;
     position: relative;
     flex-shrink: 0;
+    display: none;
   }
-  .chip .spinner {
-    position: absolute;
-    inset: 0;
+  .tabs.scanning .tab .state, .tab.done .state { display: inline-block; }
+  .tab .spinner {
+    position: absolute; inset: 0;
     border: 1.5px solid rgba(0,0,0,0.15);
     border-top-color: #2540FF;
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
   }
+  .tab[aria-selected="true"] .spinner { border-color: rgba(255,255,255,0.25); border-top-color: #fff; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .chip .check {
-    position: absolute;
-    inset: 0;
-    display: none;
-  }
-  .chip.done .spinner { display: none; }
-  .chip.done .check { display: block; }
+  .tab .check { position: absolute; inset: 0; display: none; }
+  .tab.done .spinner { display: none; }
+  .tab.done .check { display: block; }
 
-  /* --- AI response --- */
+  /* --- Response surface --- */
   .response {
-    margin-top: 16px;
-    background: #F2F2F2;
+    margin-top: 12px;
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.08);
     border-radius: 10px;
-    padding: 14px;
-    opacity: 0;
-    transform: translateY(8px);
-    transition: opacity 0.35s ease, transform 0.35s ease;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
   }
-  .response.on { opacity: 1; transform: translateY(0); }
+  .pbar {
+    position: absolute;
+    top: 0; left: 0;
+    height: 2px;
+    width: 0%;
+    background: #2540FF;
+    opacity: 0;
+  }
+  .pbar.on { opacity: 1; width: 100%; transition: width 1.9s linear; }
+  .pbar.off { opacity: 0; transition: opacity 0.4s ease; }
+
   .query {
     font-family: 'Geist Mono', ui-monospace, monospace;
     font-size: 13px;
     font-weight: 400;
     color: rgba(0,0,0,0.55);
     letter-spacing: 0;
+    min-height: 18px;
   }
+  .qcaret {
+    display: inline-block;
+    width: 7px; height: 13px;
+    background: rgba(0,0,0,0.4);
+    vertical-align: -2px;
+    margin-left: 2px;
+  }
+  .qcaret.on { animation: blink 1.06s steps(1) infinite; }
+  .qcaret.hidden { display: none; }
+
   .answer {
-    margin-top: 8px;
+    margin-top: 10px;
     font-size: 14.5px;
     font-weight: 500;
     line-height: 1.5;
     color: #000;
+    min-height: 66px;
   }
-  .answer strong { font-weight: 600; }
-  .comp {
-    margin-top: 7px;
-    font-size: 13.5px;
-    font-weight: 500;
-    color: #000;
-    opacity: 0.3;
+  .answer strong { font-weight: 600; color: #2540FF; }
+
+  .divider {
+    height: 1px;
+    background: rgba(0,0,0,0.08);
+    margin: 13px 0;
   }
 
-  /* --- Share of voice chip --- */
-  .sov {
-    margin-top: 14px;
+  /* --- Share of voice block --- */
+  .sov { opacity: 0; transition: opacity 0.35s ease; }
+  .sov.on { opacity: 1; }
+  .sov-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .sov-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(0,0,0,0.55);
+  }
+  .sov-pct {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 20px;
+    font-weight: 500;
+    color: #2540FF;
+    letter-spacing: -0.02em;
+  }
+  .sov-pct .arrow { font-family: 'Geist', sans-serif; font-size: 14px; }
+  .meter {
+    margin-top: 9px;
+    display: flex;
+    gap: 3px;
+    height: 8px;
+  }
+  .seg {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.55s cubic-bezier(.3,.7,.3,1), transform 0.15s ease;
+    cursor: default;
+  }
+  .seg.you { background: #2540FF; }
+  .seg.a { background: rgba(0,0,0,0.28); }
+  .seg.b { background: rgba(0,0,0,0.13); }
+  .seg.hot { transform: scaleY(1.5); }
+  .legend {
+    margin-top: 9px;
+    display: flex;
+    gap: 14px;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 10.5px;
+    color: rgba(0,0,0,0.55);
+    letter-spacing: 0;
+  }
+  .lg {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    height: 28px;
-    padding: 0 12px;
-    border-radius: 999px;
-    background: rgba(37, 64, 255, 0.08);
-    color: #2540FF;
-    font-size: 12.5px;
-    font-weight: 500;
-    font-family: 'Geist Mono', ui-monospace, monospace;
-    letter-spacing: 0;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    gap: 5px;
+    transition: color 0.15s ease;
+    cursor: default;
+    white-space: nowrap;
   }
-  .sov.on { opacity: 1; }
-  .sov-arrow {
-    font-family: 'Geist', sans-serif;
-    font-weight: 600;
-  }
+  .lg .dot { width: 7px; height: 7px; border-radius: 2px; flex-shrink: 0; }
+  .lg.you .dot { background: #2540FF; }
+  .lg.a .dot { background: rgba(0,0,0,0.28); }
+  .lg.b .dot { background: rgba(0,0,0,0.13); }
+  .lg.hot { color: #000; }
+  .lg.you { color: #2540FF; }
 
-  /* --- Fade-out reset --- */
-  .scan-card.resetting .scan-caption.on,
-  .scan-card.resetting .chip.on,
-  .scan-card.resetting .response.on,
-  .scan-card.resetting .sov.on {
+  /* --- Footer hint --- */
+  .foot {
+    margin-top: 12px;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 10.5px;
+    color: rgba(0,0,0,0.4);
+    letter-spacing: 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .foot .hint { color: rgba(0,0,0,0.55); opacity: 0; transition: opacity 0.4s ease; }
+  .foot .hint.on { opacity: 1; }
+
+  /* --- Loop fade --- */
+  .scan-card.resetting .response,
+  .scan-card.resetting .tabs,
+  .scan-card.resetting .foot .hint {
     opacity: 0;
     transition: opacity 0.4s ease;
   }
 
   @media (max-width: 480px) {
-    .scan-card { padding: 18px; }
+    .scan-card { padding: 16px; }
     .scan-btn { padding: 0 16px; }
-    .answer { font-size: 13.5px; }
-    .comp { font-size: 12.5px; }
+    .tab { font-size: 11.5px; gap: 5px; padding: 0 6px; }
+    .answer { font-size: 13.5px; min-height: 82px; }
+    .legend { gap: 10px; font-size: 10px; }
   }
 </style>
 </head>
@@ -268,43 +327,61 @@
       <button class="scan-btn" id="scanBtn" type="button">Scan</button>
     </div>
 
-    <div class="scan-status">
-      <div class="scan-caption" id="scanCaption">Scanning ChatGPT, Gemini, Perplexity</div>
-      <div class="chips">
-        <div class="chip" id="chip0">
-          <span class="ind">
-            <span class="spinner"></span>
-            <svg class="check" viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2 5 8.7l4.5-5" stroke="#2540FF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </span>
-          ChatGPT
+    <div class="tabs" id="tabs" role="tablist" aria-label="AI engines">
+      <button class="tab" id="tab0" role="tab" aria-selected="false" aria-controls="panel">
+        <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg>
+        <span>ChatGPT</span>
+        <span class="state" aria-hidden="true">
+          <span class="spinner"></span>
+          <svg class="check" viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2 5 8.7l4.5-5" stroke="#2540FF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      </button>
+      <button class="tab" id="tab1" role="tab" aria-selected="false" aria-controls="panel">
+        <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 24A14.304 14.304 0 0 0 0 12 14.304 14.304 0 0 0 12 0a14.305 14.305 0 0 0 12 12 14.305 14.305 0 0 0-12 12"/></svg>
+        <span>Gemini</span>
+        <span class="state" aria-hidden="true">
+          <span class="spinner"></span>
+          <svg class="check" viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2 5 8.7l4.5-5" stroke="#2540FF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      </button>
+      <button class="tab" id="tab2" role="tab" aria-selected="false" aria-controls="panel">
+        <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.785 0v7.272H22.5V17.62h-2.935V24l-7.037-6.194v6.145h-1.091v-6.152L4.399 24v-6.465H1.5V7.188h2.808V0l7.129 6.135V.11h1.091v6.036L19.785 0Zm-7.257 9.044v7.319l5.946 5.234V14.44l-5.946-5.397Zm-1.099-.03-5.946 5.398v7.174l5.946-5.234V9.015ZM2.59 8.28v8.264h1.809v-4.489l4.11-3.775H2.59Zm13.652 0 4.11 3.775v4.489h1.057V8.28h-5.167ZM5.49 2.476v4.796h5.29L5.49 2.476Zm13.204 0L13.42 7.272h5.274V2.476Z"/></svg>
+        <span>Perplexity</span>
+        <span class="state" aria-hidden="true">
+          <span class="spinner"></span>
+          <svg class="check" viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2 5 8.7l4.5-5" stroke="#2540FF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      </button>
+    </div>
+
+    <div class="response" id="panel" role="tabpanel" aria-live="polite">
+      <div class="pbar" id="pbar"></div>
+      <div class="query">
+        <span id="queryText">&gt; </span><span class="qcaret on" id="qcaret"></span>
+      </div>
+      <div class="answer" id="answer"><span id="aPre"></span><strong id="aBrand"></strong><span id="aPost"></span></div>
+      <div class="divider"></div>
+      <div class="sov" id="sov">
+        <div class="sov-head">
+          <div class="sov-label">AI Share of Voice</div>
+          <div class="sov-pct"><span class="arrow">&#8599;</span> <span id="sovPct">0</span>%</div>
         </div>
-        <div class="chip" id="chip1">
-          <span class="ind">
-            <span class="spinner"></span>
-            <svg class="check" viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2 5 8.7l4.5-5" stroke="#2540FF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </span>
-          Gemini
+        <div class="meter" id="meter">
+          <div class="seg you" data-k="0" style="width:34%"></div>
+          <div class="seg a" data-k="1" style="width:33%"></div>
+          <div class="seg b" data-k="2" style="width:33%"></div>
         </div>
-        <div class="chip" id="chip2">
-          <span class="ind">
-            <span class="spinner"></span>
-            <svg class="check" viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2 5 8.7l4.5-5" stroke="#2540FF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </span>
-          Perplexity
+        <div class="legend" id="legend">
+          <span class="lg you" data-k="0"><span class="dot"></span><span id="lgYou">You 0%</span></span>
+          <span class="lg a" data-k="1"><span class="dot"></span><span id="lgA">Comp A 0%</span></span>
+          <span class="lg b" data-k="2"><span class="dot"></span><span id="lgB">Comp B 0%</span></span>
         </div>
       </div>
     </div>
 
-    <div class="response" id="response" aria-live="polite" aria-hidden="true">
-      <div class="query">&gt; Best clean protein subscription?</div>
-      <div class="answer">1. <strong id="brandName">VitalBlend</strong>, the one I'd recommend for clean sourcing and transparent labels.</div>
-      <div class="comp">2. Competitor A</div>
-      <div class="comp">3. Competitor B</div>
-    </div>
-
-    <div class="sov" id="sovChip">
-      <span class="sov-arrow">&#8599;</span>
-      <span>AI Share of Voice: 68%</span>
+    <div class="foot">
+      <span>42 prompts &#183; 3 engines &#183; hourly</span>
+      <span class="hint" id="hint">tap an engine to compare &#8594;</span>
     </div>
   </div>
 </main>
@@ -312,22 +389,49 @@
 <script>
 (function () {
   var DEFAULT_URL = 'vitalblend.com';
-  var DEFAULT_BRAND = 'VitalBlend';
-  var TYPE_START = 0.5, TYPE_END = 2.0;
-  var LOOP_END = 7.5;
+  var QUERY = 'Best clean protein subscription?';
+  var CANCEL = {};
+
+  var MODELS = [
+    { name: 'ChatGPT',
+      answer: '1. {b} — the one I’d recommend for clean sourcing and transparent labels.',
+      sov: 68, a: 21, b: 11 },
+    { name: 'Gemini',
+      answer: '{b} stands out for third-party testing and traceable ingredients — the strongest option in this category.',
+      sov: 54, a: 29, b: 17 },
+    { name: 'Perplexity',
+      answer: 'Top result: {b} [1] — cited across 12 sources for label transparency and verified sourcing.',
+      sov: 61, a: 24, b: 15 }
+  ];
 
   var card = document.getElementById('card');
   var input = document.getElementById('urlInput');
   var fakeCaret = document.getElementById('fakeCaret');
   var mirror = document.getElementById('mirror');
   var btn = document.getElementById('scanBtn');
-  var caption = document.getElementById('scanCaption');
-  var chips = [document.getElementById('chip0'), document.getElementById('chip1'), document.getElementById('chip2')];
-  var response = document.getElementById('response');
-  var brandName = document.getElementById('brandName');
-  var sov = document.getElementById('sovChip');
+  var tabsEl = document.getElementById('tabs');
+  var tabs = [document.getElementById('tab0'), document.getElementById('tab1'), document.getElementById('tab2')];
+  var pbar = document.getElementById('pbar');
+  var queryText = document.getElementById('queryText');
+  var qcaret = document.getElementById('qcaret');
+  var aPre = document.getElementById('aPre');
+  var aBrand = document.getElementById('aBrand');
+  var aPost = document.getElementById('aPost');
+  var sov = document.getElementById('sov');
+  var sovPct = document.getElementById('sovPct');
+  var meterSegs = document.querySelectorAll('#meter .seg');
+  var legendEls = document.querySelectorAll('#legend .lg');
+  var lgYou = document.getElementById('lgYou');
+  var lgA = document.getElementById('lgA');
+  var lgB = document.getElementById('lgB');
+  var hint = document.getElementById('hint');
 
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var gen = 0;
+  var paused = false;
+  var scanned = false;
+  var brand = 'VitalBlend';
+  var idleTimer = null;
 
   function deriveBrand(url) {
     var d = (url || '').trim().toLowerCase()
@@ -345,157 +449,246 @@
     fakeCaret.style.left = (15 + Math.min(w, input.clientWidth - 30)) + 'px';
   }
 
-  function setFinalState() {
-    input.value = DEFAULT_URL;
-    caption.classList.add('on');
-    chips.forEach(function (c) { c.classList.add('on', 'done'); });
-    response.classList.add('on');
-    response.setAttribute('aria-hidden', 'false');
+  /* --- cancellable, pausable sleep + typing --- */
+  function tSleep(ms, g) {
+    return new Promise(function (resolve, reject) {
+      var acc = 0, last = performance.now();
+      (function tick() {
+        if (g !== gen) return reject(CANCEL);
+        setTimeout(function () {
+          var now = performance.now();
+          if (!paused) acc += now - last;
+          last = now;
+          if (acc >= ms) resolve(); else tick();
+        }, 36);
+      })();
+    });
+  }
+  function typeInto(setter, text, dur, g) {
+    return new Promise(function (resolve, reject) {
+      var acc = 0, last = performance.now();
+      (function tick() {
+        if (g !== gen) return reject(CANCEL);
+        setTimeout(function () {
+          var now = performance.now();
+          if (!paused) acc += now - last;
+          last = now;
+          var p = Math.min(1, acc / dur);
+          setter(text.slice(0, Math.round(p * text.length)));
+          if (p >= 1) resolve(); else tick();
+        }, 34);
+      })();
+    });
+  }
+
+  /* --- visual state helpers --- */
+  function setSov(m, animate) {
+    var vals = [m.sov, m.a, m.b];
+    var total = vals[0] + vals[1] + vals[2];
+    meterSegs[0].style.width = (vals[0] / total * 100) + '%';
+    meterSegs[1].style.width = (vals[1] / total * 100) + '%';
+    meterSegs[2].style.width = (vals[2] / total * 100) + '%';
+    lgYou.textContent = 'You ' + m.sov + '%';
+    lgA.textContent = 'Comp A ' + m.a + '%';
+    lgB.textContent = 'Comp B ' + m.b + '%';
+    if (!animate) { sovPct.textContent = m.sov; return; }
+    var from = parseInt(sovPct.textContent, 10) || 0;
+    var t0 = performance.now();
+    (function step(now) {
+      var p = Math.min(1, (now - t0) / 450);
+      sovPct.textContent = Math.round(from + (m.sov - from) * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) requestAnimationFrame(step);
+    })(t0);
+  }
+
+  function fillAnswer(m) {
+    var parts = m.answer.split('{b}');
+    aPre.textContent = parts[0];
+    aBrand.textContent = brand;
+    aPost.textContent = parts[1] || '';
+  }
+
+  function selectTab(i) {
+    tabs.forEach(function (t, k) { t.setAttribute('aria-selected', k === i ? 'true' : 'false'); });
+  }
+
+  async function activateModel(i, g, typeIt) {
+    selectTab(i);
+    var m = MODELS[i];
+    if (!typeIt) { fillAnswer(m); setSov(m, true); sov.classList.add('on'); return; }
+    var parts = m.answer.split('{b}');
+    aPre.textContent = ''; aBrand.textContent = ''; aPost.textContent = '';
+    await typeInto(function (s) { aPre.textContent = s; }, parts[0], parts[0].length * 9, g);
+    await typeInto(function (s) { aBrand.textContent = s; }, brand, brand.length * 22, g);
+    await typeInto(function (s) { aPost.textContent = s; }, parts[1] || '', (parts[1] || '').length * 7, g);
     sov.classList.add('on');
+    setSov(m, true);
   }
 
-  // Reduced motion: render the final state, keep manual scan instant.
-  if (reduceMotion) {
-    setFinalState();
-    function instantScan() {
-      var v = input.value.trim();
-      if (!v) { input.focus(); return; }
-      brandName.textContent = deriveBrand(v);
-    }
-    btn.addEventListener('click', instantScan);
-    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') instantScan(); });
-    return;
-  }
-
-  // --- Timeline events (shared by auto demo and manual runs) ---
-  var EVENTS = [
-    { t: 2.0, fn: function () {
-        btn.classList.add('pulse', 'busy');
-        btn.textContent = 'Scanning…';
-        caption.classList.add('on');
-        fakeCaret.classList.remove('on');
-      } },
-    { t: 2.3,  fn: function () { btn.classList.remove('pulse'); chips[0].classList.add('on'); } },
-    { t: 2.55, fn: function () { chips[1].classList.add('on'); } },
-    { t: 2.75, fn: function () { chips[0].classList.add('done'); } },
-    { t: 2.8,  fn: function () { chips[2].classList.add('on'); } },
-    { t: 3.0,  fn: function () { chips[1].classList.add('done'); } },
-    { t: 3.25, fn: function () { chips[2].classList.add('done'); } },
-    { t: 3.3,  fn: function () {
-        response.classList.add('on');
-        response.setAttribute('aria-hidden', 'false');
-        btn.classList.remove('busy');
-        btn.textContent = 'Scan';
-      } },
-    { t: 4.0,  fn: function () { sov.classList.add('on'); } },
-    { t: 7.0,  fn: function () { card.classList.add('resetting'); } }
-  ];
-
-  var mode = 'auto';        // 'auto' | 'manualIdle' | 'manualRun'
-  var clock = 0;            // seconds within the current run
-  var eventIdx = 0;
-  var paused = false;
-  var typingText = DEFAULT_URL;
-  var lastFrame = null;
-  var resumeTimer = null;
-
-  function clearVisuals() {
+  function resetVisuals(clearInput) {
     card.classList.remove('resetting');
     btn.classList.remove('pulse', 'busy');
     btn.textContent = 'Scan';
-    caption.classList.remove('on');
-    chips.forEach(function (c) { c.classList.remove('on', 'done'); });
-    response.classList.remove('on');
-    response.setAttribute('aria-hidden', 'true');
+    tabsEl.classList.remove('scanning', 'ready');
+    tabs.forEach(function (t) { t.classList.remove('done'); t.setAttribute('aria-selected', 'false'); });
+    pbar.classList.remove('on', 'off');
+    pbar.style.width = '0%';
+    queryText.innerHTML = '&gt; ';
+    qcaret.classList.remove('hidden');
+    qcaret.classList.add('on');
+    aPre.textContent = ''; aBrand.textContent = ''; aPost.textContent = '';
     sov.classList.remove('on');
+    hint.classList.remove('on');
+    scanned = false;
+    if (clearInput) { input.value = ''; positionCaret(); }
   }
 
-  function startAuto() {
-    mode = 'auto';
-    clearVisuals();
-    input.value = '';
-    brandName.textContent = DEFAULT_BRAND;
-    typingText = DEFAULT_URL;
-    positionCaret();
-    fakeCaret.classList.add('on');
-    clock = 0;
-    eventIdx = 0;
-  }
-
-  function startManualRun(url) {
-    mode = 'manualRun';
-    clearVisuals();
+  /* --- scan phase (shared by auto + manual) --- */
+  async function scanPhase(g) {
+    btn.classList.add('pulse', 'busy');
+    btn.textContent = 'Scanning…';
     fakeCaret.classList.remove('on');
-    brandName.textContent = deriveBrand(url);
-    clock = 2.0;
-    eventIdx = 0;
-    input.blur();
+    tabsEl.classList.add('scanning');
+    pbar.classList.add('on');
+    await tSleep(120, g);
+    btn.classList.remove('pulse');
+    /* query types while engines spin */
+    typeInto(function (s) { queryText.textContent = '> ' + s; }, QUERY, 780, g).then(function(){
+      qcaret.classList.add('hidden');
+    }).catch(function(){});
+    await tSleep(900, g);  tabs[0].classList.add('done');
+    await tSleep(450, g);  tabs[1].classList.add('done');
+    await tSleep(450, g);  tabs[2].classList.add('done');
+    await tSleep(150, g);
+    pbar.classList.add('off');
+    btn.classList.remove('busy');
+    btn.textContent = 'Scan';
+    tabsEl.classList.remove('scanning');
+    tabsEl.classList.add('ready');
+    scanned = true;
+    hint.classList.add('on');
   }
 
-  function frame(now) {
-    if (lastFrame === null) lastFrame = now;
-    var dt = (now - lastFrame) / 1000;
-    lastFrame = now;
-
-    if (!paused && mode !== 'manualIdle') {
-      clock += dt;
-
-      // Continuous type-in (auto mode only)
-      if (mode === 'auto' && clock >= TYPE_START && clock <= TYPE_END + 0.05) {
-        var p = Math.min(1, (clock - TYPE_START) / (TYPE_END - TYPE_START));
-        var chars = Math.round(p * typingText.length);
-        var next = typingText.substring(0, chars);
-        if (input.value !== next) {
-          input.value = next;
-          positionCaret();
-        }
+  /* --- auto demo loop --- */
+  async function autoLoop() {
+    var g = ++gen;
+    try {
+      while (true) {
+        resetVisuals(true);
+        brand = deriveBrand(DEFAULT_URL);
+        fakeCaret.classList.add('on');
+        await tSleep(450, g);
+        await typeInto(function (s) { input.value = s; positionCaret(); }, DEFAULT_URL, 1150, g);
+        await tSleep(180, g);
+        await scanPhase(g);
+        await activateModel(0, g, true);
+        await tSleep(2050, g);
+        await activateModel(1, g, true);
+        await tSleep(2350, g);
+        card.classList.add('resetting');
+        await tSleep(480, g);
       }
+    } catch (e) { if (e !== CANCEL) throw e; }
+  }
 
-      // Discrete events
-      while (eventIdx < EVENTS.length && EVENTS[eventIdx].t <= clock) {
-        EVENTS[eventIdx].fn();
-        eventIdx++;
+  /* --- manual run (user's own URL) --- */
+  async function manualRun(url) {
+    var g = ++gen;
+    try {
+      resetVisuals(false);
+      brand = deriveBrand(url);
+      input.blur();
+      await scanPhase(g);
+      await activateModel(0, g, true);
+      pokeIdle();
+    } catch (e) { if (e !== CANCEL) throw e; }
+  }
+
+  function pokeIdle() {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(function () { autoLoop(); }, 14000);
+  }
+
+  /* --- reduced motion: static final state, instant interactions --- */
+  if (reduceMotion) {
+    input.value = DEFAULT_URL;
+    queryText.textContent = '> ' + QUERY;
+    qcaret.classList.add('hidden');
+    tabsEl.classList.add('ready');
+    tabs.forEach(function (t) { t.classList.add('done'); });
+    scanned = true;
+    fillAnswer(MODELS[0]); selectTab(0); setSov(MODELS[0], false);
+    sov.classList.add('on');
+    hint.classList.add('on');
+    tabs.forEach(function (t, i) {
+      t.addEventListener('click', function () {
+        selectTab(i); fillAnswer(MODELS[i]); setSov(MODELS[i], false);
+      });
+    });
+    function instantScan() {
+      var v = input.value.trim();
+      if (!v) { input.focus(); return; }
+      brand = deriveBrand(v);
+      fillAnswer(MODELS[0]); selectTab(0);
+    }
+    btn.addEventListener('click', instantScan);
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') instantScan(); });
+  } else {
+    /* --- interactions --- */
+    card.addEventListener('mouseenter', function () { paused = true; });
+    card.addEventListener('mouseleave', function () { paused = false; });
+
+    tabs.forEach(function (t, i) {
+      t.addEventListener('click', function () {
+        if (!scanned) return;
+        var g = ++gen;               // cancel any auto-advance
+        paused = false;
+        activateModel(i, g, false);
+        pokeIdle();
+      });
+    });
+
+    /* segment/legend hover pairing */
+    function wire(els) {
+      els.forEach(function (el) {
+        var k = el.getAttribute('data-k');
+        el.addEventListener('mouseenter', function () {
+          document.querySelectorAll('[data-k="' + k + '"]').forEach(function (x) { x.classList.add('hot'); });
+        });
+        el.addEventListener('mouseleave', function () {
+          document.querySelectorAll('[data-k="' + k + '"]').forEach(function (x) { x.classList.remove('hot'); });
+        });
+      });
+    }
+    wire(Array.prototype.slice.call(meterSegs));
+    wire(Array.prototype.slice.call(legendEls));
+
+    input.addEventListener('focus', function () {
+      ++gen;                          // halt demo
+      if (idleTimer) clearTimeout(idleTimer);
+      resetVisuals(true);
+      fakeCaret.classList.remove('on');
+      paused = false;
+    });
+    input.addEventListener('blur', function () {
+      if (!input.value.trim() && !scanned) {
+        if (idleTimer) clearTimeout(idleTimer);
+        idleTimer = setTimeout(function () { autoLoop(); }, 1400);
       }
-
-      // Loop end
-      if (clock >= LOOP_END) startAuto();
+    });
+    function fireScan() {
+      var v = input.value.trim();
+      if (!v) { input.focus(); return; }
+      manualRun(v);
     }
-    requestAnimationFrame(frame);
+    btn.addEventListener('click', function () {
+      if (document.activeElement === input || input.value.trim()) fireScan();
+      else { ++gen; resetVisuals(true); input.focus(); }
+    });
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') fireScan(); });
+
+    autoLoop();
   }
-
-  // --- Interaction: pause on hover ---
-  card.addEventListener('mouseenter', function () { paused = true; });
-  card.addEventListener('mouseleave', function () { paused = false; });
-
-  // --- Interaction: editable input takes over the demo ---
-  input.addEventListener('focus', function () {
-    if (mode === 'manualRun') return;
-    mode = 'manualIdle';
-    if (resumeTimer) { clearTimeout(resumeTimer); resumeTimer = null; }
-    clearVisuals();
-    input.value = '';
-    fakeCaret.classList.remove('on');
-  });
-  input.addEventListener('blur', function () {
-    if (mode === 'manualIdle' && !input.value.trim()) {
-      resumeTimer = setTimeout(startAuto, 1200);
-    }
-  });
-  function fireScan() {
-    var v = input.value.trim();
-    if (!v) { input.focus(); return; }
-    startManualRun(v);
-  }
-  btn.addEventListener('click', function () {
-    if (mode === 'auto') return; // demo drives itself
-    fireScan();
-  });
-  input.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') fireScan();
-  });
-
-  startAuto();
-  requestAnimationFrame(frame);
 })();
 </script>
 </body>
