@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hero Scan · 60-Second GEO Audit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #F2F2F2;
+    font-family: 'Geist', -apple-system, system-ui, sans-serif;
+    color: #000;
+    letter-spacing: -0.01em;
+  }
+
+  .stage {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  .scan-card {
+    width: 100%;
+    max-width: 440px;
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 12px;
+    padding: 24px;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    clip: rect(0 0 0 0);
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  /* --- Input row --- */
+  .input-row {
+    display: flex;
+    gap: 8px;
+  }
+  .input-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+  }
+  #urlInput {
+    width: 100%;
+    height: 44px;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 8px;
+    padding: 0 14px;
+    font-family: 'Geist', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: #000;
+    background: #fff;
+    outline: none;
+    caret-color: #000;
+  }
+  #urlInput::placeholder { color: rgba(0,0,0,0.35); font-weight: 400; }
+  #urlInput:focus-visible {
+    outline: 2px solid #2540FF;
+    outline-offset: 2px;
+  }
+  .fake-caret {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.5px;
+    height: 16px;
+    background: #000;
+    left: 15px;
+    animation: caretBlink 1.06s steps(1) infinite;
+    pointer-events: none;
+    opacity: 0;
+  }
+  .fake-caret.on { opacity: 1; }
+  @keyframes caretBlink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+  .fake-caret.on { animation: caretBlink 1.06s steps(1) infinite; }
+  .mirror {
+    position: absolute;
+    visibility: hidden;
+    white-space: pre;
+    font-family: 'Geist', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  .scan-btn {
+    height: 44px;
+    padding: 0 20px;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Geist', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: opacity 0.2s ease;
+  }
+  .scan-btn:focus-visible {
+    outline: 2px solid #2540FF;
+    outline-offset: 2px;
+  }
+  .scan-btn.pulse { animation: btnPulse 0.28s ease; }
+  @keyframes btnPulse {
+    0% { transform: scale(1); }
+    45% { transform: scale(0.955); }
+    100% { transform: scale(1); }
+  }
+  .scan-btn.busy { opacity: 0.62; }
+
+  /* --- Scan status: caption + model chips --- */
+  .scan-status { margin-top: 14px; }
+  .scan-caption {
+    font-size: 12px;
+    font-weight: 400;
+    color: rgba(0,0,0,0.55);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  .scan-caption.on { opacity: 1; }
+  .chips {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 11px;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(0,0,0,0.55);
+    opacity: 0;
+    transform: translateY(3px);
+    transition: opacity 0.25s ease, transform 0.25s ease, color 0.25s ease;
+  }
+  .chip.on { opacity: 1; transform: translateY(0); }
+  .chip.done { color: #000; }
+  .chip .ind {
+    width: 12px;
+    height: 12px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .chip .spinner {
+    position: absolute;
+    inset: 0;
+    border: 1.5px solid rgba(0,0,0,0.15);
+    border-top-color: #2540FF;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .chip .check {
+    position: absolute;
+    inset: 0;
+    display: none;
+  }
+  .chip.done .spinner { display: none; }
+  .chip.done .check { display: block; }
+
+  /* --- AI response --- */
+  .response {
+    margin-top: 16px;
+    background: #F2F2F2;
+    border-radius: 10px;
+    padding: 14px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+  }
+  .response.on { opacity: 1; transform: translateY(0); }
+  .query {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 13px;
+    font-weight: 400;
+    color: rgba(0,0,0,0.55);
+    letter-spacing: 0;
+  }
+  .answer {
+    margin-top: 8px;
+    font-size: 14.5px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: #000;
+  }
+  .answer strong { font-weight: 600; }
+  .comp {
+    margin-top: 7px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #000;
+    opacity: 0.3;
+  }
+
+  /* --- Share of voice chip --- */
+  .sov {
+    margin-top: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: rgba(37, 64, 255, 0.08);
+    color: #2540FF;
+    font-size: 12.5px;
+    font-weight: 500;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    letter-spacing: 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .sov.on { opacity: 1; }
+  .sov-arrow {
+    font-family: 'Geist', sans-serif;
+    font-weight: 600;
+  }
+
+  /* --- Fade-out reset --- */
+  .scan-card.resetting .scan-caption.on,
+  .scan-card.resetting .chip.on,
+  .scan-card.resetting .response.on,
+  .scan-card.resetting .sov.on {
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  @media (max-width: 480px) {
+    .scan-card { padding: 18px; }
+    .scan-btn { padding: 0 16px; }
+    .answer { font-size: 13.5px; }
+    .comp { font-size: 12.5px; }
+  }
+</style>
+</head>
+<body>
+<main class="stage">
+  <div class="scan-card" id="card">
+    <label class="sr-only" for="urlInput">Your store URL</label>
+    <div class="input-row">
+      <div class="input-wrap">
+        <input id="urlInput" type="text" placeholder="yourbrand.com" autocomplete="off" spellcheck="false" inputmode="url">
+        <span class="fake-caret" id="fakeCaret" aria-hidden="true"></span>
+        <span class="mirror" id="mirror" aria-hidden="true"></span>
+      </div>
+      <button class="scan-btn" id="scanBtn" type="button">Scan</button>
+    </div>
+
+    <div class="scan-status">
+      <div class="scan-caption" id="scanCaption">Scanning ChatGPT, Gemini, Perplexity</div>
+      <div class="chips">
+        <div class="chip" id="chip0">
+          <span class="ind">
+            <span class="spinner"></span>
+            <svg class="check" viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2 5 8.7l4.5-5" stroke="#2540FF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          ChatGPT
+        </div>
+        <div class="chip" id="chip1">
+          <span class="ind">
+            <span class="spinner"></span>
+            <svg class="check" viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2 5 8.7l4.5-5" stroke="#2540FF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          Gemini
+        </div>
+        <div class="chip" id="chip2">
+          <span class="ind">
+            <span class="spinner"></span>
+            <svg class="check" viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2 5 8.7l4.5-5" stroke="#2540FF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          Perplexity
+        </div>
+      </div>
+    </div>
+
+    <div class="response" id="response" aria-live="polite" aria-hidden="true">
+      <div class="query">&gt; Best clean protein subscription?</div>
+      <div class="answer">1. <strong id="brandName">VitalBlend</strong>, the one I'd recommend for clean sourcing and transparent labels.</div>
+      <div class="comp">2. Competitor A</div>
+      <div class="comp">3. Competitor B</div>
+    </div>
+
+    <div class="sov" id="sovChip">
+      <span class="sov-arrow">&#8599;</span>
+      <span>AI Share of Voice: 68%</span>
+    </div>
+  </div>
+</main>
+
+<script>
+(function () {
+  var DEFAULT_URL = 'vitalblend.com';
+  var DEFAULT_BRAND = 'VitalBlend';
+  var TYPE_START = 0.5, TYPE_END = 2.0;
+  var LOOP_END = 7.5;
+
+  var card = document.getElementById('card');
+  var input = document.getElementById('urlInput');
+  var fakeCaret = document.getElementById('fakeCaret');
+  var mirror = document.getElementById('mirror');
+  var btn = document.getElementById('scanBtn');
+  var caption = document.getElementById('scanCaption');
+  var chips = [document.getElementById('chip0'), document.getElementById('chip1'), document.getElementById('chip2')];
+  var response = document.getElementById('response');
+  var brandName = document.getElementById('brandName');
+  var sov = document.getElementById('sovChip');
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function deriveBrand(url) {
+    var d = (url || '').trim().toLowerCase()
+      .replace(/^https?:\/\//, '').replace(/^www\./, '')
+      .split('/')[0].split('.')[0];
+    if (!d) return 'YourBrand';
+    return d.split(/[-_]+/).map(function (w) {
+      return w ? w.charAt(0).toUpperCase() + w.slice(1) : '';
+    }).join('');
+  }
+
+  function positionCaret() {
+    mirror.textContent = input.value;
+    var w = mirror.getBoundingClientRect().width;
+    fakeCaret.style.left = (15 + Math.min(w, input.clientWidth - 30)) + 'px';
+  }
+
+  function setFinalState() {
+    input.value = DEFAULT_URL;
+    caption.classList.add('on');
+    chips.forEach(function (c) { c.classList.add('on', 'done'); });
+    response.classList.add('on');
+    response.setAttribute('aria-hidden', 'false');
+    sov.classList.add('on');
+  }
+
+  // Reduced motion: render the final state, keep manual scan instant.
+  if (reduceMotion) {
+    setFinalState();
+    function instantScan() {
+      var v = input.value.trim();
+      if (!v) { input.focus(); return; }
+      brandName.textContent = deriveBrand(v);
+    }
+    btn.addEventListener('click', instantScan);
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') instantScan(); });
+    return;
+  }
+
+  // --- Timeline events (shared by auto demo and manual runs) ---
+  var EVENTS = [
+    { t: 2.0, fn: function () {
+        btn.classList.add('pulse', 'busy');
+        btn.textContent = 'Scanning…';
+        caption.classList.add('on');
+        fakeCaret.classList.remove('on');
+      } },
+    { t: 2.3,  fn: function () { btn.classList.remove('pulse'); chips[0].classList.add('on'); } },
+    { t: 2.55, fn: function () { chips[1].classList.add('on'); } },
+    { t: 2.75, fn: function () { chips[0].classList.add('done'); } },
+    { t: 2.8,  fn: function () { chips[2].classList.add('on'); } },
+    { t: 3.0,  fn: function () { chips[1].classList.add('done'); } },
+    { t: 3.25, fn: function () { chips[2].classList.add('done'); } },
+    { t: 3.3,  fn: function () {
+        response.classList.add('on');
+        response.setAttribute('aria-hidden', 'false');
+        btn.classList.remove('busy');
+        btn.textContent = 'Scan';
+      } },
+    { t: 4.0,  fn: function () { sov.classList.add('on'); } },
+    { t: 7.0,  fn: function () { card.classList.add('resetting'); } }
+  ];
+
+  var mode = 'auto';        // 'auto' | 'manualIdle' | 'manualRun'
+  var clock = 0;            // seconds within the current run
+  var eventIdx = 0;
+  var paused = false;
+  var typingText = DEFAULT_URL;
+  var lastFrame = null;
+  var resumeTimer = null;
+
+  function clearVisuals() {
+    card.classList.remove('resetting');
+    btn.classList.remove('pulse', 'busy');
+    btn.textContent = 'Scan';
+    caption.classList.remove('on');
+    chips.forEach(function (c) { c.classList.remove('on', 'done'); });
+    response.classList.remove('on');
+    response.setAttribute('aria-hidden', 'true');
+    sov.classList.remove('on');
+  }
+
+  function startAuto() {
+    mode = 'auto';
+    clearVisuals();
+    input.value = '';
+    brandName.textContent = DEFAULT_BRAND;
+    typingText = DEFAULT_URL;
+    positionCaret();
+    fakeCaret.classList.add('on');
+    clock = 0;
+    eventIdx = 0;
+  }
+
+  function startManualRun(url) {
+    mode = 'manualRun';
+    clearVisuals();
+    fakeCaret.classList.remove('on');
+    brandName.textContent = deriveBrand(url);
+    clock = 2.0;
+    eventIdx = 0;
+    input.blur();
+  }
+
+  function frame(now) {
+    if (lastFrame === null) lastFrame = now;
+    var dt = (now - lastFrame) / 1000;
+    lastFrame = now;
+
+    if (!paused && mode !== 'manualIdle') {
+      clock += dt;
+
+      // Continuous type-in (auto mode only)
+      if (mode === 'auto' && clock >= TYPE_START && clock <= TYPE_END + 0.05) {
+        var p = Math.min(1, (clock - TYPE_START) / (TYPE_END - TYPE_START));
+        var chars = Math.round(p * typingText.length);
+        var next = typingText.substring(0, chars);
+        if (input.value !== next) {
+          input.value = next;
+          positionCaret();
+        }
+      }
+
+      // Discrete events
+      while (eventIdx < EVENTS.length && EVENTS[eventIdx].t <= clock) {
+        EVENTS[eventIdx].fn();
+        eventIdx++;
+      }
+
+      // Loop end
+      if (clock >= LOOP_END) startAuto();
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // --- Interaction: pause on hover ---
+  card.addEventListener('mouseenter', function () { paused = true; });
+  card.addEventListener('mouseleave', function () { paused = false; });
+
+  // --- Interaction: editable input takes over the demo ---
+  input.addEventListener('focus', function () {
+    if (mode === 'manualRun') return;
+    mode = 'manualIdle';
+    if (resumeTimer) { clearTimeout(resumeTimer); resumeTimer = null; }
+    clearVisuals();
+    input.value = '';
+    fakeCaret.classList.remove('on');
+  });
+  input.addEventListener('blur', function () {
+    if (mode === 'manualIdle' && !input.value.trim()) {
+      resumeTimer = setTimeout(startAuto, 1200);
+    }
+  });
+  function fireScan() {
+    var v = input.value.trim();
+    if (!v) { input.focus(); return; }
+    startManualRun(v);
+  }
+  btn.addEventListener('click', function () {
+    if (mode === 'auto') return; // demo drives itself
+    fireScan();
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') fireScan();
+  });
+
+  startAuto();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
