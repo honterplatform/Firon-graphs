@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Citations Sources</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: transparent;
+    font-family: 'Geist', -apple-system, system-ui, sans-serif;
+    color: #000;
+    letter-spacing: -0.01em;
+  }
+
+  .card {
+    width: 100%;
+    height: 100%;
+    background: #F2F2F2;
+    border: 1px solid rgba(0,0,0,0.05);
+    border-radius: clamp(10px, 1.6vh, 14px);
+    padding: clamp(10px, 1.8vh, 14px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Panel */
+  .panel {
+    flex: 1;
+    min-height: 0;
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.07);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    font-size: 13px;
+    font-weight: 600;
+    color: #000;
+    flex-shrink: 0;
+  }
+  .at-icon {
+    width: 24px; height: 24px;
+    background: #FB3B24;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .info-icon {
+    width: 16px; height: 16px;
+    background: #F2F2F2;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: rgba(0,0,0,0.4);
+  }
+  .header-tag {
+    margin-left: auto;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 10px;
+    font-weight: 500;
+    color: rgba(0,0,0,0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .table-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left;
+    padding: 9px 16px;
+    background: #F2F2F2;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(0,0,0,0.4);
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  thead th.visible { opacity: 1; transform: translateY(0); }
+  .sort-arrow { color: rgba(0,0,0,0.25); margin-left: 3px; }
+  tbody tr {
+    opacity: 0;
+    transform: translateX(-16px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  tbody tr.visible { opacity: 1; transform: translateX(0); }
+  tbody td {
+    padding: 11px 16px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    font-size: 13px;
+    color: rgba(0,0,0,0.8);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  .domain-cell {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .domain-name { font-weight: 500; color: #000; }
+  .domain-icon {
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .count-cell, .share-cell {
+    font-variant-numeric: tabular-nums;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 12.5px;
+    color: #000;
+  }
+  @media (max-width: 480px) {
+    .header { font-size: 12px; padding: 10px 12px; }
+    thead th { padding: 8px 10px; font-size: 9px; }
+    tbody td { padding: 8px 10px; font-size: 11px; }
+    .domain-icon { width: 20px; height: 20px; font-size: 10px; }
+    .domain-cell { gap: 7px; }
+    .count-cell, .share-cell { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="panel">
+    <div class="header">
+      <span class="at-icon">@</span>
+      Citations Sources
+      <span class="info-icon">i</span>
+      <span class="header-tag">last 90d</span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Domain <span class="sort-arrow">&updownarrow;</span></th>
+            <th>Count <span class="sort-arrow">&updownarrow;</span></th>
+            <th>Share <span class="sort-arrow">&updownarrow;</span></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script>
+const rows = [
+  { domain: 'magneticme.com', count: 2200, countLabel: '2.2K', share: 33, color: '#FB3B24', letter: 'm' },
+  { domain: 'reddit.com', count: 936, countLabel: '936', share: 10, color: '#C42E1B', letter: 'r' },
+  { domain: 'reviewed.com', count: 468, countLabel: '468', share: 14, color: '#FF7A6B', letter: 'r' },
+  { domain: 'anbbaby.com', count: 305, countLabel: '305', share: 11, color: '#FC5844', letter: 'a' },
+  { domain: 'kidpik.com', count: 275, countLabel: '275', share: 11, color: '#FFB0A5', letter: 'K' },
+  { domain: 'juneadaptive.com', count: 257, countLabel: '257', share: 14, color: '#FB3B24', letter: 'J' },
+  { domain: 'amazon.com', count: 220, countLabel: '220', share: 5, color: 'rgba(0,0,0,0.35)', letter: 'a' },
+  { domain: 'magnaready.com', count: 197, countLabel: '197', share: 13, color: '#FF7A6B', letter: 'M' },
+  { domain: 'gorgias.help', count: 196, countLabel: '196', share: 13, color: 'rgba(0,0,0,0.55)', letter: 'g' },
+];
+
+const tbody = document.getElementById('tbody');
+
+rows.forEach(r => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><div class="domain-cell"><div class="domain-icon" style="background:${r.color}">${r.letter}</div><span class="domain-name">${r.domain}</span></div></td>
+    <td class="count-cell" data-target="${r.count}" data-label="${r.countLabel}">0</td>
+    <td class="share-cell" data-target="${r.share}">0%</td>
+  `;
+  tbody.appendChild(tr);
+});
+
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+setTimeout(() => {
+  document.querySelectorAll('thead th').forEach(th => th.classList.add('visible'));
+}, 150);
+
+const trEls = document.querySelectorAll('tbody tr');
+trEls.forEach((tr, i) => {
+  setTimeout(() => {
+    tr.classList.add('visible');
+    animateCounters(tr);
+  }, 400 + i * 80);
+});
+
+function animateCounters(tr) {
+  const countCell = tr.querySelector('.count-cell');
+  const shareCell = tr.querySelector('.share-cell');
+  const countTarget = parseInt(countCell.dataset.target);
+  const countLabel = countCell.dataset.label;
+  const shareTarget = parseInt(shareCell.dataset.target);
+  const duration = 900;
+  const start = performance.now();
+
+  function tick(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = easeOutCubic(progress);
+
+    const currentCount = Math.round(eased * countTarget);
+    if (countTarget >= 1000) {
+      countCell.textContent = (currentCount / 1000).toFixed(1) + 'K';
+    } else {
+      countCell.textContent = currentCount.toLocaleString();
+    }
+    if (progress >= 1) countCell.textContent = countLabel;
+
+    shareCell.textContent = Math.round(eased * shareTarget) + '%';
+
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+</script>
+</body>
+</html>
