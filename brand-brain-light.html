@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Firon AI Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: transparent;
+    font-family: 'Geist', -apple-system, system-ui, sans-serif;
+    color: #000;
+    letter-spacing: -0.01em;
+  }
+
+  .card {
+    width: 100%;
+    height: 100%;
+    background: #F2F2F2;
+    border: 1px solid rgba(0,0,0,0.05);
+    border-radius: clamp(10px, 1.6vh, 14px);
+    padding: clamp(16px, 3vh, 26px) clamp(16px, 3vw, 28px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* --- Stage: nodes | connectors | engine --- */
+  .stage {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.1fr);
+    gap: 0;
+    align-items: stretch;
+    position: relative;
+  }
+
+  /* === LEFT: 4 input nodes === */
+  .nodes-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: clamp(6px, 1.2vh, 12px);
+    padding: clamp(4px, 1vh, 8px) 0;
+    position: relative;
+    z-index: 2;
+  }
+  .input-node {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .input-node.show { opacity: 1; transform: translateX(0); }
+
+  .node-icon {
+    width: clamp(34px, 4.8vh, 42px);
+    height: clamp(34px, 4.8vh, 42px);
+    border-radius: 8px;
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.07);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(0,0,0,0.6);
+    transition: border-color 0.3s, color 0.3s, background 0.3s, box-shadow 0.3s, transform 0.15s;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .node-icon svg {
+    width: 50%;
+    height: 50%;
+  }
+  .input-node.firing .node-icon {
+    border-color: rgba(251,59,36,0.45);
+    background: rgba(251,59,36,0.04);
+    color: #FB3B24;
+  }
+  .input-node:hover:not(.disabled) .node-icon {
+    border-color: rgba(251,59,36,0.7);
+    box-shadow: 0 0 14px rgba(251,59,36,0.25);
+    transform: translateY(-1px);
+  }
+  .input-node.disabled .node-icon {
+    border-color: rgba(0,0,0,0.08);
+    background: transparent;
+    color: rgba(0,0,0,0.3);
+    opacity: 0.7;
+  }
+  .input-node.disabled:hover .node-icon {
+    border-color: rgba(0,0,0,0.15);
+    color: rgba(0,0,0,0.4);
+    opacity: 0.9;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .node-label {
+    font-size: clamp(10.5px, 1.3vh, 12px);
+    font-weight: 600;
+    color: rgba(0,0,0,0.6);
+    line-height: 1.25;
+    min-width: 0;
+    transition: color 0.3s;
+  }
+  .input-node.firing .node-label { color: #FB3B24; }
+  .input-node.disabled .node-label {
+    color: rgba(0,0,0,0.35);
+    text-decoration: line-through;
+    text-decoration-color: rgba(0,0,0,0.15);
+  }
+  .input-node:hover:not(.disabled) .node-label { color: #000; }
+
+  /* === MIDDLE: SVG connectors === */
+  .conn-svg {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .conn-path {
+    fill: none;
+    stroke: rgba(0,0,0,0.12);
+    stroke-width: 1;
+    stroke-dasharray: 3 5;
+    vector-effect: non-scaling-stroke;
+    transition: stroke 0.4s;
+  }
+  .conn-path.flowing {
+    stroke: #FB3B24;
+    stroke-width: 1.2;
+    stroke-dasharray: 4 6;
+    animation: dashFlow 1.6s linear infinite;
+  }
+  .conn-path.highlight {
+    stroke: #FF6B5C;
+    stroke-width: 1.8;
+    stroke-dasharray: 5 5;
+    animation: dashFlow 0.7s linear infinite;
+    filter: drop-shadow(0 0 4px rgba(251,59,36,0.55));
+  }
+  .conn-path.muted {
+    stroke: rgba(0,0,0,0.05);
+    animation: none;
+  }
+  @keyframes dashFlow {
+    to { stroke-dashoffset: -20; }
+  }
+
+  /* === RIGHT: Firon AI Engine === */
+  .engine-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: stretch;
+    padding-left: clamp(4px, 1vw, 10px);
+    z-index: 2;
+    position: relative;
+  }
+  .engine {
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.07);
+    border-radius: 8px;
+    padding: clamp(12px, 1.8vh, 16px) clamp(14px, 1.8vw, 18px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1.2vh, 11px);
+    position: relative;
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.4s;
+    width: 100%;
+  }
+  .engine.show { opacity: 1; transform: translateX(0); }
+  .engine.alive { border-color: rgba(251,59,36,0.4); }
+
+  .engine-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: clamp(7px, 1.1vh, 10px);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    flex-shrink: 0;
+  }
+  .engine-mark {
+    width: clamp(22px, 3vh, 26px);
+    height: clamp(22px, 3vh, 26px);
+    border-radius: 6px;
+    background: rgba(251,59,36,0.12);
+    color: #FB3B24;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.4s;
+  }
+  .engine.alive .engine-mark { background: rgba(251,59,36,0.2); }
+  .engine-mark svg {
+    width: 55%;
+    height: 55%;
+  }
+  .engine-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+  .engine-title {
+    font-size: clamp(12px, 1.5vh, 13.5px);
+    font-weight: 600;
+    color: #000;
+    letter-spacing: -0.15px;
+    line-height: 1.1;
+  }
+  .engine-title span { color: #FB3B24; }
+  .engine-sub {
+    font-size: clamp(8.5px, 1vh, 10px);
+    font-weight: 600;
+    color: rgba(0,0,0,0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+  }
+
+  .engine-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+  .erow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: clamp(9px, 1.1vh, 10.5px);
+    color: rgba(0,0,0,0.45);
+    font-family: 'Geist Mono', ui-monospace, monospace;
+  }
+  .erow b {
+    color: #000;
+    font-weight: 600;
+  }
+  .erow.status .er-val {
+    color: #FB3B24;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 700;
+    transition: color 0.3s;
+  }
+  .erow.status .er-val.partial { color: #E6B43C; }
+  .erow.status .er-val.idle { color: rgba(0,0,0,0.45); }
+  .erow.status .er-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  .erow.status .er-val.idle .er-dot { animation: none; }
+  .erow b {
+    transition: color 0.3s;
+  }
+  .engine:not(.alive) .engine-mark { background: rgba(0,0,0,0.05); color: rgba(0,0,0,0.45); }
+  .engine:not(.alive) .engine-title span { color: rgba(0,0,0,0.45); }
+  @keyframes pulse { 0%,100% {opacity:1;} 50% {opacity:0.4;} }
+
+  /* Hint badge */
+  .hint {
+    position: absolute;
+    top: clamp(12px, 2vh, 18px);
+    right: clamp(14px, 2.5vw, 22px);
+    font-size: 9.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: rgba(0,0,0,0.45);
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.07);
+    padding: 4px 9px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    z-index: 3;
+  }
+  .hint.show { opacity: 1; }
+  .hint-pulse {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #FB3B24;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  /* === MOBILE — vertical flow: nodes row on top → lines down → engine at bottom === */
+  @media (max-aspect-ratio: 1/1) {
+    .card { padding: 14px 12px; }
+
+    .stage {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 1fr auto;
+      gap: 0;
+    }
+
+    /* Nodes become a horizontal row at the top */
+    .nodes-col {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 4px;
+      padding: 0 0 8px 0;
+    }
+    .input-node {
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      text-align: center;
+      flex: 1;
+      min-width: 0;
+      transform: translateY(-6px);
+    }
+    .input-node.show { transform: translateY(0); }
+    .node-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 7px;
+    }
+    .node-label {
+      font-size: 9px;
+      text-align: center;
+      line-height: 1.15;
+      letter-spacing: -0.1px;
+      max-width: 100%;
+    }
+    .input-node:hover:not(.disabled) .node-icon { transform: translateY(-2px); }
+
+    /* Engine wrap fills bottom, full width */
+    .engine-wrap {
+      padding-left: 0;
+      padding-top: 8px;
+      justify-content: stretch;
+    }
+    .engine {
+      width: 100%;
+      padding: 10px 12px;
+      gap: 7px;
+      transform: translateY(4px);
+    }
+    .engine.show { transform: translateY(0); }
+    .engine-mark { width: 24px; height: 24px; }
+    .engine-title { font-size: 12px; }
+    .engine-sub { font-size: 8.5px; }
+    .erow { font-size: 9.5px; }
+
+    /* Hide the click-hint on mobile — cursor on tap is enough */
+    .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="hint" id="hint"><span class="hint-pulse"></span>Click sources to toggle</div>
+  <div class="stage" id="stage">
+    <!-- SVG connectors. Paths start just past the input nodes (x=15) and converge
+         into the left edge of the engine card (x=67 — third grid column begins at
+         (1fr + 1.2fr) / 3.3fr ≈ 66.7%). -->
+    <svg class="conn-svg" id="connSvg" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <path class="conn-path" id="p0" d="M 15 12.5 C 38 12.5, 55 50, 67 50"></path>
+      <path class="conn-path" id="p1" d="M 15 37.5 C 38 37.5, 55 50, 67 50"></path>
+      <path class="conn-path" id="p2" d="M 15 62.5 C 38 62.5, 55 50, 67 50"></path>
+      <path class="conn-path" id="p3" d="M 15 87.5 C 38 87.5, 55 50, 67 50"></path>
+    </svg>
+
+    <!-- LEFT: 4 floating nodes -->
+    <div class="nodes-col">
+      <div class="input-node" data-i="0">
+        <div class="node-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 7h14l-1.2 12.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 7z"/>
+            <path d="M8 7V5a4 4 0 0 1 8 0v2"/>
+          </svg>
+        </div>
+        <div class="node-label">Product Catalog</div>
+      </div>
+      <div class="input-node" data-i="1">
+        <div class="node-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+          </svg>
+        </div>
+        <div class="node-label">Customer Support FAQs</div>
+      </div>
+      <div class="input-node" data-i="2">
+        <div class="node-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <polyline points="9 12 11 14 15 10"/>
+          </svg>
+        </div>
+        <div class="node-label">Brand Policies</div>
+      </div>
+      <div class="input-node" data-i="3">
+        <div class="node-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="8" y1="13" x2="16" y2="13"/>
+            <line x1="8" y1="17" x2="14" y2="17"/>
+          </svg>
+        </div>
+        <div class="node-label">Blogs &amp; Sizing Guides</div>
+      </div>
+    </div>
+
+    <!-- MIDDLE: spacer (SVG draws over) -->
+    <div></div>
+
+    <!-- RIGHT: Firon AI Engine -->
+    <div class="engine-wrap">
+      <div class="engine" id="engine">
+        <div class="engine-head">
+          <div class="engine-mark">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 3l1.6 5L19 9.6l-4 3.3 1.3 5.4L12 15l-4.3 3.3 1.3-5.4-4-3.3L10.4 8 12 3z"/>
+            </svg>
+          </div>
+          <div class="engine-title-group">
+            <div class="engine-title">The <span>Firon</span> AI Engine</div>
+            <div class="engine-sub">Unified · indexed</div>
+          </div>
+        </div>
+        <div class="engine-rows">
+          <div class="erow"><span>Sources</span><b id="sourcesVal">4 / 4</b></div>
+          <div class="erow"><span>Edges</span><b id="edgesVal">1,829</b></div>
+          <div class="erow status"><span>Status</span><span class="er-val" id="statusVal"><span class="er-dot"></span>Ingesting</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var nodes = document.querySelectorAll('.input-node');
+var paths = [
+  document.getElementById('p0'),
+  document.getElementById('p1'),
+  document.getElementById('p2'),
+  document.getElementById('p3')
+];
+var engine = document.getElementById('engine');
+var hint = document.getElementById('hint');
+var sourcesVal = document.getElementById('sourcesVal');
+var edgesVal = document.getElementById('edgesVal');
+var statusVal = document.getElementById('statusVal');
+
+// SVG path geometry per layout. Desktop: horizontal flow left→right.
+// Mobile: vertical flow top→down with nodes across the top and engine at bottom.
+var DESKTOP_PATHS = [
+  'M 15 12.5 C 38 12.5, 55 50, 67 50',
+  'M 15 37.5 C 38 37.5, 55 50, 67 50',
+  'M 15 62.5 C 38 62.5, 55 50, 67 50',
+  'M 15 87.5 C 38 87.5, 55 50, 67 50'
+];
+var MOBILE_PATHS = [
+  'M 12.5 10 C 12.5 45, 50 60, 50 82',
+  'M 37.5 10 C 37.5 45, 50 60, 50 82',
+  'M 62.5 10 C 62.5 45, 50 60, 50 82',
+  'M 87.5 10 C 87.5 45, 50 60, 50 82'
+];
+function updateSvgPaths() {
+  var isMobile = window.matchMedia('(max-aspect-ratio: 1/1)').matches;
+  var d = isMobile ? MOBILE_PATHS : DESKTOP_PATHS;
+  for (var i = 0; i < paths.length; i++) {
+    paths[i].setAttribute('d', d[i]);
+  }
+}
+
+// Each source contributes some edges to the knowledge graph (totals to 1,829)
+var EDGES_PER_SOURCE = [812, 354, 226, 437];
+var enabled = [true, true, true, true];
+
+function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+
+function tween(from, to, dur, cb) {
+  var start = Date.now();
+  function step() {
+    var t = Math.min(1, (Date.now() - start) / dur);
+    var v = from + (to - from) * (1 - Math.pow(1 - t, 3));
+    cb(v);
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function totalEdges() {
+  var sum = 0;
+  for (var i = 0; i < enabled.length; i++) {
+    if (enabled[i]) sum += EDGES_PER_SOURCE[i];
+  }
+  return sum;
+}
+
+function updateEngine() {
+  var active = enabled.filter(Boolean).length;
+  var edges = totalEdges();
+
+  sourcesVal.textContent = active + ' / 4';
+
+  // Smooth tween edges count
+  var prev = parseInt(edgesVal.textContent.replace(/,/g, ''), 10) || 0;
+  tween(prev, edges, 350, function(v) {
+    edgesVal.textContent = Math.round(v).toLocaleString();
+  });
+
+  if (active === 0) {
+    engine.classList.remove('alive');
+    statusVal.className = 'er-val idle';
+    statusVal.innerHTML = '<span class="er-dot"></span>Idle';
+  } else if (active < 4) {
+    engine.classList.add('alive');
+    statusVal.className = 'er-val partial';
+    statusVal.innerHTML = '<span class="er-dot"></span>Partial';
+  } else {
+    engine.classList.add('alive');
+    statusVal.className = 'er-val';
+    statusVal.innerHTML = '<span class="er-dot"></span>Ingesting';
+  }
+}
+
+function toggleSource(idx) {
+  enabled[idx] = !enabled[idx];
+  if (enabled[idx]) {
+    nodes[idx].classList.add('firing');
+    nodes[idx].classList.remove('disabled');
+    paths[idx].classList.add('flowing');
+    paths[idx].classList.remove('muted');
+  } else {
+    nodes[idx].classList.remove('firing');
+    nodes[idx].classList.add('disabled');
+    paths[idx].classList.remove('flowing', 'highlight');
+    paths[idx].classList.add('muted');
+  }
+  updateEngine();
+}
+
+function attachInteractions() {
+  nodes.forEach(function(node, idx) {
+    node.addEventListener('click', function() {
+      toggleSource(idx);
+    });
+    node.addEventListener('mouseenter', function() {
+      if (enabled[idx]) paths[idx].classList.add('highlight');
+    });
+    node.addEventListener('mouseleave', function() {
+      paths[idx].classList.remove('highlight');
+    });
+  });
+}
+
+async function initialReveal() {
+  // Reset state
+  nodes.forEach(function(n) { n.classList.remove('show', 'firing', 'disabled'); });
+  paths.forEach(function(p) { p.classList.remove('flowing', 'muted', 'highlight'); });
+  engine.classList.remove('show', 'alive');
+  hint.classList.remove('show');
+
+  await sleep(400);
+
+  // Nodes appear top-to-bottom
+  for (var i = 0; i < nodes.length; i++) {
+    nodes[i].classList.add('show');
+    await sleep(160);
+  }
+
+  await sleep(250);
+
+  // Engine appears
+  engine.classList.add('show');
+  await sleep(450);
+
+  // Sources fire and lines start flowing
+  for (var i = 0; i < nodes.length; i++) {
+    nodes[i].classList.add('firing');
+    paths[i].classList.add('flowing');
+    await sleep(200);
+  }
+
+  await sleep(400);
+  engine.classList.add('alive');
+
+  await sleep(800);
+  hint.classList.add('show');
+}
+
+window.addEventListener('load', function() {
+  updateSvgPaths();
+  attachInteractions();
+  setTimeout(initialReveal, 200);
+});
+window.addEventListener('resize', updateSvgPaths);
+</script>
+</body>
+</html>

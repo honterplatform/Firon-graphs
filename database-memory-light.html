@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Database Memory · Customer Profile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: transparent;
+    font-family: 'Geist', -apple-system, system-ui, sans-serif;
+    color: #000;
+    letter-spacing: -0.01em;
+  }
+
+  .card {
+    width: 100%;
+    height: 100%;
+    background: #F2F2F2;
+    border: 1px solid rgba(0,0,0,0.05);
+    border-radius: clamp(10px, 1.6vh, 14px);
+    padding: clamp(16px, 3vh, 28px) clamp(16px, 3vw, 32px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 1.6vh, 16px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-label {
+    font-size: clamp(11px, 1.5vh, 14px);
+    font-weight: 600;
+    color: #FB3B24;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    flex-shrink: 0;
+  }
+
+  .main {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: clamp(10px, 1.6vw, 16px);
+  }
+
+  .panel {
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.07);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* === LEFT: Customer memory === */
+  .mem-head {
+    padding: clamp(11px, 1.6vh, 14px) clamp(12px, 1.6vw, 16px);
+    border-bottom: 1px solid rgba(0,0,0,0.07);
+    flex-shrink: 0;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    gap: clamp(8px, 1.2vw, 11px);
+  }
+  .avatar {
+    width: clamp(32px, 4.4vh, 40px);
+    height: clamp(32px, 4.4vh, 40px);
+    border-radius: 50%;
+    background: #000;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(13px, 1.7vh, 15px);
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .cust-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .cust-name {
+    font-size: clamp(13px, 1.7vh, 15px);
+    font-weight: 600;
+    color: #000;
+    line-height: 1.1;
+    letter-spacing: -0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cust-meta {
+    font-size: clamp(9px, 1.2vh, 11px);
+    font-weight: 500;
+    color: rgba(0,0,0,0.45);
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cust-meta .returning {
+    color: #FB3B24;
+    font-weight: 600;
+  }
+
+  .mem-body {
+    flex: 1;
+    min-height: 0;
+    padding: clamp(10px, 1.5vh, 14px) clamp(12px, 1.6vw, 16px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1.4vh, 12px);
+    overflow: hidden;
+  }
+
+  .mem-section {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(4px, 0.7vh, 6px);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.4s, transform 0.4s;
+  }
+  .mem-section.show { opacity: 1; transform: translateY(0); }
+
+  .mem-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: clamp(9px, 1.1vh, 11px);
+    font-weight: 600;
+    color: rgba(0,0,0,0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+  }
+  .mem-label .ml-icon {
+    color: #FB3B24;
+    font-size: 1em;
+  }
+
+  /* Sizing arc */
+  .sizing-arc {
+    display: flex;
+    align-items: center;
+    gap: clamp(2px, 0.6vw, 5px);
+    padding: clamp(4px, 0.6vh, 6px) 0;
+  }
+  .size-pill {
+    flex: 1;
+    text-align: center;
+    padding: clamp(5px, 0.8vh, 7px) clamp(5px, 0.7vw, 8px);
+    border-radius: 5px;
+    font-size: clamp(10px, 1.3vh, 12px);
+    font-weight: 600;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    border: 1px solid;
+    min-width: 0;
+    white-space: nowrap;
+    position: relative;
+  }
+  .size-pill.done {
+    color: rgba(0,0,0,0.45);
+    background: rgba(0,0,0,0.05);
+    border-color: rgba(0,0,0,0.1);
+    text-decoration: line-through;
+    text-decoration-color: rgba(0,0,0,0.3);
+  }
+  .size-pill.current {
+    color: #fff;
+    background: #000;
+    border-color: #000;
+  }
+  .size-pill.predicted {
+    color: #FB3B24;
+    background: rgba(251,59,36,0.08);
+    border-color: rgba(251,59,36,0.4);
+    border-style: dashed;
+  }
+  .size-arrow {
+    color: rgba(0,0,0,0.3);
+    font-size: clamp(10px, 1.3vh, 13px);
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* Purchase rows */
+  .purchases {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(3px, 0.5vh, 5px);
+  }
+  .purchase {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: clamp(4px, 0.7vh, 6px) clamp(7px, 1vh, 9px);
+    background: #F2F2F2;
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 5px;
+    font-size: clamp(10px, 1.3vh, 11.5px);
+  }
+  .purchase-img {
+    width: clamp(20px, 2.6vh, 24px);
+    height: clamp(20px, 2.6vh, 24px);
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .purchase-img.bloom { background: linear-gradient(135deg, #E8E8E8, #DADADA); }
+  .purchase-img.stripe { background: linear-gradient(135deg, #E8E8E8, #DADADA); }
+  .purchase-img.constellation { background: linear-gradient(135deg, #E8E8E8, #DADADA); }
+  .purchase-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .purchase-name {
+    color: #000;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: clamp(10px, 1.3vh, 11.5px);
+    line-height: 1.2;
+  }
+  .purchase-date {
+    color: rgba(0,0,0,0.35);
+    font-size: clamp(8.5px, 1vh, 10px);
+    font-family: 'Geist Mono', ui-monospace, monospace;
+  }
+  .purchase-price {
+    color: #000;
+    font-weight: 600;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: clamp(10px, 1.3vh, 11.5px);
+    flex-shrink: 0;
+  }
+
+  /* Timeline mini */
+  .timeline-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: clamp(10px, 1.3vh, 12px);
+    color: rgba(0,0,0,0.6);
+    font-family: 'Geist Mono', ui-monospace, monospace;
+  }
+  .timeline-row span.tl-key { color: rgba(0,0,0,0.45); }
+  .timeline-row span.tl-val { color: #000; font-weight: 600; }
+
+  /* === RIGHT: AI suggestion === */
+  .sugg-head {
+    padding: clamp(11px, 1.6vh, 14px) clamp(12px, 1.6vw, 16px);
+    border-bottom: 1px solid rgba(0,0,0,0.07);
+    flex-shrink: 0;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .sugg-title {
+    font-size: clamp(11px, 1.4vh, 13px);
+    font-weight: 600;
+    color: #000;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  .sugg-title .st-icon {
+    color: #FB3B24;
+    font-weight: 700;
+  }
+  .sugg-confidence {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: clamp(9px, 1.1vh, 11px);
+    font-weight: 600;
+    color: #FB3B24;
+    background: rgba(251,59,36,0.08);
+    border: 1px solid rgba(251,59,36,0.25);
+    padding: 3px 7px;
+    border-radius: 4px;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    flex-shrink: 0;
+  }
+
+  .sugg-body {
+    flex: 1;
+    min-height: 0;
+    padding: clamp(10px, 1.5vh, 14px) clamp(12px, 1.6vw, 16px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1.3vh, 12px);
+    overflow: hidden;
+  }
+
+  .product-card {
+    background: #F2F2F2;
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 8px;
+    overflow: hidden;
+    opacity: 0;
+    transform: scale(0.96);
+    transition: opacity 0.5s, transform 0.5s;
+  }
+  .product-card.show { opacity: 1; transform: scale(1); }
+
+  .prod-img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background:
+      radial-gradient(circle at 30% 40%, rgba(0,0,0,0.05) 0%, transparent 40%),
+      linear-gradient(135deg, #E8E8E8, #DADADA);
+    position: relative;
+  }
+  .prod-info {
+    padding: clamp(7px, 1.1vh, 10px) clamp(8px, 1.2vw, 11px);
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .prod-name {
+    font-size: clamp(12px, 1.5vh, 13.5px);
+    font-weight: 600;
+    color: #000;
+    line-height: 1.2;
+    letter-spacing: -0.1px;
+  }
+  .prod-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 6px;
+    margin-top: 2px;
+  }
+  .prod-size {
+    font-size: clamp(9px, 1.2vh, 11px);
+    color: rgba(0,0,0,0.45);
+    font-weight: 500;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+  }
+  .prod-price {
+    font-size: clamp(12px, 1.5vh, 13.5px);
+    font-weight: 700;
+    color: #FB3B24;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+  }
+
+  .reasoning {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(3px, 0.5vh, 5px);
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  .reasoning.show { opacity: 1; }
+  .reasoning-label {
+    font-size: clamp(8.5px, 1vh, 10px);
+    font-weight: 600;
+    color: rgba(0,0,0,0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .reason {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: clamp(10px, 1.2vh, 11.5px);
+    color: rgba(0,0,0,0.6);
+    line-height: 1.3;
+  }
+  .reason-icon {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: #FB3B24;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .card-footer {
+    font-size: clamp(11px, 1.5vh, 14px);
+    color: rgba(0,0,0,0.45);
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  /* Stack on narrow */
+  @media (max-aspect-ratio: 1/1) {
+    .card {
+      padding: clamp(11px, 1.8vh, 16px) clamp(14px, 4vw, 22px);
+      gap: clamp(7px, 1vh, 10px);
+    }
+    .card-label {
+      font-size: clamp(10px, 1.3vh, 12px);
+      letter-spacing: 1.1px;
+    }
+    .main {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: clamp(7px, 1vh, 10px);
+    }
+    .mem-head, .sugg-head {
+      padding: clamp(7px, 1vh, 9px) clamp(9px, 1.3vw, 12px);
+    }
+    .avatar {
+      width: clamp(26px, 3.6vh, 32px);
+      height: clamp(26px, 3.6vh, 32px);
+      font-size: clamp(11px, 1.4vh, 13px);
+    }
+    .cust-name { font-size: clamp(12px, 1.5vh, 13.5px); }
+    .cust-meta { font-size: clamp(8.5px, 1vh, 10px); }
+    .mem-body, .sugg-body {
+      padding: clamp(7px, 1vh, 10px) clamp(9px, 1.3vw, 12px);
+      gap: clamp(5px, 0.8vh, 8px);
+    }
+    /* Compress sections */
+    .mem-label {
+      font-size: clamp(8.5px, 1vh, 10px);
+      letter-spacing: 0.5px;
+    }
+    .size-pill {
+      padding: clamp(4px, 0.6vh, 6px) clamp(4px, 0.5vw, 6px);
+      font-size: clamp(9px, 1.1vh, 11px);
+    }
+    .timeline-row {
+      font-size: clamp(9.5px, 1.2vh, 11px);
+    }
+    /* HIDE timeline section on mobile — purchase dates already imply timeline */
+    #sec2 { display: none; }
+    /* Show only the most recent purchase on mobile */
+    .purchases > .purchase:nth-child(n+2) { display: none; }
+    .purchase {
+      padding: clamp(4px, 0.6vh, 6px) clamp(6px, 0.9vh, 8px);
+    }
+    .purchase-img {
+      width: clamp(18px, 2.4vh, 22px);
+      height: clamp(18px, 2.4vh, 22px);
+    }
+    .purchase-name { font-size: clamp(9.5px, 1.2vh, 11px); }
+    .purchase-date { font-size: clamp(8px, 0.95vh, 9.5px); }
+    .purchase-price { font-size: clamp(9.5px, 1.2vh, 11px); }
+    /* Suggestion panel */
+    .sugg-title { font-size: clamp(10px, 1.3vh, 12px); }
+    .sugg-confidence { font-size: clamp(8.5px, 1vh, 10px); padding: 2px 6px; }
+    .prod-info { padding: clamp(6px, 0.9vh, 8px) clamp(8px, 1.1vw, 10px); }
+    .prod-name { font-size: clamp(11px, 1.4vh, 12.5px); }
+    .prod-size, .prod-price { font-size: clamp(9px, 1.2vh, 11px); }
+    /* Show only 2 reasoning bullets on mobile */
+    .reasoning > .reason:nth-child(n+4) { display: none; }
+    .reasoning-label { font-size: clamp(8px, 0.95vh, 9.5px); }
+    .reason { font-size: clamp(9.5px, 1.15vh, 11px); }
+    .card-footer {
+      font-size: clamp(10px, 1.25vh, 12px);
+      line-height: 1.35;
+    }
+  }
+  /* Very tight: scrollable safety net */
+  @media (max-aspect-ratio: 1/1) and (max-height: 520px) {
+    .card { overflow-y: auto; scrollbar-width: none; }
+    .card::-webkit-scrollbar { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="main">
+    <!-- LEFT: memory profile -->
+    <div class="panel">
+      <div class="mem-head">
+        <div class="avatar">SK</div>
+        <div class="cust-info">
+          <div class="cust-name">Sarah K.</div>
+          <div class="cust-meta"><span class="returning">● Returning</span> · visit 4 · member Aug ’24</div>
+        </div>
+      </div>
+      <div class="mem-body">
+        <div class="mem-section" id="sec1">
+          <div class="mem-label"><span class="ml-icon">⟁</span> Sizing arc</div>
+          <div class="sizing-arc">
+            <div class="size-pill done">0–3M</div>
+            <span class="size-arrow">→</span>
+            <div class="size-pill current">3–6M</div>
+            <span class="size-arrow">→</span>
+            <div class="size-pill predicted">6–9M*</div>
+          </div>
+        </div>
+
+        <div class="mem-section" id="sec2">
+          <div class="mem-label"><span class="ml-icon">⟁</span> Timeline</div>
+          <div class="timeline-row"><span class="tl-key">Last visit</span> <span class="tl-val">6 weeks ago</span></div>
+          <div class="timeline-row"><span class="tl-key">Next size due</span> <span class="tl-val">~4 weeks</span></div>
+        </div>
+
+        <div class="mem-section" id="sec3">
+          <div class="mem-label"><span class="ml-icon">⟁</span> Last purchases</div>
+          <div class="purchases">
+            <div class="purchase">
+              <div class="purchase-img bloom"></div>
+              <div class="purchase-info">
+                <div class="purchase-name">Botanical Bloom Romper</div>
+                <div class="purchase-date">3-6M · Mar 2026</div>
+              </div>
+              <div class="purchase-price">£42</div>
+            </div>
+            <div class="purchase">
+              <div class="purchase-img stripe"></div>
+              <div class="purchase-info">
+                <div class="purchase-name">Sand Stripe Onesie</div>
+                <div class="purchase-date">3-6M · Feb 2026</div>
+              </div>
+              <div class="purchase-price">£28</div>
+            </div>
+            <div class="purchase">
+              <div class="purchase-img constellation"></div>
+              <div class="purchase-info">
+                <div class="purchase-name">Constellation Sleeper</div>
+                <div class="purchase-date">0-3M · Nov 2025</div>
+              </div>
+              <div class="purchase-price">£38</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: AI suggestion -->
+    <div class="panel">
+      <div class="sugg-head">
+        <div class="sugg-title"><span class="st-icon">✦</span>Next purchase predicted</div>
+        <div class="sugg-confidence" id="confPill"><span id="confVal">0</span>%</div>
+      </div>
+      <div class="sugg-body">
+        <div class="product-card" id="prodCard">
+          <div class="prod-img"></div>
+          <div class="prod-info">
+            <div class="prod-name">Petit Linen Sleeper</div>
+            <div class="prod-meta">
+              <span class="prod-size">6–9M · in stock</span>
+              <span class="prod-price">£38</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="reasoning" id="reasoning">
+          <div class="reasoning-label">Based on memory</div>
+          <div class="reason"><span class="reason-icon">✓</span>Size progression · 3-6M → 6-9M</div>
+          <div class="reason"><span class="reason-icon">✓</span>Time since last visit · 6 wks</div>
+          <div class="reason"><span class="reason-icon">✓</span>Style affinity · natural fibres</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var sections = [
+  document.getElementById('sec1'),
+  document.getElementById('sec2'),
+  document.getElementById('sec3')
+];
+var prodCard = document.getElementById('prodCard');
+var reasoning = document.getElementById('reasoning');
+var confVal = document.getElementById('confVal');
+
+function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+
+function tween(from, to, dur, cb) {
+  var start = Date.now();
+  function step() {
+    var t = Math.min(1, (Date.now() - start) / dur);
+    var v = from + (to - from) * (1 - Math.pow(1 - t, 3));
+    cb(v);
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+async function runCycle() {
+  // Reset
+  sections.forEach(function(s) { s.classList.remove('show'); });
+  prodCard.classList.remove('show');
+  reasoning.classList.remove('show');
+  confVal.textContent = '0';
+
+  await sleep(500);
+
+  // Memory sections reveal in sequence
+  for (var i = 0; i < sections.length; i++) {
+    sections[i].classList.add('show');
+    await sleep(380);
+  }
+
+  await sleep(400);
+
+  // Product card appears
+  prodCard.classList.add('show');
+  await sleep(300);
+
+  // Reasoning appears
+  reasoning.classList.add('show');
+
+  // Confidence climbs
+  tween(0, 94, 1100, function(v) {
+    confVal.textContent = Math.round(v);
+  });
+
+  await sleep(5000);
+  runCycle();
+}
+
+window.addEventListener('load', function() { setTimeout(runCycle, 200); });
+</script>
+</body>
+</html>
