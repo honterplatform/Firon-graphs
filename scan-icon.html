@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scan Icon</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .stage {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+  }
+
+  /* Square icon tile */
+  .icon {
+    position: relative;
+    width: min(100%, 100vh);
+    aspect-ratio: 1 / 1;
+    max-width: 100%;
+    max-height: 100%;
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.07);
+    border-radius: 22%;
+    overflow: hidden;
+  }
+
+  /* Inner scan area */
+  .field {
+    position: absolute;
+    inset: 0;
+  }
+
+  /* Viewfinder corner brackets */
+  .brackets {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .brackets path {
+    fill: none;
+    stroke: #111;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* Dot grid */
+  .dot {
+    position: absolute;
+    width: 6%;
+    height: 6%;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.13);
+    transform: translate(-50%, -50%) scale(1);
+    transition: none;
+    will-change: transform, background, opacity;
+  }
+
+  /* Sweeping beam */
+  .beam {
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    height: 2px;
+    top: 0;
+    background: #FB3B24;
+    border-radius: 2px;
+    box-shadow: 0 0 10px 1px rgba(251,59,36,0.55);
+    will-change: transform, opacity;
+  }
+  .beam::before {
+    /* soft trailing band */
+    content: '';
+    position: absolute;
+    left: -6%;
+    right: -6%;
+    top: -16px;
+    bottom: -16px;
+    background: linear-gradient(180deg,
+      rgba(251,59,36,0) 0%,
+      rgba(251,59,36,0.12) 45%,
+      rgba(251,59,36,0.18) 50%,
+      rgba(251,59,36,0.12) 55%,
+      rgba(251,59,36,0) 100%);
+  }
+
+  /* Center reticle */
+  .reticle {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 12%; height: 12%;
+    transform: translate(-50%, -50%);
+    opacity: 0.9;
+  }
+  .reticle line {
+    stroke: rgba(0,0,0,0.25);
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="icon">
+    <div class="field" id="field">
+      <svg class="brackets" viewBox="0 0 100 100" aria-hidden="true">
+        <path d="M20 32 V20 H32"/>
+        <path d="M68 20 H80 V32"/>
+        <path d="M80 68 V80 H68"/>
+        <path d="M32 80 H20 V68"/>
+      </svg>
+      <svg class="reticle" viewBox="0 0 24 24" aria-hidden="true">
+        <line x1="12" y1="4" x2="12" y2="9"/>
+        <line x1="12" y1="15" x2="12" y2="20"/>
+        <line x1="4" y1="12" x2="9" y2="12"/>
+        <line x1="15" y1="12" x2="20" y2="12"/>
+      </svg>
+      <div class="beam" id="beam"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var field = document.getElementById('field');
+  var beam = document.getElementById('beam');
+
+  // Build a 4x4 dot grid inside the bracket area (28%..72%)
+  var GRID = [30, 43.33, 56.66, 70];
+  var dots = [];
+  GRID.forEach(function (y) {
+    GRID.forEach(function (x) {
+      var d = document.createElement('div');
+      d.className = 'dot';
+      d.style.left = x + '%';
+      d.style.top = y + '%';
+      field.appendChild(d);
+      dots.push({ el: d, x: x, y: y });
+    });
+  });
+
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Beam sweeps top -> bottom continuously.
+  var TOP = 22, BOTTOM = 78;     // % travel range
+  var DUR = 1700;                // ms per sweep
+  var start = null;
+
+  function frame(now) {
+    if (start === null) start = now;
+    var t = ((now - start) % DUR) / DUR;   // 0..1
+
+    // ease the sweep slightly
+    var eased = t;
+    var y = TOP + (BOTTOM - TOP) * eased;
+
+    // beam position + fade at the ends
+    beam.style.top = y + '%';
+    var fade = Math.min(1, Math.min(t, 1 - t) * 6);
+    beam.style.opacity = fade.toFixed(3);
+
+    // illuminate dots near the beam
+    for (var i = 0; i < dots.length; i++) {
+      var dist = Math.abs(dots[i].y - y);
+      var k = Math.max(0, 1 - dist / 9);   // 0..1 within ~9%
+      if (k > 0) {
+        var op = 0.13 + 0.87 * k;
+        dots[i].el.style.background = 'rgba(251,59,36,' + (0.25 + 0.75 * k).toFixed(3) + ')';
+        dots[i].el.style.transform = 'translate(-50%, -50%) scale(' + (1 + 0.9 * k).toFixed(3) + ')';
+        dots[i].el.style.opacity = op.toFixed(3);
+        dots[i].el.style.boxShadow = k > 0.5 ? '0 0 6px rgba(251,59,36,' + (0.5 * k).toFixed(3) + ')' : 'none';
+      } else {
+        dots[i].el.style.background = 'rgba(0,0,0,0.13)';
+        dots[i].el.style.transform = 'translate(-50%, -50%) scale(1)';
+        dots[i].el.style.opacity = '1';
+        dots[i].el.style.boxShadow = 'none';
+      }
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  if (reduce) {
+    // Static: beam centered, mid row lit
+    beam.style.top = '50%';
+    beam.style.opacity = '1';
+    dots.forEach(function (d) {
+      if (Math.abs(d.y - 50) < 9) {
+        d.el.style.background = 'rgba(251,59,36,0.85)';
+        d.el.style.transform = 'translate(-50%,-50%) scale(1.6)';
+      }
+    });
+  } else {
+    requestAnimationFrame(frame);
+  }
+})();
+</script>
+</body>
+</html>
