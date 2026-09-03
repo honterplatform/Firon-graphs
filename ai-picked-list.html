@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Picked · The List</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: transparent;
+    font-family: 'Geist', -apple-system, system-ui, sans-serif;
+    color: #000;
+    letter-spacing: -0.01em;
+  }
+
+  .stage {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    padding: clamp(6px, 1.2vh, 10px);
+  }
+
+  .shell {
+    width: 100%;
+    height: 100%;
+    max-width: 1080px;
+    background: #F2F2F2;
+    border: 1px solid rgba(0,0,0,0.05);
+    border-radius: 10px;
+    padding: clamp(9px, 1.5vh, 13px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(7px, 1.2vh, 11px);
+    overflow: hidden;
+  }
+
+  /* ---------- Prompt bar ---------- */
+  .qbar {
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.07);
+    border-radius: 8px;
+    padding: clamp(9px, 1.5vh, 13px) clamp(12px, 1.6vw, 16px);
+    flex-shrink: 0;
+  }
+  .qlabel {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9.5px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: rgba(0,0,0,0.38);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .qline { display: flex; align-items: baseline; min-height: clamp(19px, 2.8vh, 25px); }
+  .qtext {
+    font-size: clamp(14px, 2.1vh, 19px);
+    font-weight: 500;
+    color: #000;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .caret {
+    display: inline-block;
+    width: 2px;
+    height: clamp(14px, 2vh, 18px);
+    background: #FB3B24;
+    margin-left: 3px;
+    flex-shrink: 0;
+    animation: blink 1s step-end infinite;
+  }
+  .caret.off { opacity: 0; animation: none; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+  /* ---------- Engine chips ---------- */
+  .chips {
+    display: flex;
+    gap: clamp(5px, 0.7vw, 8px);
+    flex-shrink: 0;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: clamp(28px, 4.2vh, 36px);
+    padding: 0 clamp(8px, 1vw, 13px);
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.09);
+    border-radius: 6px;
+    font-family: 'Geist', sans-serif;
+    font-size: clamp(10.5px, 1.4vh, 12.5px);
+    font-weight: 500;
+    color: rgba(0,0,0,0.55);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+    min-width: 0;
+  }
+  .chip svg { width: clamp(12px, 1.7vh, 14px); height: clamp(12px, 1.7vh, 14px); flex-shrink: 0; }
+  .chip svg path { fill: rgba(0,0,0,0.3); transition: fill 0.2s ease; }
+  .chip.answered svg path { fill: rgba(0,0,0,0.75); }
+  .chip.answered { color: rgba(0,0,0,0.8); }
+  .chip.active { border-color: #FB3B24; color: #FB3B24; }
+  .chip.active svg path { fill: #FB3B24; }
+  .chip:hover { border-color: rgba(0,0,0,0.22); }
+  .chip.active:hover { border-color: #FB3B24; }
+  .chip .mark {
+    width: 11px; height: 11px;
+    border-radius: 3px;
+    background: rgba(0,0,0,0.25);
+    flex-shrink: 0;
+    transition: background 0.2s ease;
+  }
+  .chip.active .mark { background: #FB3B24; }
+
+  /* ---------- Board ---------- */
+  .board {
+    flex: 1;
+    min-height: 0;
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.07);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: opacity 0.35s ease;
+  }
+  .board.out { opacity: 0; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: clamp(26px, 3.4vw, 38px) minmax(0, 1fr) auto clamp(112px, 17vw, 190px);
+    align-items: center;
+    gap: clamp(8px, 1.2vw, 14px);
+    padding: 0 clamp(12px, 1.6vw, 18px);
+  }
+
+  .thead {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9.5px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: rgba(0,0,0,0.36);
+    border-bottom: 1px solid rgba(0,0,0,0.07);
+    background: #F2F2F2;
+    padding-top: clamp(7px, 1.1vh, 10px);
+    padding-bottom: clamp(7px, 1.1vh, 10px);
+    flex-shrink: 0;
+  }
+  .thead .t-share { text-align: right; }
+
+  .rows { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+  .row {
+    flex: 1;
+    min-height: 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.36s ease, transform 0.36s ease;
+  }
+  .row.in { opacity: 1; transform: translateY(0); }
+
+  .rank {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: clamp(11px, 1.6vh, 14px);
+    font-weight: 500;
+    color: rgba(0,0,0,0.32);
+    font-variant-numeric: tabular-nums;
+  }
+  .row.top .rank { color: #FB3B24; }
+
+  .brand {
+    font-size: clamp(12.5px, 1.9vh, 16px);
+    font-weight: 600;
+    color: rgba(0,0,0,0.78);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .row.top .brand { color: #000; }
+
+  .eng { display: inline-flex; align-items: center; gap: clamp(4px, 0.6vw, 7px); }
+  .eng svg { width: clamp(11px, 1.6vh, 14px); height: clamp(11px, 1.6vh, 14px); }
+  .eng svg path { fill: rgba(0,0,0,0.13); }
+  .eng svg.on path { fill: rgba(0,0,0,0.72); }
+
+  .share { display: flex; align-items: center; gap: clamp(6px, 0.9vw, 10px); justify-content: flex-end; }
+  .track {
+    flex: 1;
+    min-width: 0;
+    height: 5px;
+    background: rgba(0,0,0,0.07);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .fill {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: rgba(0,0,0,0.72);
+    border-radius: 3px;
+    transition: width 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .row.top .fill { background: #FB3B24; }
+  .pct {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: clamp(10px, 1.4vh, 12px);
+    font-weight: 500;
+    color: rgba(0,0,0,0.6);
+    font-variant-numeric: tabular-nums;
+    width: 30px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .row.top .pct { color: #000; }
+
+  /* ---------- "Your brand" row ---------- */
+  .you {
+    border-top: 1px dashed rgba(0,0,0,0.16);
+    background: rgba(251,59,36,0.035);
+    padding-top: clamp(9px, 1.4vh, 13px);
+    padding-bottom: clamp(9px, 1.4vh, 13px);
+    flex-shrink: 0;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .you.in { opacity: 1; transform: translateY(0); }
+  .you .rank { color: #FB3B24; }
+  .you .brand { color: #FB3B24; font-weight: 600; }
+  .you .eng svg path { fill: rgba(251,59,36,0.22); }
+  .you-tag {
+    justify-self: end;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9.5px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #FB3B24;
+    background: rgba(251,59,36,0.1);
+    border-radius: 4px;
+    padding: 4px 8px;
+    white-space: nowrap;
+  }
+
+  /* ---------- Footer ---------- */
+  .foot {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9.5px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(0,0,0,0.38);
+    padding: 0 2px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .foot .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #FB3B24;
+    animation: pulse 1.7s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  /* ---------- Compact / mobile ---------- */
+  @media (max-width: 720px), (max-aspect-ratio: 1/1) {
+    .grid {
+      grid-template-columns: clamp(20px, 6vw, 28px) minmax(0, 1fr) clamp(86px, 30vw, 130px);
+      gap: 8px;
+      padding: 0 11px;
+    }
+    .eng, .thead .t-eng { display: none; }
+    .chip span.nm { display: none; }
+    .chip { padding: 0 9px; gap: 0; }
+    .chip.consensus span.nm { display: inline; }
+    .chip.consensus { gap: 6px; }
+    .qtext { font-size: 13.5px; }
+    .pct { width: 26px; }
+  }
+  @media (max-width: 400px) {
+    .foot .extra { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .caret, .foot .dot { animation: none; }
+    .row, .you { transition: none; }
+    .fill { transition: none; }
+  }
+</style>
+</head>
+<body>
+<main class="stage">
+  <section class="shell">
+
+    <div class="qbar">
+      <span class="qlabel">Buyer prompt</span>
+      <div class="qline">
+        <span class="qtext" id="qtext"></span><span class="caret" id="caret"></span>
+      </div>
+    </div>
+
+    <div class="chips" id="chips" role="tablist" aria-label="AI engines"></div>
+
+    <section class="board" id="board">
+      <div class="grid thead">
+        <span>#</span>
+        <span>Brand named</span>
+        <span class="t-eng">Named by</span>
+        <span class="t-share">Share of answers</span>
+      </div>
+      <div class="rows" id="rows"></div>
+      <div class="grid you" id="you">
+        <span class="rank">&mdash;</span>
+        <span class="brand">Your brand</span>
+        <span class="eng" id="youEng"></span>
+        <span class="you-tag">Not in the answer</span>
+      </div>
+    </section>
+
+    <div class="foot">
+      <span class="dot"></span>
+      <span>Live &#183; 4 engines</span>
+      <span class="extra">&#183; <span id="catName">clean protein</span> &#183; re-scanned hourly</span>
+    </div>
+
+  </section>
+</main>
+
+<script>
+(function () {
+  var OPENAI = 'M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z';
+  var CLAUDE = 'M4.709 15.955l4.72-2.647.079-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.607.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z';
+  var GEMINI = 'M12 24A14.304 14.304 0 0 0 0 12 14.304 14.304 0 0 0 12 0a14.305 14.305 0 0 0 12 12 14.305 14.305 0 0 0-12 12';
+  var PPLX = 'M19.785 0v7.272H22.5V17.62h-2.935V24l-7.037-6.194v6.145h-1.091v-6.152L4.399 24v-6.465H1.5V7.188h2.808V0l7.129 6.135V.11h1.091v6.036L19.785 0Zm-7.257 9.044v7.319l5.946 5.234V14.44l-5.946-5.397Zm-1.099-.03-5.946 5.398v7.174l5.946-5.234V9.015ZM2.59 8.28v8.264h1.809v-4.489l4.11-3.775H2.59Zm13.652 0 4.11 3.775v4.489h1.057V8.28h-5.167ZM5.49 2.476v4.796h5.29L5.49 2.476Zm13.204 0L13.42 7.272h5.274V2.476Z';
+
+  var ENGINES = [
+    { name: 'ChatGPT',    path: OPENAI },
+    { name: 'Claude',     path: CLAUDE },
+    { name: 'Gemini',     path: GEMINI },
+    { name: 'Perplexity', path: PPLX }
+  ];
+
+  // named[] follows ENGINES order: ChatGPT, Claude, Gemini, Perplexity
+  var CATEGORIES = [
+    {
+      q: 'Best clean protein powder subscription?',
+      cat: 'clean protein',
+      rows: [
+        { brand: 'VitalBlend',         named: [1,1,1,1], share: 34 },
+        { brand: 'NorthPeak Nutrition',named: [1,1,0,1], share: 22 },
+        { brand: 'Truleaf',            named: [1,0,1,1], share: 17 },
+        { brand: 'Coreform',           named: [0,1,1,0], share: 11 },
+        { brand: 'Basewell',           named: [1,0,0,1], share: 8  }
+      ]
+    },
+    {
+      q: 'Top magnesium supplement brand?',
+      cat: 'magnesium supplements',
+      rows: [
+        { brand: 'NightCap',           named: [1,1,1,1], share: 31 },
+        { brand: 'Mineral Theory',     named: [1,1,1,0], share: 24 },
+        { brand: 'Calmwell',           named: [1,0,1,1], share: 16 },
+        { brand: 'Restform',           named: [0,1,1,1], share: 12 },
+        { brand: 'Duskline',           named: [1,0,0,0], share: 7  }
+      ]
+    },
+    {
+      q: 'Best sustainable activewear brand?',
+      cat: 'sustainable activewear',
+      rows: [
+        { brand: 'TerraForm',          named: [1,1,1,1], share: 29 },
+        { brand: 'Loomfield',          named: [1,1,0,1], share: 23 },
+        { brand: 'Pace &amp; Pine',        named: [1,0,1,1], share: 18 },
+        { brand: 'Everthread',         named: [0,1,1,0], share: 13 },
+        { brand: 'Ridgeline Co.',      named: [1,1,0,0], share: 9  }
+      ]
+    },
+    {
+      q: 'Cleanest organic baby formula?',
+      cat: 'organic baby formula',
+      rows: [
+        { brand: 'PureStart',          named: [1,1,1,1], share: 36 },
+        { brand: 'Meadowmilk',         named: [1,1,1,0], share: 21 },
+        { brand: 'First Field',        named: [1,0,1,1], share: 15 },
+        { brand: 'Nurture Lab',        named: [0,1,1,1], share: 12 },
+        { brand: 'Bright Barn',        named: [1,0,0,1], share: 8  }
+      ]
+    }
+  ];
+
+  var CANCEL = {};
+  var gen = 0;
+  var curCat = 0;
+  var curEngine = -1;               // -1 = consensus (all four)
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var qtext  = document.getElementById('qtext');
+  var caret  = document.getElementById('caret');
+  var chipsEl = document.getElementById('chips');
+  var rowsEl = document.getElementById('rows');
+  var youEl  = document.getElementById('you');
+  var youEng = document.getElementById('youEng');
+  var board  = document.getElementById('board');
+  var catName = document.getElementById('catName');
+
+  function logoSvg(i, on) {
+    return '<svg viewBox="0 0 24 24" class="' + (on ? 'on' : '') + '" aria-hidden="true"><path d="' + ENGINES[i].path + '"/></svg>';
+  }
+
+  /* ---------- chips ---------- */
+  var chipEls = [];
+  (function buildChips() {
+    var all = document.createElement('button');
+    all.type = 'button';
+    all.className = 'chip consensus active';
+    all.setAttribute('role', 'tab');
+    all.setAttribute('aria-selected', 'true');
+    all.innerHTML = '<span class="mark"></span><span class="nm">Consensus</span>';
+    all.addEventListener('click', function () { select(-1); });
+    chipsEl.appendChild(all);
+    chipEls.push(all);
+
+    ENGINES.forEach(function (e, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip';
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', 'false');
+      b.setAttribute('aria-label', e.name);
+      b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + e.path + '"/></svg><span class="nm">' + e.name + '</span>';
+      b.addEventListener('click', function () { select(i); });
+      chipsEl.appendChild(b);
+      chipEls.push(b);
+    });
+
+    youEng.innerHTML = ENGINES.map(function (_, i) { return logoSvg(i, false); }).join('');
+  })();
+
+  function syncChips() {
+    chipEls.forEach(function (el, idx) {
+      var on = (idx - 1) === curEngine;
+      el.classList.toggle('active', on);
+      el.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+  }
+
+  function clearAnswered() {
+    chipEls.forEach(function (el) { el.classList.remove('answered'); });
+  }
+
+  function select(i) {
+    curEngine = i;
+    syncChips();
+    run();
+  }
+
+  /* ---------- data view ---------- */
+  function viewFor(cat, engineIdx) {
+    if (engineIdx < 0) {
+      return cat.rows.map(function (r) {
+        return { brand: r.brand, named: r.named, share: r.share };
+      });
+    }
+    var sel = cat.rows.filter(function (r) { return r.named[engineIdx]; });
+    if (!sel.length) return [];
+    // deterministic per-engine reweighting so each engine's ranking differs slightly
+    var weighted = sel.map(function (r, i) {
+      var jitter = 1 + ((((i * 7 + engineIdx * 13) % 5) - 2) * 0.13);
+      return { brand: r.brand, named: r.named, raw: r.share * jitter };
+    });
+    var total = weighted.reduce(function (s, r) { return s + r.raw; }, 0);
+    weighted.forEach(function (r) { r.share = Math.max(4, Math.round(r.raw / total * 92)); });
+    weighted.sort(function (a, b) { return b.share - a.share; });
+    return weighted;
+  }
+
+  /* ---------- timing ---------- */
+  function sleep(ms, g) {
+    return new Promise(function (resolve, reject) {
+      setTimeout(function () { g !== gen ? reject(CANCEL) : resolve(); }, ms);
+    });
+  }
+
+  function typeText(el, text, g) {
+    return new Promise(function (resolve, reject) {
+      var i = 0;
+      el.textContent = '';
+      (function step() {
+        if (g !== gen) return reject(CANCEL);
+        if (i >= text.length) return resolve();
+        el.textContent = text.slice(0, ++i);
+        setTimeout(step, 24);
+      })();
+    });
+  }
+
+  /* ---------- render ---------- */
+  function renderRows(view) {
+    rowsEl.innerHTML = '';
+    view.slice(0, 5).forEach(function (r, i) {
+      var row = document.createElement('div');
+      row.className = 'grid row' + (i === 0 ? ' top' : '');
+      row.innerHTML =
+        '<span class="rank">' + (i + 1) + '</span>' +
+        '<span class="brand">' + r.brand + '</span>' +
+        '<span class="eng">' + r.named.map(function (n, k) { return logoSvg(k, !!n); }).join('') + '</span>' +
+        '<span class="share"><span class="track"><span class="fill" data-w="' + r.share + '"></span></span>' +
+        '<span class="pct">' + r.share + '%</span></span>';
+      rowsEl.appendChild(row);
+    });
+  }
+
+  function staticState() {
+    var cat = CATEGORIES[curCat];
+    qtext.textContent = cat.q;
+    caret.classList.add('off');
+    catName.textContent = cat.cat;
+    renderRows(viewFor(cat, curEngine));
+    Array.prototype.forEach.call(rowsEl.children, function (row) {
+      row.classList.add('in');
+      var f = row.querySelector('.fill');
+      f.style.width = f.getAttribute('data-w') + '%';
+    });
+    chipEls.forEach(function (el) { el.classList.add('answered'); });
+    youEl.classList.add('in');
+  }
+
+  /* ---------- main sequence ---------- */
+  async function run() {
+    var g = ++gen;
+    try {
+      while (true) {
+        var cat = CATEGORIES[curCat];
+
+        // reset
+        board.classList.remove('out');
+        rowsEl.innerHTML = '';
+        youEl.classList.remove('in');
+        clearAnswered();
+        caret.classList.remove('off');
+        catName.textContent = cat.cat;
+
+        // 1. type the buyer prompt
+        await typeText(qtext, cat.q, g);
+        await sleep(260, g);
+
+        // 2. engines answer, one by one
+        var order = curEngine < 0 ? [0, 1, 2, 3] : [curEngine];
+        for (var e = 0; e < order.length; e++) {
+          chipEls[order[e] + 1].classList.add('answered');
+          await sleep(170, g);
+        }
+        caret.classList.add('off');
+        await sleep(200, g);
+
+        // 3. the list assembles
+        var view = viewFor(cat, curEngine);
+        renderRows(view);
+        var rowNodes = Array.prototype.slice.call(rowsEl.children);
+        for (var i = 0; i < rowNodes.length; i++) {
+          rowNodes[i].classList.add('in');
+          (function (node) {
+            var f = node.querySelector('.fill');
+            requestAnimationFrame(function () { f.style.width = f.getAttribute('data-w') + '%'; });
+          })(rowNodes[i]);
+          await sleep(130, g);
+        }
+
+        // 4. the stake: your brand isn't on it
+        await sleep(520, g);
+        youEl.classList.add('in');
+
+        // 5. hold, then next category
+        await sleep(3400, g);
+        board.classList.add('out');
+        await sleep(400, g);
+        curCat = (curCat + 1) % CATEGORIES.length;
+      }
+    } catch (err) {
+      if (err !== CANCEL) throw err;
+    }
+  }
+
+  if (reduce) {
+    staticState();
+  } else {
+    run();
+  }
+})();
+</script>
+</body>
+</html>
