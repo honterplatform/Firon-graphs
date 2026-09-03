@@ -55,7 +55,6 @@
     text-transform: uppercase;
     letter-spacing: 0.07em;
     color: rgba(0,0,0,0.38);
-    display: block;
     margin-bottom: 4px;
   }
   .qline { display: flex; align-items: baseline; min-height: clamp(19px, 2.8vh, 25px); }
@@ -67,17 +66,33 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .caret {
-    display: inline-block;
-    width: 2px;
-    height: clamp(14px, 2vh, 18px);
-    background: #FB3B24;
-    margin-left: 3px;
+  .qtext.fade { opacity: 0; }
+  .qtext { transition: opacity 0.26s ease; }
+  .qtop { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .cat {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9.5px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: rgba(0,0,0,0.5);
+    background: #F2F2F2;
+    border-radius: 4px;
+    padding: 3px 7px;
+    white-space: nowrap;
+    transition: opacity 0.26s ease;
     flex-shrink: 0;
-    animation: blink 1s step-end infinite;
   }
-  .caret.off { opacity: 0; animation: none; }
-  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+  .cat.fade { opacity: 0; }
+
+  /* bottom control rail: engine chips live here, away from the CTA */
+  .rail {
+    display: flex;
+    align-items: center;
+    gap: clamp(8px, 1.2vw, 14px);
+    flex-shrink: 0;
+    min-width: 0;
+  }
 
   /* ---------- Engine chips ---------- */
   .chips {
@@ -106,9 +121,7 @@
     min-width: 0;
   }
   .chip svg { width: clamp(12px, 1.7vh, 14px); height: clamp(12px, 1.7vh, 14px); flex-shrink: 0; }
-  .chip svg path { fill: rgba(0,0,0,0.3); transition: fill 0.2s ease; }
-  .chip.answered svg path { fill: rgba(0,0,0,0.75); }
-  .chip.answered { color: rgba(0,0,0,0.8); }
+  .chip svg path { fill: rgba(0,0,0,0.55); transition: fill 0.2s ease; }
   .chip.active { border-color: #FB3B24; color: #FB3B24; }
   .chip.active svg path { fill: #FB3B24; }
   .chip:hover { border-color: rgba(0,0,0,0.22); }
@@ -132,9 +145,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    transition: opacity 0.35s ease;
   }
-  .board.out { opacity: 0; }
 
   .grid {
     display: grid;
@@ -225,10 +236,24 @@
   }
   .row.top .pct { color: #000; }
 
+  /* brands the selected engine did not name — sunk, not removed */
+  .row.muted .rank,
+  .row.muted .pct { color: rgba(0,0,0,0.22); }
+  .row.muted .brand { color: rgba(0,0,0,0.3); font-weight: 500; }
+  .row.muted .eng svg path { fill: rgba(0,0,0,0.08); }
+  .row.muted .eng svg.on path { fill: rgba(0,0,0,0.2); }
+
+  /* content cross-fade during a turn — the board is never empty */
+  .row.swap .rank, .row.swap .brand, .row.swap .eng, .row.swap .pct {
+    opacity: 0.1;
+  }
+  .row .rank, .row .brand, .row .eng, .row .pct {
+    transition: opacity 0.22s ease, color 0.22s ease;
+  }
+
   /* ---------- "Your brand" row ---------- */
   .you {
-    border-top: 1px dashed rgba(0,0,0,0.16);
-    background: rgba(251,59,36,0.035);
+    border-top: 1px dashed rgba(0,0,0,0.18);
     padding-top: clamp(9px, 1.4vh, 13px);
     padding-bottom: clamp(9px, 1.4vh, 13px);
     flex-shrink: 0;
@@ -248,7 +273,8 @@
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: #FB3B24;
-    background: rgba(251,59,36,0.1);
+    background: #F2F2F2;
+    border: 1px dashed rgba(251,59,36,0.55);
     border-radius: 4px;
     padding: 4px 8px;
     white-space: nowrap;
@@ -266,6 +292,7 @@
     letter-spacing: 0.06em;
     color: rgba(0,0,0,0.38);
     padding: 0 2px;
+    margin-left: auto;
     flex-shrink: 0;
     white-space: nowrap;
     overflow: hidden;
@@ -299,7 +326,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .caret, .foot .dot { animation: none; }
+    .foot .dot { animation: none; }
     .row, .you { transition: none; }
     .fill { transition: none; }
   }
@@ -310,13 +337,14 @@
   <section class="shell">
 
     <div class="qbar">
-      <span class="qlabel">Buyer prompt</span>
+      <div class="qtop">
+        <span class="qlabel">Buyer prompt</span>
+        <span class="cat" id="catName">clean protein</span>
+      </div>
       <div class="qline">
-        <span class="qtext" id="qtext"></span><span class="caret" id="caret"></span>
+        <span class="qtext" id="qtext"></span>
       </div>
     </div>
-
-    <div class="chips" id="chips" role="tablist" aria-label="AI engines"></div>
 
     <section class="board" id="board">
       <div class="grid thead">
@@ -330,14 +358,16 @@
         <span class="rank">&mdash;</span>
         <span class="brand">Your brand</span>
         <span class="eng" id="youEng"></span>
-        <span class="you-tag">Not in the answer</span>
+        <span class="you-tag">Position unknown</span>
       </div>
     </section>
 
-    <div class="foot">
-      <span class="dot"></span>
-      <span>Live &#183; 4 engines</span>
-      <span class="extra">&#183; <span id="catName">clean protein</span> &#183; re-scanned hourly</span>
+    <div class="rail">
+      <div class="chips" id="chips" role="tablist" aria-label="AI engines"></div>
+      <div class="foot">
+        <span class="dot"></span>
+        <span class="extra">Live &#183; re-scanned hourly</span>
+      </div>
     </div>
 
   </section>
@@ -409,16 +439,15 @@
   var gen = 0;
   var curCat = 0;
   var curEngine = -1;               // -1 = consensus (all four)
+  var pinned = false;               // a chip click pins one engine and stops the pass
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  var qtext  = document.getElementById('qtext');
-  var caret  = document.getElementById('caret');
+  var qtext   = document.getElementById('qtext');
   var chipsEl = document.getElementById('chips');
-  var rowsEl = document.getElementById('rows');
-  var youEl  = document.getElementById('you');
-  var youEng = document.getElementById('youEng');
-  var board  = document.getElementById('board');
-  var catName = document.getElementById('catName');
+  var rowsEl  = document.getElementById('rows');
+  var youEl   = document.getElementById('you');
+  var youEng  = document.getElementById('youEng');
+  var catEl   = document.getElementById('catName');
 
   function logoSvg(i, on) {
     return '<svg viewBox="0 0 24 24" class="' + (on ? 'on' : '') + '" aria-hidden="true"><path d="' + ENGINES[i].path + '"/></svg>';
@@ -461,34 +490,36 @@
     });
   }
 
-  function clearAnswered() {
-    chipEls.forEach(function (el) { el.classList.remove('answered'); });
-  }
-
   function select(i) {
-    curEngine = i;
+    if (i < 0) { pinned = false; curEngine = -1; }
+    else { pinned = true; curEngine = i; }
     syncChips();
     run();
   }
 
-  /* ---------- data view ---------- */
+  /* ---------- data view: ALWAYS five entries, so row height never shifts ---------- */
   function viewFor(cat, engineIdx) {
     if (engineIdx < 0) {
       return cat.rows.map(function (r) {
         return { brand: r.brand, named: r.named, share: r.share };
       });
     }
-    var sel = cat.rows.filter(function (r) { return r.named[engineIdx]; });
-    if (!sel.length) return [];
-    // deterministic per-engine reweighting so each engine's ranking differs slightly
-    var weighted = sel.map(function (r, i) {
+    var cited = [], uncited = [];
+    cat.rows.forEach(function (r) {
+      (r.named[engineIdx] ? cited : uncited).push(r);
+    });
+    // deterministic per-engine reweighting so each engine's ranking genuinely differs
+    var weighted = cited.map(function (r, i) {
       var jitter = 1 + ((((i * 7 + engineIdx * 13) % 5) - 2) * 0.13);
       return { brand: r.brand, named: r.named, raw: r.share * jitter };
     });
-    var total = weighted.reduce(function (s, r) { return s + r.raw; }, 0);
+    var total = weighted.reduce(function (s, r) { return s + r.raw; }, 0) || 1;
     weighted.forEach(function (r) { r.share = Math.max(4, Math.round(r.raw / total * 92)); });
     weighted.sort(function (a, b) { return b.share - a.share; });
-    return weighted;
+    // brands this engine never named sink to the bottom — they are not deleted
+    return weighted.concat(uncited.map(function (r) {
+      return { brand: r.brand, named: r.named, share: null };
+    }));
   }
 
   /* ---------- timing ---------- */
@@ -498,100 +529,115 @@
     });
   }
 
-  function typeText(el, text, g) {
-    return new Promise(function (resolve, reject) {
-      var i = 0;
-      el.textContent = '';
-      (function step() {
-        if (g !== gen) return reject(CANCEL);
-        if (i >= text.length) return resolve();
-        el.textContent = text.slice(0, ++i);
-        setTimeout(step, 24);
-      })();
-    });
-  }
-
-  /* ---------- render ---------- */
-  function renderRows(view) {
-    rowsEl.innerHTML = '';
-    view.slice(0, 5).forEach(function (r, i) {
+  /* ---------- five persistent rows, built once ---------- */
+  var rowNodes = [];
+  (function buildRows() {
+    for (var i = 0; i < 5; i++) {
       var row = document.createElement('div');
-      row.className = 'grid row' + (i === 0 ? ' top' : '');
+      row.className = 'grid row in';
       row.innerHTML =
-        '<span class="rank">' + (i + 1) + '</span>' +
-        '<span class="brand">' + r.brand + '</span>' +
-        '<span class="eng">' + r.named.map(function (n, k) { return logoSvg(k, !!n); }).join('') + '</span>' +
-        '<span class="share"><span class="track"><span class="fill" data-w="' + r.share + '"></span></span>' +
-        '<span class="pct">' + r.share + '%</span></span>';
+        '<span class="rank"></span>' +
+        '<span class="brand"></span>' +
+        '<span class="eng">' + ENGINES.map(function (_, k) { return logoSvg(k, false); }).join('') + '</span>' +
+        '<span class="share"><span class="track"><span class="fill" data-w="0"></span></span>' +
+        '<span class="pct"></span></span>';
       rowsEl.appendChild(row);
-    });
+      rowNodes.push(row);
+    }
+  })();
+
+  function updateRow(node, r, i) {
+    var muted = (r.share === null || r.share === undefined);
+    node.classList.toggle('muted', muted);
+    node.classList.toggle('top', i === 0 && !muted);
+    node.querySelector('.rank').textContent = muted ? '—' : (i + 1);
+    node.querySelector('.brand').innerHTML = r.brand;
+    var svgs = node.querySelectorAll('.eng svg');
+    for (var k = 0; k < svgs.length; k++) svgs[k].classList.toggle('on', !!r.named[k]);
+    node.querySelector('.pct').textContent = muted ? '—' : (r.share + '%');
+    node.querySelector('.fill').setAttribute('data-w', muted ? 0 : r.share);
   }
 
-  function staticState() {
-    var cat = CATEGORIES[curCat];
+  function fillTo(node, target) {
+    var f = node.querySelector('.fill');
+    f.style.width = (target ? f.getAttribute('data-w') + '%' : '0%');
+  }
+
+  /* ---------- apply a view: staggered cross-fade, board is never empty ---------- */
+  async function applyView(view, g, opts) {
+    opts = opts || {};
+    var st = opts.stagger === undefined ? 55 : opts.stagger;
+
+    if (opts.instant) {
+      rowNodes.forEach(function (n, i) { updateRow(n, view[i], i); fillTo(n, true); });
+      return;
+    }
+
+    rowNodes.forEach(function (n, i) {
+      setTimeout(function () { if (g === gen) n.classList.add('swap'); }, i * st);
+    });
+    await sleep(240 + 4 * st, g);
+
+    rowNodes.forEach(function (n, i) { updateRow(n, view[i], i); fillTo(n, false); });
+
+    rowNodes.forEach(function (n, i) {
+      setTimeout(function () {
+        if (g !== gen) return;
+        n.classList.remove('swap');
+        requestAnimationFrame(function () { if (g === gen) fillTo(n, true); });
+      }, i * st);
+    });
+    await sleep(320 + 4 * st, g);
+  }
+
+  async function setQuestion(cat, g) {
+    qtext.classList.add('fade');
+    catEl.classList.add('fade');
+    await sleep(270, g);
     qtext.textContent = cat.q;
-    caret.classList.add('off');
-    catName.textContent = cat.cat;
-    renderRows(viewFor(cat, curEngine));
-    Array.prototype.forEach.call(rowsEl.children, function (row) {
-      row.classList.add('in');
-      var f = row.querySelector('.fill');
-      f.style.width = f.getAttribute('data-w') + '%';
-    });
-    chipEls.forEach(function (el) { el.classList.add('answered'); });
-    youEl.classList.add('in');
+    catEl.textContent = cat.cat;
+    qtext.classList.remove('fade');
+    catEl.classList.remove('fade');
+    await sleep(200, g);
   }
 
-  /* ---------- main sequence ---------- */
+  /* ---------- main loop ---------- */
   async function run() {
     var g = ++gen;
     try {
+      var cat = CATEGORIES[curCat];
+
+      // first paint is the FINISHED board — a visitor never lands on a half-built list
+      qtext.textContent = cat.q;
+      catEl.textContent = cat.cat;
+      qtext.classList.remove('fade');
+      catEl.classList.remove('fade');
+      await applyView(viewFor(cat, curEngine), g, { instant: true });
+      youEl.classList.add('in');
+
+      if (pinned) return;   // a chip is pinned: hold that engine's view
+
+      var cycle = 0;
       while (true) {
-        var cat = CATEGORIES[curCat];
+        cat = CATEGORIES[curCat];
+        await sleep(3200, g);
 
-        // reset
-        board.classList.remove('out');
-        rowsEl.innerHTML = '';
-        youEl.classList.remove('in');
-        clearAnswered();
-        caret.classList.remove('off');
-        catName.textContent = cat.cat;
+        // engine pass — runs passively so the "they disagree" point lands without a click
+        var k = cycle % ENGINES.length;
+        curEngine = k; syncChips();
+        await applyView(viewFor(cat, k), g);
+        await sleep(2400, g);
 
-        // 1. type the buyer prompt
-        await typeText(qtext, cat.q, g);
-        await sleep(260, g);
+        curEngine = -1; syncChips();
+        await applyView(viewFor(cat, -1), g);
+        await sleep(1700, g);
 
-        // 2. engines answer, one by one
-        var order = curEngine < 0 ? [0, 1, 2, 3] : [curEngine];
-        for (var e = 0; e < order.length; e++) {
-          chipEls[order[e] + 1].classList.add('answered');
-          await sleep(170, g);
-        }
-        caret.classList.add('off');
-        await sleep(200, g);
-
-        // 3. the list assembles
-        var view = viewFor(cat, curEngine);
-        renderRows(view);
-        var rowNodes = Array.prototype.slice.call(rowsEl.children);
-        for (var i = 0; i < rowNodes.length; i++) {
-          rowNodes[i].classList.add('in');
-          (function (node) {
-            var f = node.querySelector('.fill');
-            requestAnimationFrame(function () { f.style.width = f.getAttribute('data-w') + '%'; });
-          })(rowNodes[i]);
-          await sleep(130, g);
-        }
-
-        // 4. the stake: your brand isn't on it
-        await sleep(520, g);
-        youEl.classList.add('in');
-
-        // 5. hold, then next category
-        await sleep(3400, g);
-        board.classList.add('out');
-        await sleep(400, g);
+        // turn to the next category in place — the panel is never torn down
         curCat = (curCat + 1) % CATEGORIES.length;
+        cat = CATEGORIES[curCat];
+        await setQuestion(cat, g);
+        await applyView(viewFor(cat, -1), g, { stagger: 70 });
+        cycle++;
       }
     } catch (err) {
       if (err !== CANCEL) throw err;
@@ -599,7 +645,11 @@
   }
 
   if (reduce) {
-    staticState();
+    var c0 = CATEGORIES[0];
+    qtext.textContent = c0.q;
+    catEl.textContent = c0.cat;
+    rowNodes.forEach(function (n, i) { updateRow(n, viewFor(c0, -1)[i], i); fillTo(n, true); });
+    youEl.classList.add('in');
   } else {
     run();
   }
