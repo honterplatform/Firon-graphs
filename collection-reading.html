@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Collection and Reading</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: transparent;
+    font-family: 'Geist', -apple-system, system-ui, sans-serif;
+    color: #000;
+    letter-spacing: -0.01em;
+  }
+
+  .stage {
+    width: 100%; height: 100%;
+    display: flex; align-items: stretch; justify-content: center;
+    padding: clamp(6px, 1.2vh, 10px);
+  }
+  .shell {
+    width: 100%; height: 100%;
+    max-width: 1080px;
+    background: #F2F2F2;
+    border: 1px solid rgba(0,0,0,0.05);
+    border-radius: 10px;
+    padding: clamp(9px, 1.5vh, 13px);
+    display: flex; flex-direction: column;
+    gap: clamp(8px, 1.3vh, 12px);
+    overflow: hidden;
+  }
+
+  .cols {
+    flex: 1; min-height: 0;
+    display: grid;
+    grid-template-columns: 0.86fr 1.14fr;
+    gap: clamp(8px, 1.2vw, 13px);
+  }
+
+  .panel {
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.07);
+    border-radius: 8px;
+    display: flex; flex-direction: column;
+    min-width: 0; min-height: 0;
+    overflow: hidden;
+  }
+  .ph {
+    display: flex; align-items: center; gap: 8px;
+    padding: clamp(8px, 1.3vh, 12px) clamp(11px, 1.4vw, 16px);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    background: #F2F2F2;
+    flex-shrink: 0;
+  }
+  .pt {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9.5px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    color: #000;
+    white-space: nowrap;
+  }
+  .pc {
+    margin-left: auto;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9.5px; font-weight: 500;
+    color: rgba(0,0,0,0.35);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* ---------- left: the machine. deliberately monochrome. ---------- */
+  .mbody {
+    flex: 1; min-height: 0;
+    display: flex; flex-direction: column;
+    padding: clamp(10px, 1.6vh, 15px) clamp(11px, 1.4vw, 16px);
+    gap: clamp(7px, 1.1vh, 11px);
+  }
+  .clock { display: flex; align-items: baseline; gap: 8px; flex-shrink: 0; }
+  .time {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: clamp(21px, 4.4vh, 36px);
+    font-weight: 500;
+    color: #000;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .tlab {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9.5px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    color: rgba(0,0,0,0.35);
+  }
+  .done {
+    margin-left: auto;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: rgba(0,0,0,0.55);
+    background: #F2F2F2;
+    border-radius: 4px;
+    padding: 3px 7px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    white-space: nowrap;
+  }
+  .done.on { opacity: 1; }
+
+  .bar {
+    height: 5px;
+    background: rgba(0,0,0,0.07);
+    border-radius: 3px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .bar i {
+    display: block; height: 100%; width: 0;
+    background: rgba(0,0,0,0.75);
+    border-radius: 3px;
+  }
+
+  .mets {
+    flex: 1; min-height: 0;
+    display: flex; flex-direction: column;
+    justify-content: center;
+  }
+  .met {
+    display: flex; align-items: center; gap: 8px;
+    flex: 1; min-height: 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    min-width: 0;
+  }
+  .met:last-child { border-bottom: 0; }
+  .mk {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: clamp(8.5px, 1.15vh, 10px);
+    font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;
+    color: rgba(0,0,0,0.35);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .mv {
+    margin-left: auto;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: clamp(11px, 1.6vh, 13.5px);
+    font-weight: 500;
+    color: #000;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  /* ---------- right: the reading. the only accent in the graphic. ---------- */
+  .fbody {
+    flex: 1; min-height: 0;
+    display: flex; flex-direction: column;
+    padding: 0 clamp(11px, 1.4vw, 16px);
+  }
+  .frow {
+    flex: 1; min-height: 0;
+    display: flex; align-items: center; gap: clamp(8px, 1.2vw, 14px);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    min-width: 0;
+    opacity: 0; transform: translateY(5px);
+    transition: opacity 0.36s ease, transform 0.36s ease;
+  }
+  .frow:last-child { border-bottom: 0; }
+  .frow.in { opacity: 1; transform: translateY(0); }
+  .ftext {
+    font-size: clamp(11.5px, 1.7vh, 14.5px);
+    font-weight: 500;
+    color: rgba(0,0,0,0.82);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    transition: color 0.32s ease, text-decoration-color 0.32s ease, opacity 0.24s ease;
+    text-decoration: line-through transparent;
+    min-width: 0;
+  }
+  .frow.noise .ftext {
+    color: rgba(0,0,0,0.28);
+    text-decoration: line-through rgba(0,0,0,0.25);
+  }
+  .frow.money .ftext { color: #000; }
+  .frow.first .ftext { color: #000; font-weight: 600; }
+
+  .v {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: clamp(8.5px, 1.15vh, 10px);
+    font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;
+    background: #F2F2F2;
+    border-radius: 4px;
+    padding: 4px 8px;
+    color: rgba(0,0,0,0.35);
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(-3px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .v.on { opacity: 1; transform: translateY(0); }
+  .frow.money .v { color: #FB3B24; }
+  .frow.first .v { color: #000; }
+
+  /* ---------- footer ---------- */
+  .foot {
+    display: flex; align-items: center; gap: 7px;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9.5px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: rgba(0,0,0,0.38);
+    padding: 0 2px;
+    flex-shrink: 0;
+    white-space: nowrap; overflow: hidden;
+  }
+
+  @media (max-width: 760px), (max-aspect-ratio: 1/1) {
+    .cols { grid-template-columns: 1fr; grid-template-rows: 0.82fr 1.18fr; }
+    .mets { flex-direction: row; flex-wrap: wrap; }
+    .met {
+      flex: 1 1 45%;
+      border-bottom: 0;
+      gap: 6px;
+    }
+    .time { font-size: clamp(19px, 6vw, 28px); }
+    .foot .extra { display: none; }
+  }
+  @media (max-width: 430px) {
+    .v { font-size: 8px; padding: 3px 6px; }
+    .ftext { font-size: 11px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .frow, .v, .ftext, .done { transition: none; }
+  }
+</style>
+</head>
+<body>
+<main class="stage">
+  <section class="shell">
+
+    <div class="cols">
+      <!-- machine: no accent anywhere in this panel -->
+      <section class="panel">
+        <header class="ph">
+          <span class="pt">Collection</span>
+          <span class="pc">Automated</span>
+        </header>
+        <div class="mbody">
+          <div class="clock">
+            <span class="time" id="time">00:00</span>
+            <span class="tlab">elapsed</span>
+            <span class="done" id="done">Complete</span>
+          </div>
+          <div class="bar"><i id="bar"></i></div>
+          <div class="mets" id="mets"></div>
+        </div>
+      </section>
+
+      <!-- reading: the only accent in the graphic lives here -->
+      <section class="panel">
+        <header class="ph">
+          <span class="pt">Reading</span>
+          <span class="pc">Senior architect</span>
+        </header>
+        <div class="fbody" id="fbody"></div>
+      </section>
+    </div>
+
+    <footer class="foot">
+      <span>4 engines &#183; 412 prompts</span>
+      <span class="extra">&#183; 1,284 answers parsed &#183; 4 findings triaged</span>
+    </footer>
+
+  </section>
+</main>
+
+<script>
+(function () {
+  var METS = [
+    { k: 'Prompts run',     v: 412,  fmt: 0 },
+    { k: 'Engines queried', v: 4,    fmt: 0 },
+    { k: 'Answers parsed',  v: 1284, fmt: 1 },
+    { k: 'Citations mapped',v: 96,   fmt: 0 }
+  ];
+
+  var FINDINGS = [
+    { t: 'Category page absent from 3 of 4 engines', v: 'Costs you money', c: 'money' },
+    { t: 'Meta descriptions under 155 characters',   v: 'Noise',           c: 'noise' },
+    { t: 'Competitor owns the comparison query',     v: 'Costs you money', c: 'money' },
+    { t: 'Rebuild the category page as the answer',  v: 'Do first &#183; 01', c: 'first' }
+  ];
+
+  var CANCEL = {};
+  var gen = 0;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var timeEl = document.getElementById('time');
+  var barEl  = document.getElementById('bar');
+  var doneEl = document.getElementById('done');
+  var metsEl = document.getElementById('mets');
+  var fbody  = document.getElementById('fbody');
+
+  /* ---------- build once ---------- */
+  var metNodes = METS.map(function (m) {
+    var d = document.createElement('div');
+    d.className = 'met';
+    d.innerHTML = '<span class="mk">' + m.k + '</span><span class="mv">0</span>';
+    metsEl.appendChild(d);
+    return d.querySelector('.mv');
+  });
+
+  var fNodes = FINDINGS.map(function (f) {
+    var d = document.createElement('div');
+    d.className = 'frow';
+    d.innerHTML = '<span class="ftext">' + f.t + '</span><span class="v">' + f.v + '</span>';
+    fbody.appendChild(d);
+    return d;
+  });
+
+  function sleep(ms, g) {
+    return new Promise(function (resolve, reject) {
+      setTimeout(function () { g !== gen ? reject(CANCEL) : resolve(); }, ms);
+    });
+  }
+  function ease(t) { return 1 - Math.pow(1 - t, 3); }
+  function mmss(s) {
+    var m = Math.floor(s / 60), r = Math.floor(s % 60);
+    return (m < 10 ? '0' : '') + m + ':' + (r < 10 ? '0' : '') + r;
+  }
+
+  /* the machine half: fast, mechanical, over almost before you read it */
+  function collect(g) {
+    return new Promise(function (resolve, reject) {
+      var DUR = 1700, start = null;
+      (function tick(now) {
+        if (g !== gen) return reject(CANCEL);
+        if (start === null) start = now;
+        var p = Math.min(1, (now - start) / DUR), e = ease(p);
+        timeEl.textContent = mmss(e * 1200);
+        barEl.style.width = (e * 100).toFixed(1) + '%';
+        metNodes.forEach(function (el, i) {
+          var val = Math.round(e * METS[i].v);
+          el.textContent = METS[i].fmt ? val.toLocaleString('en-US') : val;
+        });
+        if (p < 1) requestAnimationFrame(tick); else resolve();
+      })(performance.now());
+    });
+  }
+
+  function resetAll() {
+    timeEl.textContent = '00:00';
+    barEl.style.width = '0%';
+    doneEl.classList.remove('on');
+    metNodes.forEach(function (el) { el.textContent = '0'; });
+    fNodes.forEach(function (n) {
+      n.classList.remove('in', 'money', 'noise', 'first');
+      n.querySelector('.v').classList.remove('on');
+    });
+  }
+
+  function finish() {
+    timeEl.textContent = '20:00';
+    barEl.style.width = '100%';
+    doneEl.classList.add('on');
+    metNodes.forEach(function (el, i) {
+      el.textContent = METS[i].fmt ? METS[i].v.toLocaleString('en-US') : METS[i].v;
+    });
+    fNodes.forEach(function (n, i) {
+      n.classList.add('in', FINDINGS[i].c);
+      n.querySelector('.v').classList.add('on');
+    });
+  }
+
+  async function run() {
+    var g = ++gen;
+    try {
+      while (true) {
+        resetAll();
+        await sleep(400, g);
+
+        // twenty minutes of gathering, compressed — the cheap half
+        await collect(g);
+        doneEl.classList.add('on');
+        await sleep(700, g);
+
+        // the reading: slower on purpose. the tempo change is the point.
+        for (var i = 0; i < fNodes.length; i++) {
+          fNodes[i].classList.add('in');
+          await sleep(430, g);
+          fNodes[i].classList.add(FINDINGS[i].c);
+          fNodes[i].querySelector('.v').classList.add('on');
+          await sleep(i === fNodes.length - 2 ? 620 : 420, g);
+        }
+
+        await sleep(4200, g);
+      }
+    } catch (err) {
+      if (err !== CANCEL) throw err;
+    }
+  }
+
+  if (reduce) finish(); else run();
+})();
+</script>
+</body>
+</html>
