@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Four Engines · Clean State</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: transparent;
+    font-family: 'Geist', -apple-system, system-ui, sans-serif;
+    color: #000;
+    letter-spacing: -0.01em;
+  }
+
+  .stage {
+    width: 100%; height: 100%;
+    display: flex; align-items: stretch; justify-content: center;
+    padding: clamp(6px, 1.2vh, 10px);
+  }
+  .shell {
+    width: 100%; height: 100%;
+    max-width: 1080px;
+    background: #F2F2F2;
+    border: 1px solid rgba(0,0,0,0.05);
+    border-radius: 10px;
+    padding: clamp(9px, 1.5vh, 13px);
+    display: flex; flex-direction: column;
+    gap: clamp(8px, 1.3vh, 12px);
+    overflow: hidden;
+  }
+
+  /* ---------- top bar: the condition switch ---------- */
+  .topbar {
+    display: flex; align-items: center; gap: 10px;
+    flex-shrink: 0; min-width: 0;
+  }
+  .tlabel {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9.5px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    color: rgba(0,0,0,0.38);
+    white-space: nowrap;
+  }
+  .seg {
+    margin-left: auto;
+    display: flex; gap: 4px;
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.07);
+    border-radius: 7px;
+    padding: 3px;
+    min-width: 0;
+  }
+  .sg {
+    font-family: 'Geist', sans-serif;
+    font-size: clamp(10.5px, 1.4vh, 12.5px);
+    font-weight: 500;
+    color: rgba(0,0,0,0.5);
+    background: transparent;
+    border: 0; border-radius: 5px;
+    padding: clamp(5px, 0.8vh, 8px) clamp(9px, 1.2vw, 14px);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.22s ease, color 0.22s ease;
+  }
+  .sg:hover { color: rgba(0,0,0,0.75); }
+  .sg.active { background: #FB3B24; color: #fff; }
+  .sg.active:hover { color: #fff; }
+
+  /* ---------- engine cards ---------- */
+  .grid4 {
+    flex: 1; min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(7px, 1vw, 11px);
+  }
+  .card {
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.07);
+    border-radius: 8px;
+    padding: clamp(9px, 1.5vh, 14px) clamp(10px, 1.1vw, 14px);
+    display: flex; flex-direction: column;
+    min-width: 0; min-height: 0;
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(7px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .card.in { opacity: 1; transform: translateY(0); }
+
+  /* accent sweep when the session is reset back to clean */
+  .card::after {
+    content: '';
+    position: absolute; top: 0; bottom: 0; left: -40%;
+    width: 40%;
+    background: linear-gradient(90deg,
+      rgba(251,59,36,0) 0%, rgba(251,59,36,0.13) 50%, rgba(251,59,36,0) 100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .card.wipe::after { animation: sweep 0.62s ease-out; }
+  @keyframes sweep {
+    0%   { opacity: 1; transform: translateX(0); }
+    100% { opacity: 1; transform: translateX(350%); }
+  }
+
+  .chead {
+    display: flex; align-items: center; gap: 7px;
+    padding-bottom: clamp(7px, 1.1vh, 10px);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    flex-shrink: 0; min-width: 0;
+  }
+  .chead svg { width: clamp(13px, 1.8vh, 16px); height: clamp(13px, 1.8vh, 16px); flex-shrink: 0; }
+  .chead svg path { fill: rgba(0,0,0,0.78); }
+  .cname {
+    font-size: clamp(11.5px, 1.6vh, 13.5px);
+    font-weight: 600; color: #000;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .states {
+    flex: 1; min-height: 0;
+    display: flex; flex-direction: column;
+    justify-content: center;
+    gap: clamp(4px, 0.75vh, 8px);
+    padding: clamp(6px, 1vh, 10px) 0;
+  }
+  .st { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .sk {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: clamp(8.5px, 1.15vh, 10px);
+    font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;
+    color: rgba(0,0,0,0.35);
+    white-space: nowrap;
+  }
+  .sv {
+    margin-left: auto;
+    display: inline-flex; align-items: center; gap: 4px;
+    min-width: 0;
+  }
+  .ck {
+    font-size: clamp(9px, 1.2vh, 11px);
+    line-height: 1;
+    color: #FB3B24;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: opacity 0.24s ease, transform 0.24s cubic-bezier(0.22,1,0.36,1);
+  }
+  .ck.on { opacity: 1; transform: scale(1); }
+  .txt {
+    font-size: clamp(10px, 1.35vh, 12px);
+    font-weight: 500;
+    color: rgba(0,0,0,0.8);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    transition: color 0.22s ease, opacity 0.22s ease;
+  }
+  .card.swap .txt, .card.swap .vtxt { opacity: 0.12; }
+
+  /* single-line state summary — narrow layouts only */
+  .stline { display: none; }
+
+  .verdict {
+    flex-shrink: 0;
+    border-top: 1px solid rgba(0,0,0,0.06);
+    padding-top: clamp(7px, 1.1vh, 10px);
+    display: flex; flex-direction: column; gap: 3px;
+    min-width: 0;
+  }
+  .vtag {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 8.5px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: rgba(0,0,0,0.35);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    transition: color 0.22s ease;
+  }
+  .card.flattered .vtag { color: #FB3B24; }
+  .vtxt {
+    font-size: clamp(11px, 1.5vh, 13px);
+    font-weight: 600;
+    color: rgba(0,0,0,0.82);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    transition: color 0.22s ease, opacity 0.22s ease;
+  }
+  .vtxt.absent { color: #FB3B24; }
+
+  /* ---------- footer ---------- */
+  .foot {
+    display: flex; align-items: center; gap: 7px;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9.5px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: rgba(0,0,0,0.38);
+    padding: 0 2px;
+    flex-shrink: 0;
+    white-space: nowrap; overflow: hidden;
+  }
+  .foot .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #FB3B24;
+    animation: pulse 1.7s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  /* ---------- narrow: four stacked strips ---------- */
+  @media (max-width: 760px), (max-aspect-ratio: 1/1) {
+    .grid4 { grid-template-columns: 1fr; grid-template-rows: repeat(4, 1fr); }
+    .card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas: "head verdict" "line verdict";
+      align-items: center;
+      column-gap: clamp(8px, 2.5vw, 16px);
+      row-gap: 3px;
+      padding: clamp(7px, 1.2vh, 11px) clamp(10px, 2.5vw, 14px);
+    }
+    .chead {
+      grid-area: head;
+      width: auto;
+      padding-bottom: 0;
+      border-bottom: 0;
+      min-width: 0;
+    }
+    .states { display: none; }
+    .stline {
+      grid-area: line;
+      display: block;
+      min-width: 0;
+      font-family: 'Geist Mono', ui-monospace, monospace;
+      font-size: clamp(8.5px, 2.3vw, 10px);
+      font-weight: 500;
+      color: rgba(0,0,0,0.4);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      transition: color 0.22s ease, opacity 0.22s ease;
+    }
+    .card.swap .stline { opacity: 0.12; }
+    .stline b { color: #FB3B24; font-weight: 500; }
+    .verdict {
+      grid-area: verdict;
+      border-top: 0;
+      padding-top: 0;
+      align-items: flex-end;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .seg { padding: 2px; }
+    .sg { padding: 5px 9px; font-size: 10.5px; }
+    .tlabel { display: none; }
+  }
+  @media (max-width: 420px) {
+    .foot .extra { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .foot .dot { animation: none; }
+    .card, .ck, .txt, .vtxt { transition: none; }
+    .card.wipe::after { animation: none; }
+  }
+</style>
+</head>
+<body>
+<main class="stage">
+  <section class="shell">
+
+    <header class="topbar">
+      <span class="tlabel">Test conditions</span>
+      <div class="seg" role="tablist" aria-label="Test conditions">
+        <button class="sg" id="sgAcct" type="button" role="tab" aria-selected="false">Your logged-in account</button>
+        <button class="sg active" id="sgClean" type="button" role="tab" aria-selected="true">Clean state</button>
+      </div>
+    </header>
+
+    <div class="grid4" id="grid"></div>
+
+    <footer class="foot">
+      <span class="dot"></span>
+      <span>Fresh session per engine</span>
+      <span class="extra">&#183; no history &#183; no memory &#183; no web access</span>
+    </footer>
+
+  </section>
+</main>
+
+<script>
+(function () {
+  var OPENAI = 'M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z';
+  var CLAUDE = 'M4.709 15.955l4.72-2.647.079-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.607.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z';
+  var GEMINI = 'M12 24A14.304 14.304 0 0 0 0 12 14.304 14.304 0 0 0 12 0a14.305 14.305 0 0 0 12 12 14.305 14.305 0 0 0-12 12';
+  var PPLX = 'M19.785 0v7.272H22.5V17.62h-2.935V24l-7.037-6.194v6.145h-1.091v-6.152L4.399 24v-6.465H1.5V7.188h2.808V0l7.129 6.135V.11h1.091v6.036L19.785 0Zm-7.257 9.044v7.319l5.946 5.234V14.44l-5.946-5.397Zm-1.099-.03-5.946 5.398v7.174l5.946-5.234V9.015ZM2.59 8.28v8.264h1.809v-4.489l4.11-3.775H2.59Zm13.652 0 4.11 3.775v4.489h1.057V8.28h-5.167ZM5.49 2.476v4.796h5.29L5.49 2.476Zm13.204 0L13.42 7.272h5.274V2.476Z';
+
+  // What each engine says about the brand under each condition.
+  var ENGINES = [
+    { name: 'ChatGPT',    path: OPENAI, clean: 'Not named',  acct: 'Named 1st' },
+    { name: 'Claude',     path: CLAUDE, clean: 'Named 4th',  acct: 'Named 1st' },
+    { name: 'Gemini',     path: GEMINI, clean: 'Not named',  acct: 'Named 1st' },
+    { name: 'Perplexity', path: PPLX,   clean: 'Named 3rd',  acct: 'Named 1st' }
+  ];
+
+  var KEYS  = ['History', 'Memory', 'Web access', 'Account'];
+  var CLEAN = ['Cleared', 'Off', 'Off', 'Signed out'];
+  var ACCT  = ['47 chats', 'On', 'On', 'You'];
+
+  var CLEAN_LINE = '<b>&#10003;</b> no history &#183; no memory &#183; no web &#183; signed out';
+  var ACCT_LINE  = 'history on &#183; memory on &#183; web on &#183; signed in as you';
+
+  var CANCEL = {};
+  var gen = 0;
+  var mode = 0;          // 0 = clean state, 1 = your logged-in account
+  var pinned = false;
+  var resumeTimer = null;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var grid    = document.getElementById('grid');
+  var sgClean = document.getElementById('sgClean');
+  var sgAcct  = document.getElementById('sgAcct');
+
+  /* ---------- build the four cards once ---------- */
+  var cards = [];
+  ENGINES.forEach(function (e) {
+    var card = document.createElement('article');
+    card.className = 'card';
+    var rows = KEYS.map(function (k) {
+      return '<div class="st"><span class="sk">' + k + '</span>' +
+             '<span class="sv"><span class="ck">&#10003;</span><span class="txt"></span></span></div>';
+    }).join('');
+    card.innerHTML =
+      '<div class="chead"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + e.path + '"/></svg>' +
+      '<span class="cname">' + e.name + '</span></div>' +
+      '<div class="states">' + rows + '</div>' +
+      '<div class="stline"></div>' +
+      '<div class="verdict"><span class="vtag"></span><span class="vtxt"></span></div>';
+    grid.appendChild(card);
+    cards.push({ el: card, data: e });
+  });
+
+  function paint(m) {
+    var vals = m ? ACCT : CLEAN;
+    cards.forEach(function (c) {
+      var txts = c.el.querySelectorAll('.txt');
+      for (var i = 0; i < txts.length; i++) txts[i].textContent = vals[i];
+      c.el.querySelector('.stline').innerHTML = m ? ACCT_LINE : CLEAN_LINE;
+      c.el.querySelector('.vtag').textContent = m ? 'Flattered' : 'What a stranger gets';
+      var v = c.el.querySelector('.vtxt');
+      v.textContent = m ? c.data.acct : c.data.clean;
+      v.classList.toggle('absent', !m && c.data.clean === 'Not named');
+      c.el.classList.toggle('flattered', !!m);
+      // checks only mean something in the clean condition
+      var cks = c.el.querySelectorAll('.ck');
+      for (var k = 0; k < cks.length; k++) cks[k].classList.toggle('on', !m);
+    });
+    sgClean.classList.toggle('active', !m);
+    sgAcct.classList.toggle('active', !!m);
+    sgClean.setAttribute('aria-selected', m ? 'false' : 'true');
+    sgAcct.setAttribute('aria-selected', m ? 'true' : 'false');
+  }
+
+  function sleep(ms, g) {
+    return new Promise(function (resolve, reject) {
+      setTimeout(function () { g !== gen ? reject(CANCEL) : resolve(); }, ms);
+    });
+  }
+
+  /* ---------- switch condition with a cross-fade, and sweep when resetting ---------- */
+  async function setMode(m, g, sweep) {
+    mode = m;
+    cards.forEach(function (c, i) {
+      setTimeout(function () { if (g === gen) c.el.classList.add('swap'); }, i * 55);
+    });
+    await sleep(230 + 3 * 55, g);
+
+    paint(m);
+    if (sweep) {
+      cards.forEach(function (c, i) {
+        setTimeout(function () {
+          if (g !== gen) return;
+          c.el.classList.remove('wipe');
+          void c.el.offsetWidth;
+          c.el.classList.add('wipe');
+        }, i * 70);
+      });
+    }
+    cards.forEach(function (c, i) {
+      setTimeout(function () { if (g === gen) c.el.classList.remove('swap'); }, i * 55);
+    });
+    await sleep(300 + 3 * 55, g);
+  }
+
+  function armResume() {
+    if (resumeTimer) clearTimeout(resumeTimer);
+    resumeTimer = setTimeout(function () { pinned = false; run(); }, 9000);
+  }
+
+  sgClean.addEventListener('click', function () { pinned = true; mode = 0; run(); armResume(); });
+  sgAcct.addEventListener('click',  function () { pinned = true; mode = 1; run(); armResume(); });
+
+  /* ---------- main loop ---------- */
+  async function run() {
+    var g = ++gen;
+    try {
+      paint(mode);
+      cards.forEach(function (c, i) {
+        setTimeout(function () { c.el.classList.add('in'); }, i * 110);
+      });
+      await sleep(500, g);
+
+      if (pinned) return;
+
+      while (true) {
+        await sleep(4200, g);
+        await setMode(1, g, false);     // this is what your own account shows you
+        await sleep(3300, g);
+        await setMode(0, g, true);      // wiped back to a clean session
+      }
+    } catch (err) {
+      if (err !== CANCEL) throw err;
+    }
+  }
+
+  if (reduce) {
+    paint(0);
+    cards.forEach(function (c) { c.el.classList.add('in'); });
+  } else {
+    run();
+  }
+})();
+</script>
+</body>
+</html>
