@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Competitor Set</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: transparent;
+    font-family: 'Geist', -apple-system, system-ui, sans-serif;
+    color: #000;
+    letter-spacing: -0.01em;
+  }
+
+  .stage {
+    width: 100%; height: 100%;
+    display: flex; align-items: stretch; justify-content: center;
+    padding: clamp(6px, 1.2vh, 10px);
+  }
+  .shell {
+    width: 100%; height: 100%;
+    max-width: 1080px;
+    background: #F2F2F2;
+    border: 1px solid rgba(0,0,0,0.05);
+    border-radius: 10px;
+    padding: clamp(9px, 1.5vh, 13px);
+    display: flex; flex-direction: column;
+    gap: clamp(8px, 1.3vh, 12px);
+    overflow: hidden;
+  }
+
+  .cols {
+    flex: 1; min-height: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(8px, 1.2vw, 13px);
+  }
+
+  .panel {
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.07);
+    border-radius: 8px;
+    display: flex; flex-direction: column;
+    min-width: 0; min-height: 0;
+    overflow: hidden;
+  }
+  .ph {
+    display: flex; align-items: center; gap: 8px;
+    padding: clamp(8px, 1.3vh, 12px) clamp(11px, 1.4vw, 16px);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    background: #F2F2F2;
+    flex-shrink: 0;
+  }
+  .pt {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9.5px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    color: rgba(0,0,0,0.45);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .pc {
+    margin-left: auto;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9.5px; font-weight: 500;
+    color: rgba(0,0,0,0.32);
+    white-space: nowrap;
+  }
+  .panel.right .pt { color: #000; }
+
+  .rows {
+    flex: 1; min-height: 0;
+    display: flex; flex-direction: column;
+    padding: 0 clamp(11px, 1.4vw, 16px);
+  }
+
+  /* ---------- left: the list typed from memory ---------- */
+  .lrow {
+    flex: 1; min-height: 0;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    opacity: 0; transform: translateY(5px);
+    transition: opacity 0.34s ease, transform 0.34s ease;
+    min-width: 0;
+  }
+  .lrow:last-child { border-bottom: 0; }
+  .lrow.in { opacity: 1; transform: translateY(0); }
+  .lname {
+    font-size: clamp(11.5px, 1.7vh, 14.5px);
+    font-weight: 500;
+    color: rgba(0,0,0,0.82);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    transition: color 0.3s ease, text-decoration-color 0.3s ease;
+    text-decoration: line-through transparent;
+  }
+  .lrow.drop .lname {
+    color: rgba(0,0,0,0.28);
+    text-decoration: line-through rgba(0,0,0,0.28);
+  }
+  .lrow.keep .lname { color: #000; font-weight: 600; }
+  .lreason {
+    margin-left: auto;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: clamp(8.5px, 1.15vh, 10px);
+    font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    color: rgba(0,0,0,0.3);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    flex-shrink: 0;
+    max-width: 58%;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .lreason.on { opacity: 1; }
+  .lrow.keep .lreason { color: rgba(0,0,0,0.5); }
+
+  /* ---------- right: the set we actually test ---------- */
+  .rrow {
+    flex: 1; min-height: 0;
+    display: flex; flex-direction: column; justify-content: center;
+    gap: 2px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    border-left: 2px solid transparent;
+    padding-left: 0;
+    min-width: 0;
+    opacity: 0; transform: translateY(5px);
+    transition: opacity 0.38s ease, transform 0.38s ease, padding-left 0.3s ease;
+  }
+  .rrow:last-child { border-bottom: 0; }
+  .rrow.in { opacity: 1; transform: translateY(0); }
+  .rrow.added { border-left-color: #FB3B24; padding-left: clamp(8px, 1vw, 11px); }
+  .rname {
+    font-size: clamp(12px, 1.8vh, 15px);
+    font-weight: 600;
+    color: #000;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    transition: color 0.3s ease;
+  }
+  .rrow.added .rname { color: #FB3B24; }
+  .rmeta {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: clamp(8.5px, 1.15vh, 10px);
+    font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    color: rgba(0,0,0,0.36);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    transition: color 0.3s ease;
+  }
+  .rrow.added .rmeta { color: #FB3B24; }
+
+  /* cross-fade between categories — panels are never emptied */
+  .swap .lname, .swap .lreason, .swap .rname, .swap .rmeta { opacity: 0.1; }
+  .lname { transition: opacity 0.24s ease, color 0.3s ease, text-decoration-color 0.3s ease; }
+  .rname, .rmeta { transition: opacity 0.24s ease, color 0.3s ease; }
+
+  /* ---------- footer ---------- */
+  .foot {
+    display: flex; align-items: center; gap: 7px;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9.5px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: rgba(0,0,0,0.38);
+    padding: 0 2px;
+    flex-shrink: 0;
+    white-space: nowrap; overflow: hidden;
+  }
+  .foot .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #FB3B24;
+    animation: pulse 1.7s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  @media (max-width: 760px), (max-aspect-ratio: 1/1) {
+    .cols { grid-template-columns: 1fr; grid-template-rows: 1.35fr 1fr; }
+    .lreason { max-width: 50%; }
+    .foot .extra { display: none; }
+  }
+  @media (max-width: 430px) {
+    .lreason { font-size: 8px; max-width: 44%; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .foot .dot { animation: none; }
+    .lrow, .rrow, .lname, .lreason, .rname, .rmeta { transition: none; }
+  }
+</style>
+</head>
+<body>
+<main class="stage">
+  <section class="shell">
+
+    <div class="cols">
+      <section class="panel left">
+        <header class="ph">
+          <span class="pt">Typed from memory</span>
+          <span class="pc">5 names</span>
+        </header>
+        <div class="rows" id="lrows"></div>
+      </section>
+
+      <section class="panel right">
+        <header class="ph">
+          <span class="pt">The set we test against</span>
+          <span class="pc">3 competitors</span>
+        </header>
+        <div class="rows" id="rrows"></div>
+      </section>
+    </div>
+
+    <footer class="foot">
+      <span class="dot"></span>
+      <span>Chosen, not auto-generated</span>
+      <span class="extra">&#183; 3 of 14 candidates &#183; re-picked every scan</span>
+    </footer>
+
+  </section>
+</main>
+
+<script>
+(function () {
+  var SETS = [
+    {
+      typed: [
+        { name: 'NorthPeak Nutrition', keep: true,  reason: 'Kept' },
+        { name: 'Coreform',            keep: false, reason: 'Different price tier' },
+        { name: 'Halcyon Labs',        keep: false, reason: 'Rivalry, not overlap' },
+        { name: 'Basewell',            keep: true,  reason: 'Kept' },
+        { name: 'Truleaf',             keep: false, reason: 'Adjacent category' }
+      ],
+      chosen: [
+        { name: 'NorthPeak Nutrition', meta: 'From your list &#183; named by 4 of 4', added: false },
+        { name: 'Basewell',            meta: 'From your list &#183; named by 3 of 4', added: false },
+        { name: 'Verdanta',            meta: 'Not on your list &#183; wins 61% of buying queries', added: true }
+      ]
+    },
+    {
+      typed: [
+        { name: 'Mineral Theory', keep: true,  reason: 'Kept' },
+        { name: 'Duskline',       keep: false, reason: 'Adjacent category' },
+        { name: 'Restform',       keep: false, reason: 'Rivalry, not overlap' },
+        { name: 'Calmwell',       keep: true,  reason: 'Kept' },
+        { name: 'Nocturne Co.',   keep: false, reason: 'Different price tier' }
+      ],
+      chosen: [
+        { name: 'Calmwell',        meta: 'From your list &#183; named by 4 of 4', added: false },
+        { name: 'Mineral Theory',  meta: 'From your list &#183; named by 3 of 4', added: false },
+        { name: 'Slate &amp; Salt',    meta: 'Not on your list &#183; wins 54% of buying queries', added: true }
+      ]
+    }
+  ];
+
+  var CANCEL = {};
+  var gen = 0;
+  var idx = 0;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var lrows = document.getElementById('lrows');
+  var rrows = document.getElementById('rrows');
+
+  /* ---------- build persistent rows once ---------- */
+  var lNodes = [], rNodes = [];
+  for (var i = 0; i < 5; i++) {
+    var lr = document.createElement('div');
+    lr.className = 'lrow';
+    lr.innerHTML = '<span class="lname"></span><span class="lreason"></span>';
+    lrows.appendChild(lr);
+    lNodes.push(lr);
+  }
+  for (var j = 0; j < 3; j++) {
+    var rr = document.createElement('div');
+    rr.className = 'rrow';
+    rr.innerHTML = '<span class="rname"></span><span class="rmeta"></span>';
+    rrows.appendChild(rr);
+    rNodes.push(rr);
+  }
+
+  function sleep(ms, g) {
+    return new Promise(function (resolve, reject) {
+      setTimeout(function () { g !== gen ? reject(CANCEL) : resolve(); }, ms);
+    });
+  }
+
+  function setNames(set) {
+    lNodes.forEach(function (n, i) {
+      n.querySelector('.lname').textContent = set.typed[i].name;
+      var r = n.querySelector('.lreason');
+      r.innerHTML = set.typed[i].reason;
+      r.classList.remove('on');
+      n.classList.remove('keep', 'drop');
+    });
+    rNodes.forEach(function (n, i) {
+      n.querySelector('.rname').innerHTML = set.chosen[i].name;
+      n.querySelector('.rmeta').innerHTML = set.chosen[i].meta;
+      n.classList.toggle('added', !!set.chosen[i].added);
+    });
+  }
+
+  function showAll() {
+    lNodes.forEach(function (n, i) {
+      n.classList.add('in', SETS[idx].typed[i].keep ? 'keep' : 'drop');
+      n.querySelector('.lreason').classList.add('on');
+    });
+    rNodes.forEach(function (n) { n.classList.add('in'); });
+  }
+
+  async function run() {
+    var g = ++gen;
+    try {
+      while (true) {
+        var set = SETS[idx];
+        setNames(set);
+
+        // 1. the list they typed appears, unjudged
+        for (var i = 0; i < lNodes.length; i++) {
+          lNodes[i].classList.add('in');
+          await sleep(90, g);
+        }
+        await sleep(420, g);
+
+        // 2. each name is judged — most of the list does not survive
+        for (var k = 0; k < lNodes.length; k++) {
+          lNodes[k].classList.add(set.typed[k].keep ? 'keep' : 'drop');
+          lNodes[k].querySelector('.lreason').classList.add('on');
+          await sleep(360, g);
+        }
+        await sleep(320, g);
+
+        // 3. the real set, ending on the one they never listed
+        for (var m = 0; m < rNodes.length; m++) {
+          rNodes[m].classList.add('in');
+          await sleep(m === 1 ? 520 : 300, g);
+        }
+
+        await sleep(3900, g);
+
+        // 4. cross-fade to the next category — panels are never emptied
+        lNodes.forEach(function (n) { n.classList.add('swap'); });
+        rNodes.forEach(function (n) { n.classList.add('swap'); });
+        await sleep(300, g);
+
+        idx = (idx + 1) % SETS.length;
+        setNames(SETS[idx]);
+        rNodes.forEach(function (n) { n.classList.remove('in'); });
+        lNodes.forEach(function (n) { n.classList.remove('swap'); });
+        rNodes.forEach(function (n) { n.classList.remove('swap'); });
+        await sleep(260, g);
+      }
+    } catch (err) {
+      if (err !== CANCEL) throw err;
+    }
+  }
+
+  if (reduce) {
+    setNames(SETS[0]);
+    showAll();
+  } else {
+    run();
+  }
+})();
+</script>
+</body>
+</html>
