@@ -64,7 +64,16 @@
     white-space: nowrap;
     transition: color 0.3s ease;
   }
-  .panel.after .pc.fixed { color: #FB3B24; }
+  .panel.after .ph { background: #FB3B24; border-bottom-color: #FB3B24; }
+  .panel.after .pt { color: #fff; }
+  .panel.after .pc { color: rgba(255,255,255,0.7); }
+  .panel.after .pc.fixed { color: #fff; }
+  .panel.after { transition: box-shadow 0.4s ease, border-color 0.4s ease; }
+  .panel.after.done { border-color: #FB3B24; box-shadow: inset 0 0 0 1px #FB3B24; }
+
+  /* diff-style flash on the element that just changed */
+  @keyframes flash { from { background-color: rgba(251,59,36,0.18); } to { background-color: transparent; } }
+  .flash { animation: flash 1s ease-out both; }
 
   .pbody {
     flex: 1; min-height: 0;
@@ -82,7 +91,10 @@
     position: relative;
     overflow: hidden;
     min-height: 0;
+    filter: grayscale(1);
+    transition: filter 0.7s ease;
   }
+  .pimg.alive { filter: none; }
   .alt {
     position: absolute; left: 7px; bottom: 7px; right: 7px;
     font-family: 'Geist Mono', ui-monospace, monospace;
@@ -96,7 +108,7 @@
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     transition: color 0.3s ease, opacity 0.24s ease;
   }
-  .alt.written { color: #FB3B24; }
+  .alt.written { color: #fff; background: #FB3B24; border-color: #FB3B24; }
   .alt.dim { opacity: 0; }
 
   /* product text */
@@ -131,7 +143,16 @@
   }
   .h1slot.declared { border-color: transparent; padding: 0; }
   .h1slot.declared .h1miss { display: none; }
-  .h1slot.declared .h1txt { display: block; animation: rise 0.4s ease both; }
+  .h1slot.declared .h1txt { display: block; animation: rise 0.4s ease both; font-size: clamp(15px, 2.4vh, 20px); }
+  .h1slot.declared::after {
+    content: '\2713';
+    margin-left: auto;
+    padding-left: 8px;
+    color: #FB3B24;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: clamp(11px, 1.6vh, 14px);
+    animation: rise 0.4s ease both;
+  }
   @keyframes rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
   .price {
@@ -224,7 +245,9 @@
   }
   .pf span { transition: color 0.3s ease; }
   .pf .sep { color: rgba(0,0,0,0.2); }
+  .pf span.def::before { content: '\2715  '; color: rgba(0,0,0,0.3); }
   .pf span.ok { color: #000; }
+  .pf span.ok::before { content: '\2713  '; color: #FB3B24; }
 
   /* ---------- narrow: stack the two pages ---------- */
   @media (max-width: 760px), (max-aspect-ratio: 1/1) {
@@ -266,9 +289,9 @@
         </div>
       </div>
       <footer class="pf">
-        <span>H1 missing</span><span class="sep">&#183;</span>
-        <span>alt empty</span><span class="sep extra">&#183;</span>
-        <span class="extra">description: supplier feed</span>
+        <span class="def">H1 missing</span><span class="sep">&#183;</span>
+        <span class="def">alt empty</span><span class="sep extra">&#183;</span>
+        <span class="def extra">description: supplier feed</span>
       </footer>
     </article>
 
@@ -279,7 +302,7 @@
         <span class="pc" id="apc">0 of 3 fixed</span>
       </header>
       <div class="pbody">
-        <div class="pimg"><span class="alt" id="aalt">alt=""</span></div>
+        <div class="pimg" id="aimg"><span class="alt" id="aalt">alt=""</span></div>
         <div class="ptext">
           <div class="h1slot" id="ah1">
             <span class="h1miss">&lt;h1&gt; missing</span>
@@ -303,9 +326,9 @@
         </div>
       </div>
       <footer class="pf">
-        <span id="f1">H1 missing</span><span class="sep">&#183;</span>
-        <span id="f2">alt empty</span><span class="sep extra">&#183;</span>
-        <span id="f3" class="extra">description: supplier feed</span>
+        <span id="f1" class="def">H1 missing</span><span class="sep">&#183;</span>
+        <span id="f2" class="def">alt empty</span><span class="sep extra">&#183;</span>
+        <span id="f3" class="def extra">description: supplier feed</span>
       </footer>
     </article>
 
@@ -326,6 +349,17 @@
   var f1 = document.getElementById('f1');
   var f2 = document.getElementById('f2');
   var f3 = document.getElementById('f3');
+  var aimg = document.getElementById('aimg');
+  var apanel = document.querySelector('.panel.after');
+  var afacts = document.getElementById('afacts');
+
+  function flash(el) {
+    el.classList.remove('flash');
+    void el.offsetWidth;
+    el.classList.add('flash');
+  }
+  function ok(el, text) { el.textContent = text; el.classList.remove('def'); el.classList.add('ok'); }
+  function def(el, text) { el.textContent = text; el.classList.remove('ok'); el.classList.add('def'); }
 
   var ALT_WRITTEN = 'alt="White heavyweight crew tee, regular fit, front view"';
 
@@ -344,9 +378,12 @@
     aalt.classList.remove('written', 'dim');
     adesc.classList.remove('dim');
     facts.forEach(function (f) { f.classList.remove('in'); });
-    f1.textContent = 'H1 missing';  f1.classList.remove('ok');
-    f2.textContent = 'alt empty';   f2.classList.remove('ok');
-    f3.textContent = 'description: supplier feed'; f3.classList.remove('ok');
+    aimg.classList.remove('alive');
+    apanel.classList.remove('done');
+    [ah1, aalt, afacts].forEach(function (el) { el.classList.remove('flash'); });
+    def(f1, 'H1 missing');
+    def(f2, 'alt empty');
+    def(f3, 'description: supplier feed');
     count(0);
   }
 
@@ -356,9 +393,11 @@
     aalt.classList.add('written');
     adesc.classList.add('dim');
     facts.forEach(function (f) { f.classList.add('in'); });
-    f1.textContent = 'H1 declared'; f1.classList.add('ok');
-    f2.textContent = 'alt written'; f2.classList.add('ok');
-    f3.textContent = '5 facts declared'; f3.classList.add('ok');
+    aimg.classList.add('alive');
+    apanel.classList.add('done');
+    ok(f1, 'H1 declared');
+    ok(f2, 'alt written');
+    ok(f3, '5 facts declared');
     count(3);
   }
 
@@ -371,7 +410,8 @@
 
         // 1. declare the H1
         ah1.classList.add('declared');
-        f1.textContent = 'H1 declared'; f1.classList.add('ok');
+        flash(ah1);
+        ok(f1, 'H1 declared');
         count(1);
         await sleep(950, g);
 
@@ -381,19 +421,22 @@
         aalt.textContent = ALT_WRITTEN;
         aalt.classList.add('written');
         aalt.classList.remove('dim');
-        f2.textContent = 'alt written'; f2.classList.add('ok');
+        aimg.classList.add('alive');          // described, the photo comes to colour
+        ok(f2, 'alt written');
         count(2);
         await sleep(950, g);
 
         // 3. replace the supplier paragraph with declared facts
         adesc.classList.add('dim');
         await sleep(320, g);
+        flash(afacts);
         for (var i = 0; i < facts.length; i++) {
           facts[i].classList.add('in');
           await sleep(150, g);
         }
-        f3.textContent = '5 facts declared'; f3.classList.add('ok');
+        ok(f3, '5 facts declared');
         count(3);
+        apanel.classList.add('done');
 
         await sleep(4200, g);
 
