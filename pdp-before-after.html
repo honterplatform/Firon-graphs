@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Page · Before and After</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: transparent;
+    font-family: 'Geist', -apple-system, system-ui, sans-serif;
+    color: #000;
+    letter-spacing: -0.01em;
+  }
+
+  .stage {
+    width: 100%; height: 100%;
+    display: flex; align-items: stretch; justify-content: center;
+    padding: clamp(6px, 1.2vh, 10px);
+  }
+  .shell {
+    width: 100%; height: 100%;
+    max-width: 1080px;
+    background: #F2F2F2;
+    border: 1px solid rgba(0,0,0,0.05);
+    border-radius: 10px;
+    padding: clamp(9px, 1.5vh, 13px);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(8px, 1.2vw, 13px);
+    overflow: hidden;
+  }
+
+  /* ---------- a panel = one product page ---------- */
+  .panel {
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.07);
+    border-radius: 8px;
+    display: flex; flex-direction: column;
+    min-width: 0; min-height: 0;
+    overflow: hidden;
+  }
+  .ph {
+    display: flex; align-items: center; gap: 8px;
+    padding: clamp(8px, 1.3vh, 12px) clamp(11px, 1.4vw, 16px);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    background: #F2F2F2;
+    flex-shrink: 0;
+  }
+  .pt {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9.5px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    color: #000;
+    white-space: nowrap;
+  }
+  .pc {
+    margin-left: auto;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9.5px; font-weight: 500;
+    color: rgba(0,0,0,0.35);
+    white-space: nowrap;
+    transition: color 0.3s ease;
+  }
+  .panel.after .pc.fixed { color: #FB3B24; }
+
+  .pbody {
+    flex: 1; min-height: 0;
+    display: flex;
+    gap: clamp(10px, 1.4vw, 16px);
+    padding: clamp(10px, 1.6vh, 14px) clamp(11px, 1.4vw, 16px);
+  }
+
+  /* product image well */
+  .pimg {
+    width: 40%;
+    flex-shrink: 0;
+    border-radius: 6px;
+    background: #F2F2F2 url("https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=700&q=75") center 20% / cover no-repeat;
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+  }
+  .alt {
+    position: absolute; left: 7px; bottom: 7px; right: 7px;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: clamp(8px, 1.1vh, 9.5px);
+    font-weight: 500;
+    color: rgba(0,0,0,0.45);
+    background: rgba(255,255,255,0.92);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 4px;
+    padding: 4px 6px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    transition: color 0.3s ease, opacity 0.24s ease;
+  }
+  .alt.written { color: #FB3B24; }
+  .alt.dim { opacity: 0; }
+
+  /* product text */
+  .ptext {
+    flex: 1; min-width: 0; min-height: 0;
+    display: flex; flex-direction: column;
+    gap: clamp(6px, 1vh, 9px);
+  }
+
+  .h1slot {
+    min-height: clamp(20px, 3.2vh, 26px);
+    display: flex; align-items: center;
+    border: 1px dashed rgba(0,0,0,0.25);
+    border-radius: 4px;
+    padding: 0 7px;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: clamp(8.5px, 1.15vh, 10px);
+    font-weight: 500;
+    color: rgba(0,0,0,0.38);
+    letter-spacing: 0.03em;
+    transition: border-color 0.35s ease, padding 0.35s ease;
+    flex-shrink: 0;
+  }
+  .h1slot .h1txt {
+    display: none;
+    font-family: 'Geist', sans-serif;
+    font-size: clamp(13px, 2vh, 17px);
+    font-weight: 600;
+    color: #000;
+    letter-spacing: -0.02em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .h1slot.declared { border-color: transparent; padding: 0; }
+  .h1slot.declared .h1miss { display: none; }
+  .h1slot.declared .h1txt { display: block; animation: rise 0.4s ease both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  .price {
+    font-size: clamp(11.5px, 1.6vh, 13.5px);
+    font-weight: 500;
+    color: rgba(0,0,0,0.75);
+    flex-shrink: 0;
+  }
+
+  .copy {
+    flex: 1; min-height: 0;
+    position: relative;
+  }
+  .desc {
+    position: absolute; inset: 0;
+    font-size: clamp(10.5px, 1.45vh, 12.5px);
+    line-height: 1.45;
+    color: rgba(0,0,0,0.5);
+    overflow: hidden;
+    transition: opacity 0.3s ease;
+  }
+  .desc.dim { opacity: 0; }
+  .tag {
+    display: inline-block;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 8.5px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: rgba(0,0,0,0.4);
+    background: #F2F2F2;
+    border-radius: 3px;
+    padding: 2px 5px;
+    margin-bottom: 5px;
+  }
+
+  .facts {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; justify-content: center;
+    gap: clamp(3px, 0.6vh, 6px);
+    border-left: 2px solid #FB3B24;
+    padding-left: clamp(8px, 1vw, 11px);
+    pointer-events: none;
+  }
+  .fact {
+    display: flex; align-items: baseline; gap: 8px;
+    min-width: 0;
+    opacity: 0; transform: translateY(4px);
+    transition: opacity 0.32s ease, transform 0.32s ease;
+  }
+  .fact.in { opacity: 1; transform: none; }
+  .fk {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: clamp(8px, 1.1vh, 9.5px);
+    font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em;
+    color: rgba(0,0,0,0.38);
+    width: clamp(56px, 6.5vw, 74px);
+    flex-shrink: 0;
+  }
+  .fv {
+    font-size: clamp(10.5px, 1.45vh, 12.5px);
+    font-weight: 500;
+    color: #000;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  .cta {
+    flex-shrink: 0;
+    height: clamp(26px, 4vh, 32px);
+    border-radius: 5px;
+    background: rgba(0,0,0,0.06);
+    display: flex; align-items: center; justify-content: center;
+    font-size: clamp(10.5px, 1.4vh, 12px);
+    font-weight: 500;
+    color: rgba(0,0,0,0.45);
+  }
+
+  /* callout strip */
+  .pf {
+    flex-shrink: 0;
+    display: flex; align-items: center; gap: 6px;
+    padding: clamp(7px, 1.1vh, 10px) clamp(11px, 1.4vw, 16px);
+    border-top: 1px solid rgba(0,0,0,0.06);
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: clamp(8.5px, 1.15vh, 10px);
+    font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    color: rgba(0,0,0,0.4);
+    white-space: nowrap; overflow: hidden;
+    min-width: 0;
+  }
+  .pf span { transition: color 0.3s ease; }
+  .pf .sep { color: rgba(0,0,0,0.2); }
+  .pf span.ok { color: #000; }
+
+  /* ---------- narrow: stack the two pages ---------- */
+  @media (max-width: 760px), (max-aspect-ratio: 1/1) {
+    .shell { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+    .pimg { width: 34%; }
+    .cta { display: none; }
+    .pf .extra { display: none; }
+    .fk { width: 52px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .h1slot.declared .h1txt { animation: none; }
+    .fact, .desc, .alt, .h1slot { transition: none; }
+  }
+</style>
+</head>
+<body>
+<main class="stage">
+  <section class="shell">
+
+    <!-- BEFORE: the page as it stands -->
+    <article class="panel before">
+      <header class="ph">
+        <span class="pt">Before</span>
+        <span class="pc">As it stands</span>
+      </header>
+      <div class="pbody">
+        <div class="pimg"><span class="alt">alt=""</span></div>
+        <div class="ptext">
+          <div class="h1slot"><span class="h1miss">&lt;h1&gt; missing</span></div>
+          <div class="price">&#163;38</div>
+          <div class="copy">
+            <div class="desc">
+              <span class="tag">Auto-pulled</span><br>
+              Premium quality t-shirt made from soft fabric. Comfortable and stylish. Suitable for everyday wear. Available in a range of sizes. Please allow 1&#8211;3 cm difference due to manual measurement.
+            </div>
+          </div>
+          <div class="cta">Add to cart</div>
+        </div>
+      </div>
+      <footer class="pf">
+        <span>H1 missing</span><span class="sep">&#183;</span>
+        <span>alt empty</span><span class="sep extra">&#183;</span>
+        <span class="extra">description: supplier feed</span>
+      </footer>
+    </article>
+
+    <!-- AFTER: the same page with facts declared -->
+    <article class="panel after">
+      <header class="ph">
+        <span class="pt">After</span>
+        <span class="pc" id="apc">0 of 3 fixed</span>
+      </header>
+      <div class="pbody">
+        <div class="pimg"><span class="alt" id="aalt">alt=""</span></div>
+        <div class="ptext">
+          <div class="h1slot" id="ah1">
+            <span class="h1miss">&lt;h1&gt; missing</span>
+            <span class="h1txt">Heavyweight Crew Tee</span>
+          </div>
+          <div class="price">&#163;38</div>
+          <div class="copy">
+            <div class="desc" id="adesc">
+              <span class="tag">Auto-pulled</span><br>
+              Premium quality t-shirt made from soft fabric. Comfortable and stylish. Suitable for everyday wear. Available in a range of sizes. Please allow 1&#8211;3 cm difference due to manual measurement.
+            </div>
+            <div class="facts" id="afacts">
+              <div class="fact"><span class="fk">Material</span><span class="fv">100% organic Supima cotton, 220 gsm</span></div>
+              <div class="fact"><span class="fk">Origin</span><span class="fv">Knit, dyed and sewn in Porto, Portugal</span></div>
+              <div class="fact"><span class="fk">Style</span><span class="fv">Regular fit, crew neck, ribbed collar</span></div>
+              <div class="fact"><span class="fk">Dimensions</span><span class="fv">Chest 52 cm &#183; Length 71 cm (M)</span></div>
+              <div class="fact"><span class="fk">Care</span><span class="fv">Cold wash &#183; tumble low &#183; no bleach</span></div>
+            </div>
+          </div>
+          <div class="cta">Add to cart</div>
+        </div>
+      </div>
+      <footer class="pf">
+        <span id="f1">H1 missing</span><span class="sep">&#183;</span>
+        <span id="f2">alt empty</span><span class="sep extra">&#183;</span>
+        <span id="f3" class="extra">description: supplier feed</span>
+      </footer>
+    </article>
+
+  </section>
+</main>
+
+<script>
+(function () {
+  var CANCEL = {};
+  var gen = 0;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var apc   = document.getElementById('apc');
+  var aalt  = document.getElementById('aalt');
+  var ah1   = document.getElementById('ah1');
+  var adesc = document.getElementById('adesc');
+  var facts = Array.prototype.slice.call(document.querySelectorAll('#afacts .fact'));
+  var f1 = document.getElementById('f1');
+  var f2 = document.getElementById('f2');
+  var f3 = document.getElementById('f3');
+
+  var ALT_WRITTEN = 'alt="White heavyweight crew tee, regular fit, front view"';
+
+  function sleep(ms, g) {
+    return new Promise(function (resolve, reject) {
+      setTimeout(function () { g !== gen ? reject(CANCEL) : resolve(); }, ms);
+    });
+  }
+
+  function count(n) { apc.textContent = n + ' of 3 fixed'; apc.classList.toggle('fixed', n === 3); }
+
+  /* the After panel begins identical to the Before */
+  function resetAfter() {
+    ah1.classList.remove('declared');
+    aalt.textContent = 'alt=""';
+    aalt.classList.remove('written', 'dim');
+    adesc.classList.remove('dim');
+    facts.forEach(function (f) { f.classList.remove('in'); });
+    f1.textContent = 'H1 missing';  f1.classList.remove('ok');
+    f2.textContent = 'alt empty';   f2.classList.remove('ok');
+    f3.textContent = 'description: supplier feed'; f3.classList.remove('ok');
+    count(0);
+  }
+
+  function finishAfter() {
+    ah1.classList.add('declared');
+    aalt.textContent = ALT_WRITTEN;
+    aalt.classList.add('written');
+    adesc.classList.add('dim');
+    facts.forEach(function (f) { f.classList.add('in'); });
+    f1.textContent = 'H1 declared'; f1.classList.add('ok');
+    f2.textContent = 'alt written'; f2.classList.add('ok');
+    f3.textContent = '5 facts declared'; f3.classList.add('ok');
+    count(3);
+  }
+
+  async function run() {
+    var g = ++gen;
+    try {
+      while (true) {
+        resetAfter();
+        await sleep(1500, g);
+
+        // 1. declare the H1
+        ah1.classList.add('declared');
+        f1.textContent = 'H1 declared'; f1.classList.add('ok');
+        count(1);
+        await sleep(950, g);
+
+        // 2. write the alt text
+        aalt.classList.add('dim');
+        await sleep(240, g);
+        aalt.textContent = ALT_WRITTEN;
+        aalt.classList.add('written');
+        aalt.classList.remove('dim');
+        f2.textContent = 'alt written'; f2.classList.add('ok');
+        count(2);
+        await sleep(950, g);
+
+        // 3. replace the supplier paragraph with declared facts
+        adesc.classList.add('dim');
+        await sleep(320, g);
+        for (var i = 0; i < facts.length; i++) {
+          facts[i].classList.add('in');
+          await sleep(150, g);
+        }
+        f3.textContent = '5 facts declared'; f3.classList.add('ok');
+        count(3);
+
+        await sleep(4200, g);
+
+        // back to the broken state, so the fix replays
+        facts.forEach(function (f) { f.classList.remove('in'); });
+        await sleep(280, g);
+      }
+    } catch (err) {
+      if (err !== CANCEL) throw err;
+    }
+  }
+
+  if (reduce) finishAfter(); else run();
+})();
+</script>
+</body>
+</html>
