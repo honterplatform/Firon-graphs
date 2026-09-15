@@ -144,7 +144,7 @@
   .h1slot.declared { border-color: transparent; padding: 0; }
   .h1slot.declared .h1miss { display: none; }
   .h1slot.declared .h1txt { display: block; animation: rise 0.4s ease both; font-size: clamp(15px, 2.4vh, 20px); }
-  .h1slot.declared::after {
+  .h1slot.checked::after {
     content: '\2713';
     margin-left: auto;
     padding-left: 8px;
@@ -249,18 +249,59 @@
   .pf span.ok { color: #000; }
   .pf span.ok::before { content: '\2713  '; color: #FB3B24; }
 
+  /* ---------- what an engine gets from the page ---------- */
+  .read {
+    flex-shrink: 0;
+    display: flex; flex-direction: column; gap: 3px;
+    padding: clamp(7px, 1.1vh, 10px) clamp(11px, 1.4vw, 16px);
+    border-top: 1px solid rgba(0,0,0,0.06);
+    background: #F2F2F2;
+    min-width: 0;
+  }
+  .rhead { display: flex; align-items: center; gap: 6px; }
+  .rmark { display: inline-flex; width: 11px; height: 11px; }
+  .rmark svg { width: 100%; height: 100%; }
+  .rmark svg path { fill: rgba(0,0,0,0.55); }
+  .rlab {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 8.5px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: rgba(0,0,0,0.4);
+    white-space: nowrap;
+  }
+  .rtxt {
+    font-size: clamp(10.5px, 1.45vh, 12.5px);
+    line-height: 1.35;
+    color: rgba(0,0,0,0.45);
+    min-height: 2.7em;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color 0.3s ease;
+  }
+  .rtxt.good { color: #000; font-weight: 500; }
+  .rtxt .cur {
+    display: inline-block; width: 2px; height: 0.95em;
+    background: #FB3B24; vertical-align: -0.12em; margin-left: 2px;
+    animation: blink 0.9s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
   /* ---------- narrow: stack the two pages ---------- */
   @media (max-width: 760px), (max-aspect-ratio: 1/1) {
     .shell { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
     .pimg { width: 34%; }
     .cta { display: none; }
-    .pf .extra { display: none; }
+    .pf { display: none; }
+    .rtxt { min-height: 1.35em; -webkit-line-clamp: 1; }
     .fk { width: 52px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .h1slot.declared .h1txt { animation: none; }
     .fact, .desc, .alt, .h1slot { transition: none; }
+    .rtxt .cur { animation: none; }
   }
 </style>
 </head>
@@ -293,6 +334,10 @@
         <span class="def">alt empty</span><span class="sep extra">&#183;</span>
         <span class="def extra">description: supplier feed</span>
       </footer>
+      <div class="read">
+        <div class="rhead"><span class="rmark"></span><span class="rlab">What ChatGPT sees</span></div>
+        <div class="rtxt">A white t-shirt. No material, origin or sizing given.</div>
+      </div>
     </article>
 
     <!-- AFTER: the same page with facts declared -->
@@ -330,6 +375,10 @@
         <span id="f2" class="def">alt empty</span><span class="sep extra">&#183;</span>
         <span id="f3" class="def extra">description: supplier feed</span>
       </footer>
+      <div class="read">
+        <div class="rhead"><span class="rmark"></span><span class="rlab">What ChatGPT sees</span></div>
+        <div class="rtxt" id="aread">A white t-shirt. No material, origin or sizing given.</div>
+      </div>
     </article>
 
   </section>
@@ -362,6 +411,51 @@
   function def(el, text) { el.textContent = text; el.classList.remove('ok'); el.classList.add('def'); }
 
   var ALT_WRITTEN = 'alt="White heavyweight crew tee, regular fit, front view"';
+  var H1_TEXT = 'Heavyweight Crew Tee';
+  var POOR = 'A white t-shirt. No material, origin or sizing given.';
+  var GOOD = 'Heavyweight organic Supima cotton crew tee, 220 gsm, made in Porto, Portugal. Regular fit; chest 52 cm, length 71 cm in a medium. Cold wash, tumble low.';
+
+  var OPENAI = 'M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z';
+  Array.prototype.forEach.call(document.querySelectorAll('.rmark'), function (m) {
+    m.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + OPENAI + '"/></svg>';
+  });
+
+  var h1txt = ah1.querySelector('.h1txt');
+  var aread = document.getElementById('aread');
+  var fvals = facts.map(function (f) {
+    var fv = f.querySelector('.fv');
+    var v = fv.textContent;
+    fv.setAttribute('data-v', v);
+    return v;
+  });
+
+  /* typed, not faded — the facts are written by hand */
+  function typeChars(el, text, g, ms) {
+    return new Promise(function (resolve, reject) {
+      var i = 0;
+      el.textContent = '';
+      (function step() {
+        if (g !== gen) return reject(CANCEL);
+        if (i >= text.length) return resolve();
+        el.textContent = text.slice(0, ++i);
+        setTimeout(step, ms);
+      })();
+    });
+  }
+  /* streamed, like an engine answering */
+  function streamWords(el, text, g, ms) {
+    return new Promise(function (resolve, reject) {
+      var words = text.split(' '), i = 0;
+      el.innerHTML = '<span class="cur"></span>';
+      (function step() {
+        if (g !== gen) return reject(CANCEL);
+        if (i >= words.length) { el.textContent = text; return resolve(); }
+        i++;
+        el.innerHTML = words.slice(0, i).join(' ') + '<span class="cur"></span>';
+        setTimeout(step, ms);
+      })();
+    });
+  }
 
   function sleep(ms, g) {
     return new Promise(function (resolve, reject) {
@@ -373,7 +467,11 @@
 
   /* the After panel begins identical to the Before */
   function resetAfter() {
-    ah1.classList.remove('declared');
+    ah1.classList.remove('declared', 'checked');
+    h1txt.textContent = '';
+    facts.forEach(function (f) { f.querySelector('.fv').textContent = ''; });
+    aread.textContent = POOR;
+    aread.classList.remove('good');
     aalt.textContent = 'alt=""';
     aalt.classList.remove('written', 'dim');
     adesc.classList.remove('dim');
@@ -388,11 +486,14 @@
   }
 
   function finishAfter() {
-    ah1.classList.add('declared');
+    ah1.classList.add('declared', 'checked');
+    h1txt.textContent = H1_TEXT;
     aalt.textContent = ALT_WRITTEN;
     aalt.classList.add('written');
     adesc.classList.add('dim');
-    facts.forEach(function (f) { f.classList.add('in'); });
+    facts.forEach(function (f, i) { f.classList.add('in'); f.querySelector('.fv').textContent = fvals[i]; });
+    aread.textContent = GOOD;
+    aread.classList.add('good');
     aimg.classList.add('alive');
     apanel.classList.add('done');
     ok(f1, 'H1 declared');
@@ -408,23 +509,25 @@
         resetAfter();
         await sleep(1500, g);
 
-        // 1. declare the H1
+        // 1. declare the H1 — typed
         ah1.classList.add('declared');
         flash(ah1);
+        await typeChars(h1txt, H1_TEXT, g, 28);
+        ah1.classList.add('checked');
         ok(f1, 'H1 declared');
         count(1);
-        await sleep(950, g);
+        await sleep(600, g);
 
         // 2. write the alt text
         aalt.classList.add('dim');
         await sleep(240, g);
-        aalt.textContent = ALT_WRITTEN;
         aalt.classList.add('written');
         aalt.classList.remove('dim');
+        await typeChars(aalt, ALT_WRITTEN, g, 14);
         aimg.classList.add('alive');          // described, the photo comes to colour
         ok(f2, 'alt written');
         count(2);
-        await sleep(950, g);
+        await sleep(600, g);
 
         // 3. replace the supplier paragraph with declared facts
         adesc.classList.add('dim');
@@ -432,13 +535,19 @@
         flash(afacts);
         for (var i = 0; i < facts.length; i++) {
           facts[i].classList.add('in');
-          await sleep(150, g);
+          await typeChars(facts[i].querySelector('.fv'), fvals[i], g, 12);
+          await sleep(70, g);
         }
         ok(f3, '5 facts declared');
         count(3);
         apanel.classList.add('done');
+        await sleep(450, g);
 
-        await sleep(4200, g);
+        // 4. the payoff: the same engine, reading the same page, now has something to say
+        await streamWords(aread, GOOD, g, 62);
+        aread.classList.add('good');
+
+        await sleep(4400, g);
 
         // back to the broken state, so the fix replays
         facts.forEach(function (f) { f.classList.remove('in'); });
