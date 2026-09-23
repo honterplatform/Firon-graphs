@@ -132,7 +132,7 @@
   var MULT = 3.2;       /* months climbing per month stopped */
   var DRIFT = 0.12;     /* competitor keeps producing */
   var YMAX = 80;
-  var PAUSES = [1, 2, 4, 6];
+  var PAUSES = [2, 4, 6];
   var ACCENT = '#FB3B24';
 
   function series(P) {
@@ -165,7 +165,7 @@
   var MODELS = {};
   PAUSES.forEach(function (P) { MODELS[P] = series(P); });
 
-  var cur = 4, pinned = false, resumeTimer = null, cycleIdx = 2;
+  var cur = 2, pinned = false, resumeTimer = null, cycleIdx = 0;
   var prog = 0;
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -183,7 +183,7 @@
     b.type = 'button'; b.className = 'pick' + (P === cur ? ' on' : '');
     b.setAttribute('role', 'tab');
     b.setAttribute('aria-selected', P === cur ? 'true' : 'false');
-    b.textContent = P + (P === 1 ? ' month' : ' months');
+    b.textContent = P + ' months';
     b.addEventListener('click', function () { pinned = true; select(P); armResume(); });
     picks.appendChild(b);
   });
