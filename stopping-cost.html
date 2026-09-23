@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stopping Is Fast</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: transparent;
+    font-family: 'Geist', -apple-system, system-ui, sans-serif;
+    color: #000;
+    letter-spacing: -0.01em;
+  }
+
+  .stage { width: 100%; height: 100%; display: flex; align-items: stretch; padding: 0; }
+  .shell {
+    width: 100%; height: 100%;
+    background: #F2F2F2;
+    border: 1px solid rgba(0,0,0,0.05);
+    border-radius: clamp(12px, 2vh, 18px);
+    padding: clamp(9px, 1.5vh, 13px);
+    display: flex; flex-direction: column;
+    gap: clamp(7px, 1.2vh, 11px);
+    overflow: hidden;
+  }
+
+  /* ---------- controls ---------- */
+  .top { display: flex; align-items: center; gap: clamp(7px, 1vw, 12px); flex-shrink: 0; min-width: 0; overflow: hidden; }
+  .tlabel {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9.5px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    color: rgba(0,0,0,0.4);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .picks { margin-left: auto; display: flex; gap: 4px; flex-shrink: 0; }
+  .pick {
+    font-family: 'Geist', sans-serif;
+    font-size: clamp(10.5px, 1.4vh, 12.5px);
+    font-weight: 500;
+    color: rgba(0,0,0,0.55);
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.09);
+    border-radius: 6px;
+    padding: clamp(5px, 0.8vh, 8px) clamp(8px, 1.1vw, 13px);
+    cursor: pointer; white-space: nowrap;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+  }
+  .pick:hover { border-color: rgba(0,0,0,0.25); color: rgba(0,0,0,0.8); }
+  .pick.on { background: #FB3B24; border-color: #FB3B24; color: #fff; }
+
+  .panel {
+    flex: 1; min-height: 0;
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.07);
+    border-radius: 8px;
+    position: relative; overflow: hidden;
+  }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+  /* ---------- readout ---------- */
+  .foot { display: flex; align-items: center; gap: clamp(7px, 1vw, 12px); flex-shrink: 0; min-width: 0; overflow: hidden; }
+  .stat {
+    display: inline-flex; align-items: baseline; gap: 5px;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: clamp(9px, 1.25vh, 10.5px);
+    font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;
+    color: rgba(0,0,0,0.4); white-space: nowrap;
+  }
+  .stat b { font-size: clamp(11px, 1.7vh, 14px); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .stat.stop b { color: rgba(0,0,0,0.8); }
+  .stat.back b { color: #FB3B24; }
+  .verdict {
+    margin-left: auto; flex-shrink: 0;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    border-radius: 4px; padding: 4px 8px;
+    white-space: nowrap;
+    transition: color 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.12);
+    color: rgba(0,0,0,0.6);
+  }
+  .verdict.lost {
+    color: #FB3B24;
+    border-color: rgba(251,59,36,0.55);
+    border-style: dashed;
+  }
+
+  @media (max-width: 600px), (max-aspect-ratio: 1/1) {
+    .tlabel { display: none; }
+    .picks { margin-left: 0; }
+    .pick { padding: 5px 9px; font-size: 11px; }
+    .stat.ratio { display: none; }
+  }
+</style>
+</head>
+<body>
+<main class="stage">
+  <section class="shell">
+
+    <header class="top">
+      <span class="tlabel">Stop producing for&#8230;</span>
+      <div class="picks" id="picks" role="tablist" aria-label="Pause length"></div>
+    </header>
+
+    <section class="panel"><canvas id="c"></canvas></section>
+
+    <footer class="foot">
+      <span class="stat stop">Stopped <b id="sStop">0</b> wks</span>
+      <span class="stat back">Climbing back <b id="sBack">0</b> wks</span>
+      <span class="stat ratio"><b id="sRatio">0</b>&#215; longer</span>
+      <span class="verdict" id="verdict">&#8212;</span>
+    </footer>
+
+  </section>
+</main>
+
+<script>
+(function () {
+  /* ============================================================
+     Illustrative model, not measured data. Visibility decays while
+     you are not producing, a competitor absorbs a share of what you
+     drop and does not hand it back, and recovery runs at roughly a
+     third of the speed of the fall.
+     ============================================================ */
+  var YOU_START = 62, COMP_BASE = 44;
+  var DECAY = 0.90;     /* share kept per paused week */
+  var FILL = 0.60;      /* share of your loss the competitor absorbs */
+  var EROSION = 0.9;    /* ceiling lost per week stopped — you do not get all of it back */
+  var MULT = 3.2;       /* weeks of climbing per week stopped */
+  var DRIFT = 0.02;     /* competitor keeps producing */
+  var W = 68, PRE = 8, YMAX = 80;
+  var PAUSES = [2, 4, 8, 12];
+
+  var ACCENT = '#FB3B24';
+
+  function series(P) {
+    var you = [], comp = [], v = YOU_START, c = COMP_BASE, low = null;
+    var R = Math.round(P * MULT);
+    var ceiling = YOU_START - EROSION * P;
+    for (var w = 0; w <= W; w++) {
+      if (w < PRE) { /* steady, producing */ }
+      else if (w < PRE + P) {
+        var prev = v; v *= DECAY; c += (prev - v) * FILL;
+      } else {
+        if (low === null) low = v;
+        var t = Math.min(1, (w - (PRE + P)) / R);
+        v = low + (ceiling - low) * (1 - Math.pow(1 - t, 2));
+        c += DRIFT;
+      }
+      you.push(v); comp.push(c);
+    }
+    var regain = null;
+    for (var k = PRE + P; k <= W; k++) { if (you[k] > comp[k]) { regain = k; break; } }
+    // only claim a recovery that actually holds to the end of the frame
+    if (regain !== null) {
+      for (var m = regain; m <= W; m++) if (you[m] <= comp[m]) { regain = null; break; }
+    }
+    return { you: you, comp: comp, R: R, low: low, regain: regain };
+  }
+
+  var MODELS = {};
+  PAUSES.forEach(function (P) { MODELS[P] = series(P); });
+
+  var cur = 8, pinned = false, resumeTimer = null, cycleIdx = 2;
+  var prog = 0, progFrom = 0;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var canvas = document.getElementById('c');
+  var ctx = canvas.getContext('2d');
+  var picks = document.getElementById('picks');
+  var sStop = document.getElementById('sStop');
+  var sBack = document.getElementById('sBack');
+  var sRatio = document.getElementById('sRatio');
+  var verdictEl = document.getElementById('verdict');
+
+  PAUSES.forEach(function (P) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'pick' + (P === cur ? ' on' : '');
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-selected', P === cur ? 'true' : 'false');
+    b.textContent = P + ' weeks';
+    b.addEventListener('click', function () { pinned = true; select(P); armResume(); });
+    picks.appendChild(b);
+  });
+  var pickEls = Array.prototype.slice.call(picks.children);
+
+  function armResume() {
+    if (resumeTimer) clearTimeout(resumeTimer);
+    resumeTimer = setTimeout(function () { pinned = false; }, 12000);
+  }
+  function select(P) {
+    cur = P;
+    cycleIdx = PAUSES.indexOf(P);
+    prog = 0;
+    pickEls.forEach(function (el, i) {
+      var on = PAUSES[i] === P;
+      el.classList.toggle('on', on);
+      el.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    var m = MODELS[P];
+    verdictEl.textContent = m.regain ? ('Back in front · week ' + m.regain) : 'Never back in front';
+    verdictEl.classList.toggle('lost', !m.regain);
+  }
+
+  var W_px = 0, H_px = 0, dpr = window.devicePixelRatio || 1;
+  function resize() {
+    var r = canvas.getBoundingClientRect();
+    W_px = r.width; H_px = r.height;
+    canvas.width = Math.max(1, W_px * dpr);
+    canvas.height = Math.max(1, H_px * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function pads() {
+    var fs = Math.max(8.5, Math.min(11, H_px * 0.048));
+    return { l: fs * 3.0, r: fs * 1.2, t: fs * 1.5, spans: fs * 2.4, lab: fs * 1.9, fs: fs };
+  }
+  function plotBottom(p) { return H_px - p.spans - p.lab; }
+  function X(w, p) { return p.l + (w / W) * (W_px - p.l - p.r); }
+  function Y(v, p) { return p.t + (1 - v / YMAX) * (plotBottom(p) - p.t); }
+  function ease(t) { return 1 - Math.pow(1 - t, 3); }
+
+  function line(data, upto, color, lw, p) {
+    ctx.beginPath();
+    for (var w = 0; w <= upto; w++) {
+      var x = X(w, p), y = Y(data[w], p);
+      if (w === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = color; ctx.lineWidth = lw;
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.stroke();
+  }
+
+  function draw() {
+    var p = pads();
+    var m = MODELS[cur];
+    var pb = plotBottom(p);
+    ctx.clearRect(0, 0, W_px, H_px);
+    var e = ease(prog);
+    var upto = Math.max(1, Math.round(e * W));
+
+    /* grid */
+    ctx.font = '500 ' + (p.fs * 0.9) + 'px "Geist Mono", ui-monospace, monospace';
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'right';
+    [0, 40, 80].forEach(function (v) {
+      var y = Y(v, p);
+      ctx.beginPath(); ctx.moveTo(p.l, y); ctx.lineTo(W_px - p.r, y);
+      ctx.strokeStyle = 'rgba(0,0,0,0.055)'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = 'rgba(0,0,0,0.28)';
+      ctx.fillText(v + '%', p.l - p.fs * 0.7, y);
+    });
+
+    /* the weeks you stopped */
+    var bx0 = X(PRE, p), bx1 = X(PRE + cur, p);
+    ctx.fillStyle = 'rgba(0,0,0,0.055)';
+    ctx.fillRect(bx0, p.t, bx1 - bx0, pb - p.t);
+    ctx.save();
+    ctx.setLineDash([3, 3]);
+    [bx0, bx1].forEach(function (x) {
+      ctx.beginPath(); ctx.moveTo(x, p.t); ctx.lineTo(x, pb);
+      ctx.strokeStyle = 'rgba(0,0,0,0.22)'; ctx.lineWidth = 1; ctx.stroke();
+    });
+    ctx.restore();
+
+    /* lines */
+    line(m.comp, upto, 'rgba(0,0,0,0.72)', 2, p);
+    line(m.you, upto, ACCENT, 2.4, p);
+
+    /* the floor you fell to */
+    var lowW = PRE + cur;
+    if (upto >= lowW) {
+      ctx.beginPath();
+      ctx.arc(X(lowW, p), Y(m.you[lowW], p), 3.4, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.strokeStyle = ACCENT; ctx.lineWidth = 2; ctx.stroke();
+    }
+
+    /* the asymmetry, as two adjacent bars on one timeline */
+    var sy = pb + p.fs * 0.85, sh = p.fs * 0.85;
+    var rx1 = X(Math.min(W, PRE + cur + m.R), p);
+    var stopW = (bx1 - bx0) * e, backW = (rx1 - bx1) * e;
+    ctx.fillStyle = 'rgba(0,0,0,0.75)';
+    ctx.fillRect(bx0, sy, stopW, sh);
+    ctx.fillStyle = ACCENT;
+    ctx.fillRect(bx1, sy, backW, sh);
+
+    ctx.font = '500 ' + (p.fs * 0.88) + 'px "Geist Mono", ui-monospace, monospace';
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+    if (bx1 - bx0 > p.fs * 2.6) {
+      ctx.fillStyle = '#fff';
+      ctx.fillText(cur + 'w', (bx0 + bx1) / 2, sy + sh / 2 + 0.5);
+    }
+    if (rx1 - bx1 > p.fs * 3.4) {
+      ctx.fillStyle = '#fff';
+      ctx.fillText(m.R + 'w back', (bx1 + rx1) / 2, sy + sh / 2 + 0.5);
+    }
+
+    /* week axis */
+    ctx.textBaseline = 'top'; ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    [0, 16, 32, 48, 64].forEach(function (w) {
+      ctx.fillText('wk ' + w, X(w, p), H_px - p.lab + p.fs * 0.35);
+    });
+
+    /* readout */
+    sStop.textContent = Math.round(e * cur);
+    sBack.textContent = Math.round(e * m.R);
+    sRatio.textContent = (m.R / cur).toFixed(1);
+  }
+
+  var last = null, cycleAt = 0;
+  function frame(now) {
+    if (last === null) { last = now; cycleAt = now + 4600; }
+    var dt = now - last; last = now;
+    if (prog < 1) prog = Math.min(1, prog + dt / 1400);
+    if (!pinned && now > cycleAt) {
+      cycleAt = now + 4600;
+      cycleIdx = (cycleIdx + 1) % PAUSES.length;
+      select(PAUSES[cycleIdx]);
+    }
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  function boot() {
+    resize();
+    select(cur);
+    if (reduce) { prog = 1; draw(); }
+    else requestAnimationFrame(frame);
+  }
+  window.addEventListener('resize', function () { resize(); if (reduce) draw(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot); else boot();
+})();
+</script>
+</body>
+</html>
