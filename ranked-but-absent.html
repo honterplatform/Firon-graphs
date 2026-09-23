@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ranked and Absent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: transparent;
+    font-family: 'Geist', -apple-system, system-ui, sans-serif;
+    color: #000;
+    letter-spacing: -0.01em;
+  }
+
+  .stage {
+    width: 100%; height: 100%;
+    display: flex; align-items: stretch; justify-content: center;
+    padding: clamp(6px, 1.2vh, 10px);
+  }
+  .shell {
+    width: 100%; height: 100%;
+    max-width: 1080px;
+    background: #F2F2F2;
+    border: 1px solid rgba(0,0,0,0.05);
+    border-radius: 10px;
+    padding: clamp(9px, 1.5vh, 13px);
+    display: grid;
+    grid-template-columns: 0.88fr 1.12fr;
+    gap: clamp(8px, 1.2vw, 13px);
+    overflow: hidden;
+  }
+
+  .panel {
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.07);
+    border-radius: 8px;
+    display: flex; flex-direction: column;
+    min-width: 0; min-height: 0;
+    overflow: hidden;
+  }
+  .ph {
+    display: flex; align-items: center; gap: 7px;
+    padding: clamp(8px, 1.3vh, 12px) clamp(11px, 1.4vw, 15px);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    background: #F2F2F2;
+    flex-shrink: 0;
+  }
+  .ph svg { width: 12px; height: 12px; flex-shrink: 0; }
+  .ph svg path { fill: rgba(0,0,0,0.6); }
+  .pt {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9.5px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    color: #000;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .pc {
+    margin-left: auto;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 9.5px; font-weight: 500;
+    color: rgba(0,0,0,0.33);
+    white-space: nowrap;
+  }
+
+  /* ---------- left: the SERP you already won ---------- */
+  .serp {
+    flex: 1; min-height: 0;
+    display: flex; flex-direction: column;
+    padding: 0 clamp(11px, 1.4vw, 15px);
+  }
+  .row {
+    flex: 1; min-height: 0;
+    display: flex; align-items: center; gap: clamp(7px, 0.9vw, 10px);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    min-width: 0;
+    opacity: 0; transform: translateY(4px);
+    transition: opacity 0.32s ease, transform 0.32s ease;
+  }
+  .row:last-child { border-bottom: 0; }
+  .row.in { opacity: 1; transform: none; }
+  .rk {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: clamp(9px, 1.25vh, 10.5px);
+    font-weight: 500;
+    color: rgba(0,0,0,0.3);
+    width: clamp(15px, 2vw, 19px);
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .bn {
+    font-size: clamp(11px, 1.6vh, 13.5px);
+    font-weight: 500;
+    color: rgba(0,0,0,0.55);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    min-width: 0;
+  }
+  .row.you .rk { color: #000; font-weight: 500; }
+  .row.you .bn { color: #000; font-weight: 600; }
+  .youtag {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 8.5px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: #000;
+    background: #F2F2F2;
+    border-radius: 3px;
+    padding: 3px 6px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .youtag.on { opacity: 1; }
+  /* the brand the AI names first — lit only once the answer says it */
+  .row.picked { border-left: 2px solid #FB3B24; padding-left: clamp(6px, 0.8vw, 9px); }
+  .row.picked .bn { color: #FB3B24; font-weight: 600; }
+  .row.picked .rk { color: #FB3B24; }
+  .row { border-left: 2px solid transparent; transition: opacity 0.32s ease, transform 0.32s ease, border-color 0.3s ease, padding-left 0.3s ease; }
+  .gap { flex: 0 0 auto; }
+  .gap .rk { color: rgba(0,0,0,0.18); }
+
+  .pf {
+    flex-shrink: 0;
+    display: flex; align-items: center; gap: 6px;
+    padding: clamp(7px, 1.1vh, 10px) clamp(11px, 1.4vw, 15px);
+    border-top: 1px solid rgba(0,0,0,0.06);
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: clamp(8.5px, 1.15vh, 9.8px);
+    font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    color: rgba(0,0,0,0.38);
+    white-space: nowrap; overflow: hidden;
+    min-width: 0;
+  }
+  .pf b { color: rgba(0,0,0,0.75); font-weight: 500; }
+  .pf .hot { color: #FB3B24; }
+
+  /* ---------- right: the answer you are not in ---------- */
+  .convo {
+    flex: 1; min-height: 0;
+    display: flex; flex-direction: column;
+    gap: clamp(7px, 1.1vh, 11px);
+    padding: clamp(10px, 1.5vh, 14px) clamp(11px, 1.4vw, 15px);
+    min-width: 0;
+  }
+  .q {
+    align-self: flex-start;
+    background: #F2F2F2;
+    border-radius: 7px;
+    padding: clamp(6px, 0.9vh, 9px) clamp(9px, 1.1vw, 12px);
+    font-size: clamp(11px, 1.55vh, 13px);
+    font-weight: 500;
+    color: rgba(0,0,0,0.8);
+    max-width: 100%;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    flex-shrink: 0;
+  }
+  .q.in { opacity: 1; }
+  .ans {
+    flex: 1; min-height: 0;
+    font-size: clamp(11.5px, 1.7vh, 14px);
+    line-height: 1.45;
+    color: rgba(0,0,0,0.6);
+    overflow: hidden;
+  }
+  .ans strong { color: #000; font-weight: 600; }
+  .ans .cur {
+    display: inline-block; width: 2px; height: 0.95em;
+    background: #FB3B24; vertical-align: -0.12em; margin-left: 2px;
+    animation: blink 0.9s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .absent {
+    flex-shrink: 0;
+    display: flex; align-items: center; gap: 8px;
+    border-top: 1px dashed rgba(0,0,0,0.18);
+    padding-top: clamp(7px, 1.1vh, 10px);
+    min-width: 0;
+    opacity: 0; transform: translateY(4px);
+    transition: opacity 0.38s ease, transform 0.38s ease;
+  }
+  .absent.in { opacity: 1; transform: none; }
+  .absent .nm {
+    font-size: clamp(11.5px, 1.7vh, 14px);
+    font-weight: 600;
+    color: #FB3B24;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    min-width: 0;
+  }
+  .absent .tg {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 8.5px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: #FB3B24;
+    background: #F2F2F2;
+    border: 1px dashed rgba(251,59,36,0.55);
+    border-radius: 4px;
+    padding: 4px 8px;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 760px), (max-aspect-ratio: 1/1) {
+    .shell { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+    .pf .extra { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ans .cur { animation: none; }
+    .row, .q, .absent, .youtag { transition: none; }
+  }
+</style>
+</head>
+<body>
+<main class="stage">
+  <section class="shell">
+
+    <!-- the win -->
+    <section class="panel">
+      <header class="ph">
+        <span class="pt">Google &#183; organic results</span>
+        <span class="pc" id="lpc"></span>
+      </header>
+      <div class="serp" id="serp"></div>
+      <footer class="pf">
+        <span>Your rank</span> <b>#1</b>
+        <span class="extra">&#183; held 14 months</span>
+      </footer>
+    </section>
+
+    <!-- the answer that ignores it -->
+    <section class="panel">
+      <header class="ph">
+        <span id="engMark"></span>
+        <span class="pt">ChatGPT &#183; the answer</span>
+        <span class="pc">live</span>
+      </header>
+      <div class="convo">
+        <div class="q" id="q"></div>
+        <div class="ans" id="ans"></div>
+        <div class="absent" id="absent">
+          <span class="nm" id="absentNm"></span>
+          <span class="tg">Not in the answer</span>
+        </div>
+      </div>
+      <footer class="pf">
+        <span><b id="namedN">0</b> named</span>
+        <span>&#183; <span class="hot"><b id="buriedN" class="hot">0</b> buried</span></span>
+        <span class="extra">&#183; no session &#183; no click &#183; no funnel event</span>
+      </footer>
+    </section>
+
+  </section>
+</main>
+
+<script>
+(function () {
+  var OPENAI = 'M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z';
+  document.getElementById('engMark').innerHTML =
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + OPENAI + '"/></svg>';
+
+  /* Brands wrapped in * are the ones the answer names. */
+  var CASES = [
+    {
+      cat: 'clean protein',
+      q: 'Best clean protein powder?',
+      total: 300,
+      serp: [
+        { r: 1, n: 'NorthPeak Nutrition', you: true },
+        { r: 2, n: 'Coreform' },
+        { r: 3, n: 'Halcyon Labs' },
+        { r: 9, n: 'VitalBlend', picked: true }
+      ],
+      ans: 'I’d go with *VitalBlend*, *Truleaf* or *Basewell* — the clearest sourcing and label transparency in clean protein.'
+    },
+    {
+      cat: 'magnesium supplements',
+      q: 'Best magnesium supplement?',
+      total: 300,
+      serp: [
+        { r: 1, n: 'Restform', you: true },
+        { r: 2, n: 'Duskline' },
+        { r: 4, n: 'Nocturne Co.' },
+        { r: 11, n: 'NightCap', picked: true }
+      ],
+      ans: 'For magnesium I’d look at *NightCap*, *Calmwell* or *Mineral Theory* — third-party tested with the clearest dosing.'
+    }
+  ];
+
+  var CANCEL = {};
+  var gen = 0, idx = 0;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var serpEl = document.getElementById('serp');
+  var lpc = document.getElementById('lpc');
+  var qEl = document.getElementById('q');
+  var ansEl = document.getElementById('ans');
+  var absentEl = document.getElementById('absent');
+  var absentNm = document.getElementById('absentNm');
+  var namedN = document.getElementById('namedN');
+  var buriedN = document.getElementById('buriedN');
+
+  function sleep(ms, g) {
+    return new Promise(function (res, rej) {
+      setTimeout(function () { g !== gen ? rej(CANCEL) : res(); }, ms);
+    });
+  }
+
+  /* Tokenise on the *brand* markers, NOT on spaces — brand names can be
+     multi-word ("Mineral Theory"), and punctuation must attach without a
+     leading space. Each unit renders as word + post, joined by spaces. */
+  function parseAns(str) {
+    var units = [], re = /\*([^*]+)\*/g, last = 0, m;
+    function pushPlain(txt) {
+      txt.split(' ').forEach(function (w) { if (w) units.push({ w: w, b: false, post: '' }); });
+    }
+    while ((m = re.exec(str)) !== null) {
+      pushPlain(str.slice(last, m.index));
+      last = m.index + m[0].length;
+      // punctuation sitting flush against the closing marker belongs to this unit
+      var tail = /^[,.;:!?)\]]+/.exec(str.slice(last));
+      var post = tail ? tail[0] : '';
+      last += post.length;
+      units.push({ w: m[1], b: true, key: m[1], post: post });
+    }
+    pushPlain(str.slice(last));
+    return units;
+  }
+  function render(units, upto, caret) {
+    var html = units.slice(0, upto).map(function (u) {
+      return (u.b ? '<strong>' + u.w + '</strong>' : u.w) + (u.post || '');
+    }).join(' ');
+    ansEl.innerHTML = html + (caret ? '<span class="cur"></span>' : '');
+  }
+
+  function buildSerp(c) {
+    serpEl.innerHTML = '';
+    var nodes = [];
+    c.serp.forEach(function (row, i) {
+      // a break in rank needs to look like a break, not a miscount
+      var prev = i > 0 ? c.serp[i - 1].r : 0;
+      if (row.r > prev + 1 && i > 0) {
+        var g = document.createElement('div');
+        g.className = 'row gap in';
+        g.innerHTML = '<span class="rk">&#8942;</span><span class="bn"></span>';
+        serpEl.appendChild(g);
+      }
+      var d = document.createElement('div');
+      d.className = 'row' + (row.you ? ' you' : '');
+      d.innerHTML = '<span class="rk">' + row.r + '</span><span class="bn">' + row.n + '</span>' +
+                    (row.you ? '<span class="youtag">You</span>' : '');
+      if (row.picked) d.setAttribute('data-brand', row.n);
+      serpEl.appendChild(d);
+      nodes.push(d);
+    });
+    return nodes;
+  }
+
+  async function run() {
+    var g = ++gen;
+    try {
+      while (true) {
+        var c = CASES[idx];
+        var units = parseAns(c.ans);
+        var brands = units.filter(function (u) { return u.b; });
+        var youName = c.serp.filter(function (r) { return r.you; })[0].n;
+
+        lpc.textContent = c.cat;
+        qEl.textContent = c.q;
+        qEl.classList.remove('in');
+        absentEl.classList.remove('in');
+        absentNm.textContent = youName;
+        ansEl.innerHTML = '';
+        namedN.textContent = '0';
+        buriedN.textContent = '0';
+        var nodes = buildSerp(c);
+
+        // 1. the win: you are #1, and it looks like a win
+        for (var i = 0; i < nodes.length; i++) {
+          nodes[i].classList.add('in');
+          await sleep(110, g);
+        }
+        var youTag = serpEl.querySelector('.youtag');
+        if (youTag) youTag.classList.add('on');
+        await sleep(900, g);
+
+        // 2. the buyer asks somewhere else entirely
+        qEl.classList.add('in');
+        await sleep(650, g);
+
+        // 3. the answer names three brands, and lights the one sitting at #9
+        for (var k = 1; k <= units.length; k++) {
+          render(units, k, true);
+          var u = units[k - 1];
+          if (u.b) {
+            var hit = serpEl.querySelector('[data-brand="' + u.key + '"]');
+            if (hit) hit.classList.add('picked');
+          }
+          await sleep(72, g);
+        }
+        render(units, units.length, false);
+        await sleep(520, g);
+
+        // 4. you are not in it
+        absentEl.classList.add('in');
+        await sleep(420, g);
+
+        // 5. and here is the scale of it
+        var dur = 900, t0 = performance.now();
+        while (true) {
+          var pr = Math.min(1, (performance.now() - t0) / dur);
+          var e = 1 - Math.pow(1 - pr, 3);
+          namedN.textContent = Math.round(e * brands.length);
+          buriedN.textContent = Math.round(e * (c.total - brands.length));
+          if (pr >= 1) break;
+          await sleep(36, g);
+        }
+
+        await sleep(4200, g);
+        idx = (idx + 1) % CASES.length;
+      }
+    } catch (err) { if (err !== CANCEL) throw err; }
+  }
+
+  if (reduce) {
+    var c = CASES[0], units = parseAns(c.ans);
+    var brands = units.filter(function (u) { return u.b; });
+    lpc.textContent = c.cat;
+    qEl.textContent = c.q; qEl.classList.add('in');
+    var nodes = buildSerp(c);
+    nodes.forEach(function (n) { n.classList.add('in'); });
+    var yt = serpEl.querySelector('.youtag'); if (yt) yt.classList.add('on');
+    serpEl.querySelectorAll('[data-brand]').forEach(function (n) { n.classList.add('picked'); });
+    render(units, units.length, false);
+    absentNm.textContent = c.serp.filter(function (r) { return r.you; })[0].n;
+    absentEl.classList.add('in');
+    namedN.textContent = brands.length;
+    buriedN.textContent = c.total - brands.length;
+  } else {
+    run();
+  }
+})();
+</script>
+</body>
+</html>
