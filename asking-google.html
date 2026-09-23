@@ -64,28 +64,6 @@
   }
   canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
-  /* the two territory labels — fixed corners, because a 100% stack
-     guarantees Google owns bottom-left and AI owns top-right */
-  .note {
-    position: absolute;
-    font-family: 'Geist Mono', ui-monospace, monospace;
-    font-size: clamp(8.5px, 1.2vh, 10px);
-    font-weight: 500;
-    text-transform: uppercase; letter-spacing: 0.06em;
-    white-space: nowrap;
-    padding: 4px 8px;
-    border-radius: 4px;
-    opacity: 0;
-    transition: opacity 0.45s ease;
-    pointer-events: none;
-  }
-  .note.on { opacity: 1; }
-  .note.rank {
-    left: clamp(40px, 9vw, 74px);
-    top: 30%;
-    color: rgba(0,0,0,0.75);
-    background: rgba(255,255,255,0.86);
-  }
 
   .foot {
     display: flex; align-items: center; gap: clamp(7px, 1vw, 12px);
@@ -116,8 +94,7 @@
     .lg span.nm { display: none; }
     .lg.solo span.nm { display: inline; }
     .span { display: none; }
-    .note { font-size: 8px; padding: 3px 6px; }
-  }
+    }
 </style>
 </head>
 <body>
@@ -128,7 +105,6 @@
 
     <section class="panel">
       <canvas id="c"></canvas>
-      <span class="note rank" id="noteRank">Your #1 ranks here</span>
     </section>
 
     <footer class="foot">
@@ -208,7 +184,6 @@
   var ctx = canvas.getContext('2d');
   var dG = document.getElementById('dG');
   var dA = document.getElementById('dA');
-  var noteRank = document.getElementById('noteRank');
   document.getElementById('spanLbl').textContent = SOURCE ? SOURCE :
     YEARS[0] + '\u2013' + YEARS[ACTUAL_THROUGH] +
     (ACTUAL_THROUGH < N - 1
@@ -430,7 +405,6 @@
 
     ctx.globalAlpha = 1;
 
-    noteRank.classList.toggle('on', e > 2400 && e < 7700);
 
     var dp = ease(seg(e, 1800, 2600));
     var gd = (GOOGLE[N - 1] - GOOGLE[0]) * dp;
