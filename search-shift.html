@@ -34,29 +34,27 @@
     overflow: hidden;
   }
 
-  /* ---------- header ---------- */
+  /* ---------- legend ---------- */
   .top {
-    display: flex; align-items: center; gap: 10px;
-    flex-shrink: 0; min-width: 0;
+    display: flex; align-items: center; gap: clamp(8px, 1.2vw, 14px);
+    flex-shrink: 0; min-width: 0; overflow: hidden;
   }
-  .tlabel {
-    font-family: 'Geist Mono', ui-monospace, monospace;
-    font-size: 9.5px; font-weight: 500;
-    text-transform: uppercase; letter-spacing: 0.07em;
-    color: rgba(0,0,0,0.4);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .legend { margin-left: auto; display: flex; gap: clamp(7px, 1vw, 12px); flex-shrink: 0; }
   .lg {
     display: inline-flex; align-items: center; gap: 5px;
-    font-size: clamp(10px, 1.4vh, 12px);
+    font-size: clamp(10px, 1.35vh, 11.5px);
     font-weight: 500;
     color: rgba(0,0,0,0.6);
     white-space: nowrap;
+    flex-shrink: 0;
   }
-  .sw { width: 9px; height: 3px; border-radius: 2px; flex-shrink: 0; }
-  .sw.g { background: rgba(0,0,0,0.75); }
-  .sw.a { background: #FB3B24; }
+  .lg svg { width: clamp(11px, 1.55vh, 13px); height: clamp(11px, 1.55vh, 13px); }
+  .sw { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .rule {
+    width: 1px; height: 13px;
+    background: rgba(0,0,0,0.12);
+    flex-shrink: 0;
+  }
+  .ai-group { display: flex; align-items: center; gap: clamp(7px, 1vw, 12px); min-width: 0; overflow: hidden; }
 
   /* ---------- chart ---------- */
   .panel {
@@ -69,11 +67,10 @@
   }
   canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
-  /* ---------- footer deltas ---------- */
+  /* ---------- footer ---------- */
   .foot {
     display: flex; align-items: center; gap: clamp(7px, 1vw, 12px);
-    flex-shrink: 0; min-width: 0;
-    overflow: hidden;
+    flex-shrink: 0; min-width: 0; overflow: hidden;
   }
   .delta {
     display: inline-flex; align-items: baseline; gap: 5px;
@@ -100,9 +97,9 @@
     white-space: nowrap;
   }
 
-  @media (max-width: 560px), (max-aspect-ratio: 1/1) {
-    .tlabel { display: none; }
-    .legend { margin-left: 0; }
+  @media (max-width: 620px), (max-aspect-ratio: 1/1) {
+    .lg span.nm { display: none; }
+    .lg.google span.nm { display: inline; }
     .span { display: none; }
   }
 </style>
@@ -111,13 +108,7 @@
 <main class="stage">
   <section class="shell">
 
-    <header class="top">
-      <span class="tlabel">Where buyers start a product search</span>
-      <div class="legend">
-        <span class="lg"><i class="sw g"></i>Google</span>
-        <span class="lg"><i class="sw a"></i>AI assistants</span>
-      </div>
-    </header>
+    <header class="top" id="legend"></header>
 
     <section class="panel"><canvas id="c"></canvas></section>
 
@@ -134,23 +125,60 @@
 (function () {
   /* ============================================================
      DATA — placeholder shape, not sourced figures.
-     Replace with your own researched numbers before publishing,
-     and put the citation in SOURCE below (empty renders nothing).
+     Replace with researched numbers before publishing and put the
+     citation in SOURCE (empty renders nothing, so no false claim).
+     Each assistant series must be same length as YEARS.
      ============================================================ */
-  var YEARS  = ['2021', '2022', '2023', '2024', '2025', '2026'];
-  var GOOGLE = [92, 89, 84, 75, 62, 47];
-  var AI     = [ 1,  3, 10, 22, 38, 55];
+  var YEARS  = ['2022', '2023', '2024', '2025', '2026'];
+  var GOOGLE = [91, 85, 76, 63, 47];
   var SOURCE = '';
 
+  var OPENAI = 'M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z';
+  var GEMINI = 'M12 24A14.304 14.304 0 0 0 0 12 14.304 14.304 0 0 0 12 0a14.305 14.305 0 0 0 12 12 14.305 14.305 0 0 0-12 12';
+  var CLAUDE = 'M4.709 15.955l4.72-2.647.079-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.607.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z';
+  var PPLX = 'M19.785 0v7.272H22.5V17.62h-2.935V24l-7.037-6.194v6.145h-1.091v-6.152L4.399 24v-6.465H1.5V7.188h2.808V0l7.129 6.135V.11h1.091v6.036L19.785 0Zm-7.257 9.044v7.319l5.946 5.234V14.44l-5.946-5.397Zm-1.099-.03-5.946 5.398v7.174l5.946-5.234V9.015ZM2.59 8.28v8.264h1.809v-4.489l4.11-3.775H2.59Zm13.652 0 4.11 3.775v4.489h1.057V8.28h-5.167ZM5.49 2.476v4.796h5.29L5.49 2.476Zm13.204 0L13.42 7.272h5.274V2.476Z';
+
+  /* stack order: biggest at the base. tints are one accent ramp, not new hues. */
+  var ASSISTANTS = [
+    { name: 'ChatGPT',    path: OPENAI, tint: '#FB3B24', data: [2, 7, 13, 20, 26] },
+    { name: 'Gemini',     path: GEMINI, tint: '#FD6A58', data: [0, 2,  5,  9, 12] },
+    { name: 'Claude',     path: CLAUDE, tint: '#FE9384', data: [0, 1,  3,  6, 10] },
+    { name: 'Perplexity', path: PPLX,   tint: '#FFBEB4', data: [0, 1,  3,  5,  7] }
+  ];
+
+  var BAR_RATIO = 0.17;   /* thin bars — fraction of a year's slot */
+  var BAR_MAX   = 15;
   var ACCENT = '#FB3B24';
   var N = YEARS.length;
+
+  var AI_TOTAL = YEARS.map(function (_, i) {
+    return ASSISTANTS.reduce(function (s, a) { return s + a.data[i]; }, 0);
+  });
+  var OVERTAKE = (function () {
+    for (var i = 0; i < N; i++) if (AI_TOTAL[i] > GOOGLE[i]) return i;
+    return -1;
+  })();
+
+  /* ---------- legend, built from the same data ---------- */
+  var legend = document.getElementById('legend');
+  function lgSvg(path, tint) {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + path + '" fill="' + tint + '"/></svg>';
+  }
+  legend.innerHTML =
+    '<span class="lg google"><i class="sw" style="background:rgba(0,0,0,0.78)"></i><span class="nm">Google</span></span>' +
+    '<span class="rule"></span>' +
+    '<span class="ai-group">' +
+    ASSISTANTS.map(function (a) {
+      return '<span class="lg">' + lgSvg(a.path, a.tint) + '<span class="nm">' + a.name + '</span></span>';
+    }).join('') +
+    '</span>';
 
   var canvas = document.getElementById('c');
   var ctx = canvas.getContext('2d');
   var dG = document.getElementById('dG');
   var dA = document.getElementById('dA');
-  var spanLbl = document.getElementById('spanLbl');
-  spanLbl.textContent = SOURCE ? SOURCE : YEARS[0] + ' – ' + YEARS[N - 1];
+  document.getElementById('spanLbl').textContent =
+    SOURCE ? SOURCE : YEARS[0] + ' – ' + YEARS[N - 1];
 
   var W = 0, H = 0, dpr = window.devicePixelRatio || 1;
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -163,86 +191,28 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  /* ---------- geometry ---------- */
   function pads() {
     var fs = Math.max(8.5, Math.min(11, H * 0.05));
-    return { l: fs * 3.1, r: fs * 5.0, t: fs * 1.4, b: fs * 2.5, fs: fs };
+    return { l: fs * 3.1, r: fs * 1.4, t: fs * 2.6, b: fs * 2.5, fs: fs };
   }
-  function X(i, p) { return p.l + (i / (N - 1)) * (W - p.l - p.r); }
-  function Y(v, p) { return p.t + (1 - v / 100) * (H - p.t - p.b); }
-
-  /* where the two series actually cross */
-  var CROSS = (function () {
-    for (var i = 0; i < N - 1; i++) {
-      var d0 = GOOGLE[i] - AI[i], d1 = GOOGLE[i + 1] - AI[i + 1];
-      if (d0 === 0) return { i: i, v: GOOGLE[i] };
-      if ((d0 > 0) !== (d1 > 0)) {
-        var t = d0 / (d0 - d1);
-        return { i: i + t, v: GOOGLE[i] + t * (GOOGLE[i + 1] - GOOGLE[i]) };
-      }
-    }
-    return null;
-  })();
+  function slotW(p) { return (W - p.l - p.r) / N; }
+  function cx(i, p)  { return p.l + slotW(p) * (i + 0.5); }
+  function Y(v, p)   { return p.t + (1 - v / 100) * (H - p.t - p.b); }
 
   function clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
   function seg(e, a, b) { return clamp01((e - a) / (b - a)); }
   function ease(t) { return 1 - Math.pow(1 - t, 3); }
 
-  /* ---------- drawing ---------- */
-  function polyline(data, prog, p) {
-    var pts = [], cur = prog * (N - 1), last = Math.floor(cur);
-    for (var i = 0; i <= Math.min(last, N - 1); i++) pts.push([X(i, p), Y(data[i], p)]);
-    if (last < N - 1) {
-      var f = cur - last;
-      pts.push([
-        X(last, p) + f * (X(last + 1, p) - X(last, p)),
-        Y(data[last], p) + f * (Y(data[last + 1], p) - Y(data[last], p))
-      ]);
-    }
-    return pts;
-  }
-
-  function strokePts(pts, color, lw) {
-    if (pts.length < 2) return;
+  function roundTopPath(x, y, w, h, r) {
+    r = Math.min(r, w / 2, Math.max(0, h));
     ctx.beginPath();
-    ctx.moveTo(pts[0][0], pts[0][1]);
-    for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = lw;
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-    ctx.stroke();
-  }
-
-  function fillUnder(pts, color, p) {
-    if (pts.length < 2) return;
-    var base = Y(0, p);
-    ctx.beginPath();
-    ctx.moveTo(pts[0][0], base);
-    for (var i = 0; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
-    ctx.lineTo(pts[pts.length - 1][0], base);
+    ctx.moveTo(x, y + h);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h);
     ctx.closePath();
-    ctx.fillStyle = color;
-    ctx.fill();
-  }
-
-  function chip(x, y, text, bg, fg, p) {
-    ctx.font = '500 ' + p.fs + 'px "Geist Mono", ui-monospace, monospace';
-    var w = ctx.measureText(text).width + p.fs * 1.1;
-    var h = p.fs * 1.8, r = 4;
-    ctx.beginPath();
-    ctx.moveTo(x + r, y - h / 2);
-    ctx.arcTo(x + w, y - h / 2, x + w, y + h / 2, r);
-    ctx.arcTo(x + w, y + h / 2, x, y + h / 2, r);
-    ctx.arcTo(x, y + h / 2, x, y - h / 2, r);
-    ctx.arcTo(x, y - h / 2, x + w, y - h / 2, r);
-    ctx.closePath();
-    ctx.fillStyle = bg;
-    ctx.fill();
-    ctx.fillStyle = fg;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(text, x + w / 2, y + 0.5);
   }
 
   function draw(e) {
@@ -250,11 +220,12 @@
     ctx.clearRect(0, 0, W, H);
 
     var aGrid = ease(seg(e, 0, 400));
-    var prog  = ease(seg(e, 300, 1700));
-    var aCross = ease(seg(e, 1750, 2150));
-    var aEnd  = ease(seg(e, 2150, 2500));
     var aOut  = 1 - seg(e, 7600, 8000);
     ctx.globalAlpha = aOut;
+
+    var base = Y(0, p);
+    var bw = Math.max(4, Math.min(BAR_MAX, slotW(p) * BAR_RATIO));
+    var gap = Math.max(3, bw * 0.45);
 
     /* grid */
     ctx.font = '500 ' + (p.fs * 0.92) + 'px "Geist Mono", ui-monospace, monospace';
@@ -262,11 +233,9 @@
     [0, 25, 50, 75, 100].forEach(function (v) {
       var y = Y(v, p);
       ctx.beginPath();
-      ctx.moveTo(p.l, y);
-      ctx.lineTo(W - p.r, y);
+      ctx.moveTo(p.l, y); ctx.lineTo(W - p.r, y);
       ctx.strokeStyle = 'rgba(0,0,0,' + (0.055 * aGrid).toFixed(3) + ')';
-      ctx.lineWidth = 1;
-      ctx.stroke();
+      ctx.lineWidth = 1; ctx.stroke();
       if (v % 50 === 0) {
         ctx.fillStyle = 'rgba(0,0,0,' + (0.3 * aGrid).toFixed(3) + ')';
         ctx.textAlign = 'right';
@@ -275,94 +244,105 @@
     });
 
     /* x labels */
-    var everyOther = W < 430;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
     YEARS.forEach(function (yr, i) {
-      if (everyOther && i % 2 === 1 && i !== N - 1) return;
       ctx.fillStyle = 'rgba(0,0,0,' + (0.3 * aGrid).toFixed(3) + ')';
-      ctx.fillText(yr, X(i, p), H - p.b + p.fs * 0.55);
+      ctx.fillText(yr, cx(i, p), H - p.b + p.fs * 0.55);
     });
 
-    /* series */
-    var gPts = polyline(GOOGLE, prog, p);
-    var aPts = polyline(AI, prog, p);
-    fillUnder(gPts, 'rgba(0,0,0,0.045)', p);
-    fillUnder(aPts, 'rgba(251,59,36,0.08)', p);
-    strokePts(gPts, 'rgba(0,0,0,0.78)', 2);
-    strokePts(aPts, ACCENT, 2.4);
+    /* bars — each year grows on its own beat, left to right */
+    var showVals = slotW(p) > 54;
+    for (var i = 0; i < N; i++) {
+      var t0 = 350 + i * 170;
+      var gp = ease(seg(e, t0, t0 + 750));
+      if (gp <= 0) continue;
 
-    /* the crossover — the whole point of the chart */
-    if (CROSS && aCross > 0) {
-      var cx = X(CROSS.i, p), cy = Y(CROSS.v, p);
-      ctx.save();
-      ctx.globalAlpha = aOut * aCross;
-      ctx.setLineDash([3, 3]);
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(cx, H - p.b);
-      ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.setLineDash([]);
+      var c = cx(i, p);
+      var gx = c - bw - gap / 2;
+      var ax = c + gap / 2;
 
-      ctx.beginPath();
-      ctx.arc(cx, cy, 4.5 + (1 - aCross) * 6, 0, Math.PI * 2);
-      ctx.fillStyle = '#fff';
+      /* Google */
+      var gh = (base - Y(GOOGLE[i], p)) * gp;
+      ctx.fillStyle = 'rgba(0,0,0,0.78)';
+      roundTopPath(gx, base - gh, bw, gh, 2.5);
       ctx.fill();
-      ctx.strokeStyle = ACCENT;
-      ctx.lineWidth = 2;
-      ctx.stroke();
 
-      ctx.font = '500 ' + (p.fs * 0.92) + 'px "Geist Mono", ui-monospace, monospace';
-      ctx.fillStyle = ACCENT;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'bottom';
-      ctx.fillText('CROSSOVER', cx, cy - p.fs * 1.2);
-      ctx.restore();
+      /* AI: one stacked bar, clipped to a rounded top */
+      var th = (base - Y(AI_TOTAL[i], p)) * gp;
+      if (th > 0.5) {
+        ctx.save();
+        roundTopPath(ax, base - th, bw, th, 2.5);
+        ctx.clip();
+        var acc = 0, unit = (base - p.t) / 100;   /* px per percentage point */
+        for (var k = 0; k < ASSISTANTS.length; k++) {
+          var sh = ASSISTANTS[k].data[i] * unit * gp;
+          if (sh <= 0) continue;
+          ctx.fillStyle = ASSISTANTS[k].tint;
+          ctx.fillRect(ax, base - acc - sh, bw, sh + 0.5);
+          acc += sh;
+        }
+        ctx.restore();
+      }
+
+      /* value labels */
+      if (showVals && gp > 0.85) {
+        ctx.save();
+        ctx.globalAlpha = aOut * ease(seg(e, t0 + 620, t0 + 900));
+        ctx.font = '500 ' + (p.fs * 0.9) + 'px "Geist Mono", ui-monospace, monospace';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillText(GOOGLE[i] + '', gx + bw / 2, base - gh - p.fs * 0.35);
+        ctx.fillStyle = ACCENT;
+        ctx.fillText(AI_TOTAL[i] + '', ax + bw / 2, base - th - p.fs * 0.35);
+        ctx.restore();
+      }
     }
 
-    /* endpoint values, nudged apart so the chips never collide */
-    if (aEnd > 0) {
-      ctx.save();
-      ctx.globalAlpha = aOut * aEnd;
-      var ex = X(N - 1, p) + p.fs * 0.8;
-      chip(ex, Y(GOOGLE[N - 1], p) + p.fs * 1.1, GOOGLE[N - 1] + '%', '#F2F2F2', 'rgba(0,0,0,0.8)', p);
-      chip(ex, Y(AI[N - 1], p) - p.fs * 1.1, AI[N - 1] + '%', ACCENT, '#fff', p);
-      ctx.restore();
+    /* the year AI overtakes Google */
+    if (OVERTAKE >= 0) {
+      var tO = 350 + OVERTAKE * 170 + 820;
+      var aO = ease(seg(e, tO, tO + 380));
+      if (aO > 0) {
+        ctx.save();
+        ctx.globalAlpha = aOut * aO;
+        var ocx = cx(OVERTAKE, p);
+        var top = Y(Math.max(GOOGLE[OVERTAKE], AI_TOTAL[OVERTAKE]), p);
+        ctx.font = '500 ' + (p.fs * 0.9) + 'px "Geist Mono", ui-monospace, monospace';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillStyle = ACCENT;
+        ctx.fillText('AI OVERTAKES', ocx, Math.max(p.fs * 1.1, top - p.fs * 2.0));
+        ctx.beginPath();
+        ctx.moveTo(ocx, Math.max(p.fs * 1.35, top - p.fs * 1.7));
+        ctx.lineTo(ocx, top - p.fs * 0.6);
+        ctx.strokeStyle = ACCENT;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.restore();
+      }
     }
 
     ctx.globalAlpha = 1;
 
-    /* footer deltas count up with the reveal */
-    var dp = ease(seg(e, 2400, 3200));
+    var dp = ease(seg(e, 1700, 2500));
     var gd = (GOOGLE[N - 1] - GOOGLE[0]) * dp;
-    var ad = (AI[N - 1] - AI[0]) * dp;
+    var ad = (AI_TOTAL[N - 1] - AI_TOTAL[0]) * dp;
     dG.textContent = (gd > 0 ? '+' : '−') + Math.abs(Math.round(gd));
     dA.textContent = (ad >= 0 ? '+' : '−') + Math.abs(Math.round(ad));
   }
 
-  var TOTAL = 8000;
-  var start = null;
+  var TOTAL = 8000, start = null;
   function frame(now) {
     if (start === null) start = now;
     draw((now - start) % TOTAL);
     requestAnimationFrame(frame);
   }
-
   function boot() {
     resize();
-    if (reduce) { draw(7000); }
-    else requestAnimationFrame(frame);
+    if (reduce) draw(7000); else requestAnimationFrame(frame);
   }
+  window.addEventListener('resize', function () { resize(); if (reduce) draw(7000); });
 
-  window.addEventListener('resize', function () {
-    resize();
-    if (reduce) draw(7000);
-  });
-
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot);
-  else boot();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot); else boot();
 })();
 </script>
 </body>
