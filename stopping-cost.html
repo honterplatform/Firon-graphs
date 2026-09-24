@@ -119,47 +119,45 @@
 (function () {
   /* ============================================================
      Illustrative model, not measured data. You build visibility from
-     nothing over BUILD months, it decays while you are not producing,
-     a competitor absorbs a share of what you drop and does not hand it
-     back, and climbing back runs about MULT times the length of the
-     pause.
+     nothing over BUILD months. While you are not producing it decays and
+     a competitor absorbs a share of what you drop. The competitor climbs
+     every single month of the run and never stops. When you restart you
+     climb again, faster than they do but slower than you originally
+     built, so you do get back in front — the cost is how long that takes.
+     Nothing plateaus; both lines are still rising at the end of the frame.
      ============================================================ */
   var YOU_PEAK = 62, COMP_PEAK = 44;
-  var BUILD = 9, TAIL = 4;   /* each scenario runs only as long as it needs, plus a settled tail */
-  var DECAY = 0.78;     /* share kept per paused month */
-  var FILL = 0.50;      /* share of your loss the competitor absorbs */
-  var EROSION = 1.2;    /* ceiling lost per month stopped */
-  var MULT = 3.2;       /* months climbing per month stopped */
-  var DRIFT = 0.12;     /* competitor keeps producing */
-  var YMAX = 80;
+  var BUILD = 9, TAIL = 5;   /* each scenario runs to the crossing, plus a settled tail */
+  var DECAY = 0.80;     /* share kept per paused month */
+  var FILL = 0.45;      /* share of your loss the competitor absorbs */
+  var CG = 0.50;        /* competitor never stops — climbs every month, throughout */
+  var RECOVER = 2.4;    /* your climb per month once producing again */
+  var YMAX = 100;
   var PAUSES = [2, 4, 6];
   var ACCENT = '#FB3B24';
 
   function series(P) {
-    var you = [], comp = [], v = 0, c = 0, low = null;
-    var R = Math.round(P * MULT);
-    var ceiling = YOU_PEAK - EROSION * P;
-    var HZ = BUILD + P + R + TAIL;          /* horizon: the story, then a little after */
-    for (var m = 0; m <= HZ; m++) {
+    var you = [], comp = [], v = 0, c = 0, low = null, cross = null, m = 0;
+    while (m < 240) {
       if (m <= BUILD) {
-        var t0 = Math.pow(m / BUILD, 0.75);
+        var t0 = Math.pow(m / BUILD, 0.85);
         v = YOU_PEAK * t0; c = COMP_PEAK * t0;          // both start at nothing
       } else if (m <= BUILD + P) {
-        var prev = v; v *= DECAY; c += (prev - v) * FILL;
+        var loss = v * (1 - DECAY);
+        v -= loss;
+        c += CG + FILL * loss;                          // they climb, and take part of your drop
       } else {
         if (low === null) low = v;
-        var t = Math.min(1, (m - (BUILD + P)) / R);
-        v = low + (ceiling - low) * (1 - Math.pow(1 - t, 2));
-        c += DRIFT;
+        v += RECOVER;                                   // climbing back, slower than you built
+        c += CG;                                        // they never stopped climbing
       }
       you.push(v); comp.push(c);
+      if (cross === null && m > BUILD + P && v > c) cross = m;
+      if (cross !== null && m >= cross + TAIL) break;
+      m++;
     }
-    var regain = null;
-    for (var k = BUILD + P; k <= HZ; k++) { if (you[k] > comp[k]) { regain = k; break; } }
-    if (regain !== null) {
-      for (var n = regain; n <= HZ; n++) if (you[n] <= comp[n]) { regain = null; break; }
-    }
-    return { you: you, comp: comp, R: R, low: low, regain: regain, hz: HZ };
+    return { you: you, comp: comp, low: low, cross: cross, hz: m,
+             R: cross === null ? 0 : cross - (BUILD + P) };
   }
 
   var MODELS = {};
@@ -201,8 +199,7 @@
       el.setAttribute('aria-selected', on ? 'true' : 'false');
     });
     var m = MODELS[P];
-    verdictEl.textContent = m.regain ? ('Back in front · month ' + m.regain) : 'Never back in front';
-    verdictEl.classList.toggle('lost', !m.regain);
+    verdictEl.textContent = 'Back in front \u00b7 month ' + m.cross;
   }
 
   var W_px = 0, H_px = 0, dpr = window.devicePixelRatio || 1;
@@ -269,7 +266,7 @@
 
     ctx.font = '500 ' + (p.fs * 0.9) + 'px "Geist Mono", ui-monospace, monospace';
     ctx.textBaseline = 'middle'; ctx.textAlign = 'right';
-    [0, 40, 80].forEach(function (v) {
+    [0, 50, 100].forEach(function (v) {
       var y = Y(v, p);
       ctx.beginPath(); ctx.moveTo(p.l, y); ctx.lineTo(W_px - p.r, y);
       ctx.strokeStyle = 'rgba(0,0,0,0.055)'; ctx.lineWidth = 1; ctx.stroke();
@@ -298,6 +295,18 @@
       ctx.arc(X(lowM, p), Y(m.you[lowM], p), 3.4, 0, Math.PI * 2);
       ctx.fillStyle = '#fff'; ctx.fill();
       ctx.strokeStyle = ACCENT; ctx.lineWidth = 2; ctx.stroke();
+    }
+    /* the crossing — back in front, and this is how long it took */
+    if (m.cross !== null && upto >= m.cross) {
+      var cX = X(m.cross, p), cY = Y(m.you[m.cross], p);
+      ctx.beginPath(); ctx.arc(cX, cY, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.strokeStyle = ACCENT; ctx.lineWidth = 2; ctx.stroke();
+      ctx.font = '500 ' + (p.fs * 0.86) + 'px "Geist Mono", ui-monospace, monospace';
+      ctx.fillStyle = ACCENT; ctx.textBaseline = 'bottom';
+      var t2 = 'BACK IN FRONT', tw = ctx.measureText(t2).width;
+      ctx.textAlign = 'center';
+      ctx.fillText(t2, Math.min(Math.max(cX, p.l + tw / 2), W_px - p.r - tw / 2), cY - p.fs * 1.0);
     }
 
     /* earn / stop / climb back, as three adjacent bars on the same timeline */
