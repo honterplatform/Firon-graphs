@@ -1,123 +1,28 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nobody's Asking Google</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 100%; height: 100%; overflow: hidden; }
-  body {
-    background: transparent;
-    font-family: 'Geist', -apple-system, system-ui, sans-serif;
-    color: #000;
-    letter-spacing: -0.01em;
+// @ts-nocheck
+// Generated from asking-google.html by tools/to-framer.mjs. Edit the HTML, then regenerate:
+//   node tools/to-framer.mjs asking-google
+import { useEffect, useRef } from "react"
+
+const LABEL = "Line chart of where buyers ask, 2022–2030: Google falls from 99% to 46% while AI assistants rise from 1% to 54%. 2027–2030 projected."
+
+// Rendered as plain HTML so Framer's server render puts it in the page's own markup.
+const HTML = "<style>@import url(\"https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap\");\n.fx-asking-google { position: relative; display: block; width: 100%; height: 100%; overflow: hidden; container-type: size; container-name: fx-asking-google; }\n.fx-asking-google, .fx-asking-google * { margin: 0; padding: 0; box-sizing: border-box; }\n.fx-asking-google { width: 100%; height: 100%; overflow: hidden; }\n.fx-asking-google { background: transparent;\n    font-family: 'Geist', -apple-system, system-ui, sans-serif;\n    color: #000;\n    letter-spacing: -0.01em; }\n.fx-asking-google .stage { width: 100%; height: 100%;\n    display: flex; align-items: stretch; justify-content: center;\n    padding: 0; }\n.fx-asking-google .shell { width: 100%; height: 100%;\n    background: #F2F2F2;\n    border: 1px solid rgba(0,0,0,0.05);\n    border-radius: clamp(12px, 2cqh, 18px);\n    padding: clamp(9px, 1.5cqh, 13px);\n    display: flex; flex-direction: column;\n    gap: clamp(7px, 1.2cqh, 11px);\n    overflow: hidden; }\n.fx-asking-google .top { display: flex; align-items: center; gap: clamp(8px, 1.2cqw, 14px);\n    flex-shrink: 0; min-width: 0; overflow: hidden; }\n.fx-asking-google .lg { display: inline-flex; align-items: center; gap: 5px;\n    font-size: clamp(10px, 1.35cqh, 11.5px);\n    font-weight: 500;\n    color: rgba(0,0,0,0.6);\n    white-space: nowrap; flex-shrink: 0; }\n.fx-asking-google .lg svg { width: clamp(11px, 1.55cqh, 13px); height: clamp(11px, 1.55cqh, 13px); }\n.fx-asking-google .sw { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }\n.fx-asking-google .rule { width: 1px; height: 13px; background: rgba(0,0,0,0.12); flex-shrink: 0; }\n.fx-asking-google .ai-group { display: flex; align-items: center; gap: clamp(7px, 1cqw, 12px); min-width: 0; overflow: hidden; }\n.fx-asking-google .panel { flex: 1; min-height: 0;\n    background: #FFFFFF;\n    border: 1px solid rgba(0,0,0,0.07);\n    border-radius: 8px;\n    position: relative;\n    overflow: hidden; }\n.fx-asking-google canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }\n.fx-asking-google .foot { display: flex; align-items: center; gap: clamp(7px, 1cqw, 12px);\n    flex-shrink: 0; min-width: 0; overflow: hidden; }\n.fx-asking-google .delta { display: inline-flex; align-items: baseline; gap: 5px;\n    font-family: 'Geist Mono', ui-monospace, monospace;\n    font-size: clamp(9px, 1.25cqh, 10.5px);\n    font-weight: 500;\n    text-transform: uppercase; letter-spacing: 0.05em;\n    color: rgba(0,0,0,0.4);\n    white-space: nowrap; }\n.fx-asking-google .delta b { font-size: clamp(11px, 1.7cqh, 14px); font-weight: 500; font-variant-numeric: tabular-nums; }\n.fx-asking-google .delta.down b { color: rgba(0,0,0,0.8); }\n.fx-asking-google .delta.up b { color: #FB3B24; }\n.fx-asking-google .span { margin-left: auto;\n    font-family: 'Geist Mono', ui-monospace, monospace;\n    font-size: 9px; font-weight: 500;\n    text-transform: uppercase; letter-spacing: 0.06em;\n    color: rgba(0,0,0,0.28);\n    white-space: nowrap; }\n@container fx-asking-google (max-width: 620px) or (max-aspect-ratio: 1/1) {\n.fx-asking-google .lg span.nm { display: none; }\n.fx-asking-google .lg.solo span.nm { display: inline; }\n.fx-asking-google .span { display: none; }\n}</style><div class=\"stage\">\n  <section class=\"shell\">\n\n    <header class=\"top\" id=\"fx-asking-google-legend\"></header>\n\n    <section class=\"panel\">\n      <canvas id=\"fx-asking-google-c\"><table><caption>Line chart of where buyers ask, 2022–2030: Google falls from 99% to 46% while AI assistants rise from 1% to 54%. 2027–2030 projected.</caption><thead><tr><th scope=\"col\">Year</th><th scope=\"col\">Google</th><th scope=\"col\">All AI</th><th scope=\"col\">ChatGPT</th><th scope=\"col\">Gemini</th><th scope=\"col\">Claude</th><th scope=\"col\">Perplexity</th></tr></thead><tbody><tr><th scope=\"row\">2022</th><td>99%</td><td>1%</td><td>1%</td><td>0%</td><td>0%</td><td>0%</td></tr><tr><th scope=\"row\">2023</th><td>96%</td><td>4%</td><td>3%</td><td>0%</td><td>1%</td><td>0%</td></tr><tr><th scope=\"row\">2024</th><td>92%</td><td>8%</td><td>5%</td><td>1%</td><td>1%</td><td>1%</td></tr><tr><th scope=\"row\">2025</th><td>86%</td><td>14%</td><td>8%</td><td>3%</td><td>2%</td><td>1%</td></tr><tr><th scope=\"row\">2026</th><td>79%</td><td>21%</td><td>12%</td><td>4%</td><td>3%</td><td>2%</td></tr><tr><th scope=\"row\">2027 (projected)</th><td>70%</td><td>30%</td><td>16%</td><td>7%</td><td>4%</td><td>3%</td></tr><tr><th scope=\"row\">2028 (projected)</th><td>61%</td><td>39%</td><td>20%</td><td>9%</td><td>6%</td><td>4%</td></tr><tr><th scope=\"row\">2029 (projected)</th><td>53%</td><td>47%</td><td>24%</td><td>11%</td><td>8%</td><td>4%</td></tr><tr><th scope=\"row\">2030 (projected)</th><td>46%</td><td>54%</td><td>27%</td><td>13%</td><td>9%</td><td>5%</td></tr></tbody></table></canvas>\n    </section>\n\n    <footer class=\"foot\">\n      <span class=\"delta down\">Asked Google <b id=\"fx-asking-google-dG\">&#8722;53</b> pts</span>\n      <span class=\"delta up\">Asked AI <b id=\"fx-asking-google-dA\">+53</b> pts</span>\n      <span class=\"span\" id=\"fx-asking-google-spanLbl\">2022&#8211;2026 &#183; 2027&#8211;2030 projected</span>\n    </footer>\n\n  </section>\n</div>"
+
+function init(root) {
+  var $P = 'fx-asking-google-';
+  function $sel(s) { return s.replace(/#([A-Za-z][\w-]*)/g, "#" + $P + "$1"); }
+  function $id(x) { return root.querySelector("#" + $P + x); }
+  function $q(s) { return root.querySelector($sel(s)); }
+  function $qa(s) { return root.querySelectorAll($sel(s)); }
+  var $dead = false, $ro = null;
+  function $raf(f) { return requestAnimationFrame(function (t) { if (!$dead) f(t); }); }
+  function $st(f, ms) { return setTimeout(function () { if (!$dead) f(); }, ms); }
+  function $onResize(f) {
+    if (typeof ResizeObserver === "undefined") { window.addEventListener("resize", f); return; }
+    $ro = new ResizeObserver(function () { if (!$dead) f(); });
+    $ro.observe(root);
   }
 
-  .stage {
-    width: 100%; height: 100%;
-    display: flex; align-items: stretch; justify-content: center;
-    padding: 0;
-  }
-  /* full-bleed: no max-width and no outer inset, so the chart spans the
-     embed at every screen size. The shell's own padding stays — it is what
-     keeps the legend and footer off the edge. Rounded corners sit on the
-     iframe edge, so the body stays transparent and the host page shows
-     through them. */
-  .shell {
-    width: 100%; height: 100%;
-    background: #F2F2F2;
-    border: 1px solid rgba(0,0,0,0.05);
-    border-radius: clamp(12px, 2vh, 18px);
-    padding: clamp(9px, 1.5vh, 13px);
-    display: flex; flex-direction: column;
-    gap: clamp(7px, 1.2vh, 11px);
-    overflow: hidden;
-  }
-
-  .top {
-    display: flex; align-items: center; gap: clamp(8px, 1.2vw, 14px);
-    flex-shrink: 0; min-width: 0; overflow: hidden;
-  }
-  .lg {
-    display: inline-flex; align-items: center; gap: 5px;
-    font-size: clamp(10px, 1.35vh, 11.5px);
-    font-weight: 500;
-    color: rgba(0,0,0,0.6);
-    white-space: nowrap; flex-shrink: 0;
-  }
-  .lg svg { width: clamp(11px, 1.55vh, 13px); height: clamp(11px, 1.55vh, 13px); }
-  .sw { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
-  .rule { width: 1px; height: 13px; background: rgba(0,0,0,0.12); flex-shrink: 0; }
-  .ai-group { display: flex; align-items: center; gap: clamp(7px, 1vw, 12px); min-width: 0; overflow: hidden; }
-
-  .panel {
-    flex: 1; min-height: 0;
-    background: #FFFFFF;
-    border: 1px solid rgba(0,0,0,0.07);
-    border-radius: 8px;
-    position: relative;
-    overflow: hidden;
-  }
-  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-
-
-  .foot {
-    display: flex; align-items: center; gap: clamp(7px, 1vw, 12px);
-    flex-shrink: 0; min-width: 0; overflow: hidden;
-  }
-  .delta {
-    display: inline-flex; align-items: baseline; gap: 5px;
-    font-family: 'Geist Mono', ui-monospace, monospace;
-    font-size: clamp(9px, 1.25vh, 10.5px);
-    font-weight: 500;
-    text-transform: uppercase; letter-spacing: 0.05em;
-    color: rgba(0,0,0,0.4);
-    white-space: nowrap;
-  }
-  .delta b { font-size: clamp(11px, 1.7vh, 14px); font-weight: 500; font-variant-numeric: tabular-nums; }
-  .delta.down b { color: rgba(0,0,0,0.8); }
-  .delta.up b { color: #FB3B24; }
-  .span {
-    margin-left: auto;
-    font-family: 'Geist Mono', ui-monospace, monospace;
-    font-size: 9px; font-weight: 500;
-    text-transform: uppercase; letter-spacing: 0.06em;
-    color: rgba(0,0,0,0.28);
-    white-space: nowrap;
-  }
-
-  @media (max-width: 620px), (max-aspect-ratio: 1/1) {
-    .lg span.nm { display: none; }
-    .lg.solo span.nm { display: inline; }
-    .span { display: none; }
-    }
-</style>
-</head>
-<body>
-<main class="stage">
-  <section class="shell">
-
-    <header class="top" id="legend"></header>
-
-    <section class="panel">
-      <canvas id="c"></canvas>
-    </section>
-
-    <footer class="foot">
-      <span class="delta down">Asked Google <b id="dG">&#8722;53</b> pts</span>
-      <span class="delta up">Asked AI <b id="dA">+53</b> pts</span>
-      <span class="span" id="spanLbl">2022&#8211;2026 &#183; 2027&#8211;2030 projected</span>
-    </footer>
-
-  </section>
-</main>
-
-<script>
-(function () {
   /* ============================================================
      DATA — placeholder shape, not sourced figures. Google and the
      assistants must sum to 100 in every year (it is a 100% stack).
@@ -168,7 +73,7 @@
   if (HAS_P2D) ASSISTANTS.forEach(function (a) { a.p2d = new Path2D(a.path); });
   var GOOGLE_P2D = HAS_P2D ? new Path2D(GOOGLE_MARK) : null;
 
-  var legend = document.getElementById('legend');
+  var legend = $id('legend');
   legend.innerHTML =
     '<span class="lg solo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + GOOGLE_MARK +
       '" fill="rgba(0,0,0,0.7)"/></svg><span class="nm">Google</span></span>' +
@@ -180,11 +85,11 @@
              '" fill="' + a.tint + '"/></svg><span class="nm">' + a.name + '</span></span>';
     }).join('') + '</span>';
 
-  var canvas = document.getElementById('c');
+  var canvas = $id('c');
   var ctx = canvas.getContext('2d');
-  var dG = document.getElementById('dG');
-  var dA = document.getElementById('dA');
-  document.getElementById('spanLbl').textContent = SOURCE ? SOURCE :
+  var dG = $id('dG');
+  var dA = $id('dA');
+  $id('spanLbl').textContent = SOURCE ? SOURCE :
     YEARS[0] + '\u2013' + YEARS[ACTUAL_THROUGH] +
     (ACTUAL_THROUGH < N - 1
       ? ' \u00b7 ' + YEARS[ACTUAL_THROUGH + 1] +
@@ -417,12 +322,39 @@
   function frame(now) {
     if (start === null) start = now;
     draw((now - start) % TOTAL);
-    requestAnimationFrame(frame);
+    $raf(frame);
   }
-  function boot() { resize(); if (reduce) draw(6000); else requestAnimationFrame(frame); }
-  window.addEventListener('resize', function () { resize(); if (reduce) draw(6000); });
+  function boot() { resize(); if (reduce) draw(6000); else $raf(frame); }
+  $onResize(function () { resize(); if (reduce) draw(6000); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot); else boot();
-})();
-</script>
-</body>
-</html>
+
+  return function dispose() { $dead = true; if ($ro) $ro.disconnect();  };
+}
+
+/**
+ * @framerSupportedLayoutWidth any-prefer-fixed
+ * @framerSupportedLayoutHeight any-prefer-fixed
+ * @framerIntrinsicWidth 900
+ * @framerIntrinsicHeight 330
+ */
+export default function AskingGoogle() {
+    const ref = useRef(null)
+    useEffect(() => {
+        const root = ref.current
+        if (!root) return
+        const dispose = init(root)
+        return () => {
+            if (typeof dispose === "function") dispose()
+        }
+    }, [])
+    return (
+        <div
+            ref={ref}
+            className="fx-asking-google"
+            role="figure"
+            aria-label={LABEL}
+            style={{ width: "100%", height: "100%" }}
+            dangerouslySetInnerHTML={{ __html: HTML }}
+        />
+    )
+}

@@ -21,6 +21,15 @@
 //   - <main> becomes <div>: a page may only have one main landmark.
 //   - The script's IIFE becomes init(root), which returns a dispose function so
 //     timers and async loops stop when Framer unmounts the component.
+//   - guardLoops (canvas charts): requestAnimationFrame / setTimeout are wrapped
+//     so they go inert on dispose, and window 'resize' becomes a ResizeObserver
+//     on the component — on a page the box can resize without the window doing so.
+//   - Container queries that test aspect-ratio or height switch the root to
+//     container-type: size; inline-size containers cannot answer them, so the
+//     narrow layout would otherwise never trigger.
+//   - fallback (canvas charts): canvas output is pixels, not text. The chart's
+//     data is placed inside <canvas> as a table — canvas fallback content, the
+//     standard accessible description of a canvas, and real text in the HTML.
 //
 // Usage: node tools/to-framer.mjs <slug>   (config for each slug lives below)
 
@@ -38,6 +47,67 @@ const CONFIG = {
     // runs inside init(); must stop every loop and timer the script started
     dispose: 'gen++; paused = true; if (idleTimer) clearTimeout(idleTimer);',
   },
+  'asking-google': {
+    component: 'AskingGoogle',
+    width: 900,
+    height: 330,
+    guardLoops: true,
+    dispose: '',
+    data(src) {
+      const Y = JSON.parse(src.match(/var YEARS\s*=\s*(\[[^\]]+\])/)[1].replace(/'/g, '"'))
+      const G = JSON.parse(src.match(/var GOOGLE = (\[[^\]]+\])/)[1])
+      const AT = +src.match(/var ACTUAL_THROUGH = (\d+)/)[1]
+      const A = [...src.matchAll(/name: '([^']+)'[^\n]*?data: (\[[^\]]+\])/g)].map((m) => ({ name: m[1], data: JSON.parse(m[2]) }))
+      const ai = Y.map((_, i) => A.reduce((s, a) => s + a.data[i], 0))
+      return { Y, G, AT, A, ai }
+    },
+    label(src) {
+      const { Y, G, AT, ai } = this.data(src)
+      return 'Line chart of where buyers ask, ' + Y[0] + '\u2013' + Y.at(-1) + ': Google falls from ' + G[0] +
+        '% to ' + G.at(-1) + '% while AI assistants rise from ' + ai[0] + '% to ' + ai.at(-1) + '%. ' +
+        Y[AT + 1] + '\u2013' + Y.at(-1) + ' projected.'
+    },
+    fallback(src) {
+      const { Y, G, AT, A, ai } = this.data(src)
+      const head = ['Year', 'Google', 'All AI'].concat(A.map((a) => a.name))
+      const rows = Y.map((y, i) =>
+        '<tr><th scope="row">' + y + (i > AT ? ' (projected)' : '') + '</th>' +
+        [G[i], ai[i]].concat(A.map((a) => a.data[i])).map((v) => '<td>' + v + '%</td>').join('') + '</tr>')
+      return '<table><caption>' + this.label(src) + '</caption><thead><tr>' +
+        head.map((h) => '<th scope="col">' + h + '</th>').join('') + '</tr></thead><tbody>' + rows.join('') + '</tbody></table>'
+    },
+  },
+  'stopping-cost': {
+    component: 'StoppingCost',
+    width: 900,
+    height: 340,
+    guardLoops: true,
+    dispose: 'if (resumeTimer) clearTimeout(resumeTimer);',
+    model(src) {
+      const js = src.match(/<script>([\s\S]*?)<\/script>/)[1]
+      const consts = js.match(/var YOU_PEAK[\s\S]*?var ACCENT = '#FB3B24';/)[0]
+      const fn = js.match(/  function series\(P\) \{[\s\S]*?\n  \}\n/)[0]
+      return new Function(consts + fn + 'return { series: series, BUILD: BUILD, PAUSES: PAUSES };')()
+    },
+    label(src) {
+      const { BUILD, PAUSES } = this.model(src)
+      return 'Interactive chart: after ' + BUILD + ' months building visibility, stop producing for ' +
+        PAUSES.join(', ').replace(/, (\d+)$/, ' or $1') + ' months and see how long it takes to climb back ' +
+        'in front of a competitor who never stopped.'
+    },
+    fallback(src) {
+      const { series, BUILD, PAUSES } = this.model(src)
+      const rows = PAUSES.map((P) => {
+        const m = series(P)
+        return '<tr><th scope="row">' + P + ' months</th><td>' + m.R + ' months</td><td>' +
+          (m.R / P).toFixed(1) + '\u00d7</td><td>Month ' + m.cross + '</td></tr>'
+      })
+      return '<table><caption>' + this.label(src) + ' Visibility takes ' + BUILD + ' months to earn.</caption>' +
+        '<thead><tr><th scope="col">Stopped for</th><th scope="col">Time to climb back</th>' +
+        '<th scope="col">Longer than the pause</th><th scope="col">Back in front</th></tr></thead><tbody>' +
+        rows.join('') + '</tbody></table>'
+    },
+  },
 }
 
 const slug = process.argv[2]
@@ -50,6 +120,7 @@ if (!cfg) {
 const repo = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..')
 const src = fs.readFileSync(path.join(repo, slug + '.html'), 'utf8')
 const R = 'fx-' + slug // root class, container name and id/keyframe prefix
+const label = typeof cfg.label === 'function' ? cfg.label(src) : cfg.label
 
 function between(s, a, b) {
   const i = s.indexOf(a)
@@ -155,6 +226,8 @@ function convertPrelude(prelude) {
     .split(',')
     .map((s) => s.trim())
     .join(' or ')
+  // an inline-size container cannot answer these; they would silently never match
+  if (/aspect-ratio|height|orientation/.test(cond)) usesContainerHeight = true
   return '@container ' + R + ' ' + cond
 }
 
@@ -192,6 +265,14 @@ const markup = between(src, '<body>', '<script>')
   .replace(/<\/main>/g, '</div>')
   .replace(/\sid="([^"]+)"/g, ' id="' + R + '-$1"')
 
+let markupOut = markup
+if (cfg.fallback) {
+  const fb = cfg.fallback(src)
+  const before = markupOut
+  markupOut = markupOut.replace(/(<canvas\b[^>]*>)\s*<\/canvas>/, '$1' + fb + '</canvas>')
+  if (markupOut === before) throw new Error('fallback configured but no empty <canvas> found')
+}
+
 const ids = [...markup.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1].slice(R.length + 1))
 
 // ------------------------------------------------------------- script ----
@@ -212,17 +293,35 @@ script = script
   .replace(/document\.querySelector\(/g, '$q(')
 if (/document\.(getElementById|querySelector)/.test(script)) throw new Error('unscoped lookup left')
 
+if (cfg.guardLoops) {
+  script = script
+    .replace(/window\.addEventListener\('resize',\s*/g, '$onResize(')
+    .replace(/\brequestAnimationFrame\(/g, '$raf(')
+    .replace(/\bsetTimeout\(/g, '$st(')
+  if (/window\.addEventListener\(/.test(script)) throw new Error('unguarded window listener left')
+}
+
 const scopeHelpers = [
   "  var $P = '" + R + "-';",
   '  function $sel(s) { return s.replace(/#([A-Za-z][\\w-]*)/g, "#" + $P + "$1"); }',
   '  function $id(x) { return root.querySelector("#" + $P + x); }',
   '  function $q(s) { return root.querySelector($sel(s)); }',
   '  function $qa(s) { return root.querySelectorAll($sel(s)); }',
-].join('\n')
+].concat(cfg.guardLoops ? [
+  '  var $dead = false, $ro = null;',
+  '  function $raf(f) { return requestAnimationFrame(function (t) { if (!$dead) f(t); }); }',
+  '  function $st(f, ms) { return setTimeout(function () { if (!$dead) f(); }, ms); }',
+  '  function $onResize(f) {',
+  '    if (typeof ResizeObserver === "undefined") { window.addEventListener("resize", f); return; }',
+  '    $ro = new ResizeObserver(function () { if (!$dead) f(); });',
+  '    $ro.observe(root);',
+  '  }',
+] : []).join('\n')
 
 const initSource =
   'function init(root) {\n' + scopeHelpers + '\n' + script.replace(/\s+$/, '') +
-  '\n\n  return function dispose() { ' + cfg.dispose + ' };\n}'
+  '\n\n  return function dispose() { ' +
+  (cfg.guardLoops ? '$dead = true; if ($ro) $ro.disconnect(); ' : '') + cfg.dispose + ' };\n}'
 
 // --------------------------------------------------------------- emit ----
 
@@ -231,10 +330,10 @@ const tsx = `// @ts-nocheck
 //   node tools/to-framer.mjs ${slug}
 import { useEffect, useRef } from "react"
 
-const LABEL = ${JSON.stringify(cfg.label)}
+const LABEL = ${JSON.stringify(label)}
 
 // Rendered as plain HTML so Framer's server render puts it in the page's own markup.
-const HTML = ${JSON.stringify('<style>' + css + '</style>' + markup)}
+const HTML = ${JSON.stringify('<style>' + css + '</style>' + markupOut)}
 
 ${initSource}
 
@@ -277,7 +376,7 @@ if (harnessDir) {
   fs.mkdirSync(harnessDir, { recursive: true })
   fs.writeFileSync(
     path.join(harnessDir, slug + '.parts.json'),
-    JSON.stringify({ root: R, html: '<style>' + css + '</style>' + markup, init: initSource, label: cfg.label })
+    JSON.stringify({ root: R, html: '<style>' + css + '</style>' + markupOut, init: initSource, label })
   )
 }
 

@@ -1,122 +1,28 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stopping Is Fast</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 100%; height: 100%; overflow: hidden; }
-  body {
-    background: transparent;
-    font-family: 'Geist', -apple-system, system-ui, sans-serif;
-    color: #000;
-    letter-spacing: -0.01em;
+// @ts-nocheck
+// Generated from stopping-cost.html by tools/to-framer.mjs. Edit the HTML, then regenerate:
+//   node tools/to-framer.mjs stopping-cost
+import { useEffect, useRef } from "react"
+
+const LABEL = "Interactive chart: after 9 months building visibility, stop producing for 2, 4 or 6 months and see how long it takes to climb back in front of a competitor who never stopped."
+
+// Rendered as plain HTML so Framer's server render puts it in the page's own markup.
+const HTML = "<style>@import url(\"https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap\");\n.fx-stopping-cost { position: relative; display: block; width: 100%; height: 100%; overflow: hidden; container-type: size; container-name: fx-stopping-cost; }\n.fx-stopping-cost, .fx-stopping-cost * { margin: 0; padding: 0; box-sizing: border-box; }\n.fx-stopping-cost { width: 100%; height: 100%; overflow: hidden; }\n.fx-stopping-cost { background: transparent;\n    font-family: 'Geist', -apple-system, system-ui, sans-serif;\n    color: #000;\n    letter-spacing: -0.01em; }\n.fx-stopping-cost .stage { width: 100%; height: 100%; display: flex; align-items: stretch; padding: 0; }\n.fx-stopping-cost .shell { width: 100%; height: 100%;\n    background: #F2F2F2;\n    border: 1px solid rgba(0,0,0,0.05);\n    border-radius: clamp(12px, 2cqh, 18px);\n    padding: clamp(9px, 1.5cqh, 13px);\n    display: flex; flex-direction: column;\n    gap: clamp(7px, 1.2cqh, 11px);\n    overflow: hidden; }\n.fx-stopping-cost .top { display: flex; align-items: center; gap: clamp(7px, 1cqw, 12px); flex-shrink: 0; min-width: 0; overflow: hidden; }\n.fx-stopping-cost .tlabel { font-family: 'Geist Mono', ui-monospace, monospace;\n    font-size: 9.5px; font-weight: 500;\n    text-transform: uppercase; letter-spacing: 0.07em;\n    color: rgba(0,0,0,0.4);\n    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.fx-stopping-cost .picks { margin-left: auto; display: flex; gap: 4px; flex-shrink: 0; }\n.fx-stopping-cost .pick { font-family: 'Geist', sans-serif;\n    font-size: clamp(10.5px, 1.4cqh, 12.5px);\n    font-weight: 500;\n    color: rgba(0,0,0,0.55);\n    background: #FFFFFF;\n    border: 1px solid rgba(0,0,0,0.09);\n    border-radius: 6px;\n    padding: clamp(5px, 0.8cqh, 8px) clamp(8px, 1.1cqw, 13px);\n    cursor: pointer; white-space: nowrap;\n    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease; }\n.fx-stopping-cost .pick:hover { border-color: rgba(0,0,0,0.25); color: rgba(0,0,0,0.8); }\n.fx-stopping-cost .pick.on { background: #FB3B24; border-color: #FB3B24; color: #fff; }\n.fx-stopping-cost .panel { flex: 1; min-height: 0;\n    background: #FFFFFF;\n    border: 1px solid rgba(0,0,0,0.07);\n    border-radius: 8px;\n    position: relative; overflow: hidden; }\n.fx-stopping-cost canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }\n.fx-stopping-cost .foot { display: flex; align-items: center; gap: clamp(7px, 1cqw, 12px); flex-shrink: 0; min-width: 0; overflow: hidden; }\n.fx-stopping-cost .stat { display: inline-flex; align-items: baseline; gap: 5px;\n    font-family: 'Geist Mono', ui-monospace, monospace;\n    font-size: clamp(9px, 1.25cqh, 10.5px);\n    font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;\n    color: rgba(0,0,0,0.4); white-space: nowrap; }\n.fx-stopping-cost .stat b { font-size: clamp(11px, 1.7cqh, 14px); font-weight: 500; font-variant-numeric: tabular-nums; }\n.fx-stopping-cost .stat.earn b { color: rgba(0,0,0,0.45); }\n.fx-stopping-cost .stat.stop b { color: rgba(0,0,0,0.8); }\n.fx-stopping-cost .stat.back b { color: #FB3B24; }\n.fx-stopping-cost .verdict { margin-left: auto; flex-shrink: 0;\n    font-family: 'Geist Mono', ui-monospace, monospace;\n    font-size: 9px; font-weight: 500;\n    text-transform: uppercase; letter-spacing: 0.06em;\n    border-radius: 4px; padding: 4px 8px; white-space: nowrap;\n    background: #FFFFFF; border: 1px solid rgba(0,0,0,0.12); color: rgba(0,0,0,0.6);\n    transition: color 0.25s ease, border-color 0.25s ease; }\n.fx-stopping-cost .verdict.lost { color: #FB3B24; border-color: rgba(251,59,36,0.55); border-style: dashed; }\n@container fx-stopping-cost (max-width: 640px) or (max-aspect-ratio: 1/1) {\n.fx-stopping-cost .tlabel { display: none; }\n.fx-stopping-cost .picks { margin-left: 0; }\n.fx-stopping-cost .pick { padding: 5px 9px; font-size: 11px; }\n.fx-stopping-cost .stat.earn, .fx-stopping-cost .stat.ratio { display: none; }\n}</style><div class=\"stage\">\n  <section class=\"shell\">\n\n    <header class=\"top\">\n      <span class=\"tlabel\">Stop producing for&#8230;</span>\n      <div class=\"picks\" id=\"fx-stopping-cost-picks\" role=\"tablist\" aria-label=\"Pause length\"></div>\n    </header>\n\n    <section class=\"panel\"><canvas id=\"fx-stopping-cost-c\"><table><caption>Interactive chart: after 9 months building visibility, stop producing for 2, 4 or 6 months and see how long it takes to climb back in front of a competitor who never stopped. Visibility takes 9 months to earn.</caption><thead><tr><th scope=\"col\">Stopped for</th><th scope=\"col\">Time to climb back</th><th scope=\"col\">Longer than the pause</th><th scope=\"col\">Back in front</th></tr></thead><tbody><tr><th scope=\"row\">2 months</th><td>9 months</td><td>4.5×</td><td>Month 20</td></tr><tr><th scope=\"row\">4 months</th><td>20 months</td><td>5.0×</td><td>Month 33</td></tr><tr><th scope=\"row\">6 months</th><td>28 months</td><td>4.7×</td><td>Month 43</td></tr></tbody></table></canvas></section>\n\n    <footer class=\"foot\">\n      <span class=\"stat earn\"><b id=\"fx-stopping-cost-sEarn\">9</b> mo to earn</span>\n      <span class=\"stat stop\"><b id=\"fx-stopping-cost-sStop\">2</b> mo stopped</span>\n      <span class=\"stat back\"><b id=\"fx-stopping-cost-sBack\">9</b> mo to climb back</span>\n      <span class=\"stat ratio\"><b id=\"fx-stopping-cost-sRatio\">4.5</b>&#215; longer</span>\n      <span class=\"verdict\" id=\"fx-stopping-cost-verdict\">Back in front &#183; month 20</span>\n    </footer>\n\n  </section>\n</div>"
+
+function init(root) {
+  var $P = 'fx-stopping-cost-';
+  function $sel(s) { return s.replace(/#([A-Za-z][\w-]*)/g, "#" + $P + "$1"); }
+  function $id(x) { return root.querySelector("#" + $P + x); }
+  function $q(s) { return root.querySelector($sel(s)); }
+  function $qa(s) { return root.querySelectorAll($sel(s)); }
+  var $dead = false, $ro = null;
+  function $raf(f) { return requestAnimationFrame(function (t) { if (!$dead) f(t); }); }
+  function $st(f, ms) { return setTimeout(function () { if (!$dead) f(); }, ms); }
+  function $onResize(f) {
+    if (typeof ResizeObserver === "undefined") { window.addEventListener("resize", f); return; }
+    $ro = new ResizeObserver(function () { if (!$dead) f(); });
+    $ro.observe(root);
   }
 
-  .stage { width: 100%; height: 100%; display: flex; align-items: stretch; padding: 0; }
-  .shell {
-    width: 100%; height: 100%;
-    background: #F2F2F2;
-    border: 1px solid rgba(0,0,0,0.05);
-    border-radius: clamp(12px, 2vh, 18px);
-    padding: clamp(9px, 1.5vh, 13px);
-    display: flex; flex-direction: column;
-    gap: clamp(7px, 1.2vh, 11px);
-    overflow: hidden;
-  }
-
-  .top { display: flex; align-items: center; gap: clamp(7px, 1vw, 12px); flex-shrink: 0; min-width: 0; overflow: hidden; }
-  .tlabel {
-    font-family: 'Geist Mono', ui-monospace, monospace;
-    font-size: 9.5px; font-weight: 500;
-    text-transform: uppercase; letter-spacing: 0.07em;
-    color: rgba(0,0,0,0.4);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .picks { margin-left: auto; display: flex; gap: 4px; flex-shrink: 0; }
-  .pick {
-    font-family: 'Geist', sans-serif;
-    font-size: clamp(10.5px, 1.4vh, 12.5px);
-    font-weight: 500;
-    color: rgba(0,0,0,0.55);
-    background: #FFFFFF;
-    border: 1px solid rgba(0,0,0,0.09);
-    border-radius: 6px;
-    padding: clamp(5px, 0.8vh, 8px) clamp(8px, 1.1vw, 13px);
-    cursor: pointer; white-space: nowrap;
-    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
-  }
-  .pick:hover { border-color: rgba(0,0,0,0.25); color: rgba(0,0,0,0.8); }
-  .pick.on { background: #FB3B24; border-color: #FB3B24; color: #fff; }
-
-  .panel {
-    flex: 1; min-height: 0;
-    background: #FFFFFF;
-    border: 1px solid rgba(0,0,0,0.07);
-    border-radius: 8px;
-    position: relative; overflow: hidden;
-  }
-  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-
-  .foot { display: flex; align-items: center; gap: clamp(7px, 1vw, 12px); flex-shrink: 0; min-width: 0; overflow: hidden; }
-  .stat {
-    display: inline-flex; align-items: baseline; gap: 5px;
-    font-family: 'Geist Mono', ui-monospace, monospace;
-    font-size: clamp(9px, 1.25vh, 10.5px);
-    font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;
-    color: rgba(0,0,0,0.4); white-space: nowrap;
-  }
-  .stat b { font-size: clamp(11px, 1.7vh, 14px); font-weight: 500; font-variant-numeric: tabular-nums; }
-  .stat.earn b { color: rgba(0,0,0,0.45); }
-  .stat.stop b { color: rgba(0,0,0,0.8); }
-  .stat.back b { color: #FB3B24; }
-  .verdict {
-    margin-left: auto; flex-shrink: 0;
-    font-family: 'Geist Mono', ui-monospace, monospace;
-    font-size: 9px; font-weight: 500;
-    text-transform: uppercase; letter-spacing: 0.06em;
-    border-radius: 4px; padding: 4px 8px; white-space: nowrap;
-    background: #FFFFFF; border: 1px solid rgba(0,0,0,0.12); color: rgba(0,0,0,0.6);
-    transition: color 0.25s ease, border-color 0.25s ease;
-  }
-  .verdict.lost { color: #FB3B24; border-color: rgba(251,59,36,0.55); border-style: dashed; }
-
-  @media (max-width: 640px), (max-aspect-ratio: 1/1) {
-    .tlabel { display: none; }
-    .picks { margin-left: 0; }
-    .pick { padding: 5px 9px; font-size: 11px; }
-    .stat.earn, .stat.ratio { display: none; }
-  }
-</style>
-</head>
-<body>
-<main class="stage">
-  <section class="shell">
-
-    <header class="top">
-      <span class="tlabel">Stop producing for&#8230;</span>
-      <div class="picks" id="picks" role="tablist" aria-label="Pause length"></div>
-    </header>
-
-    <section class="panel"><canvas id="c"></canvas></section>
-
-    <footer class="foot">
-      <span class="stat earn"><b id="sEarn">9</b> mo to earn</span>
-      <span class="stat stop"><b id="sStop">2</b> mo stopped</span>
-      <span class="stat back"><b id="sBack">9</b> mo to climb back</span>
-      <span class="stat ratio"><b id="sRatio">4.5</b>&#215; longer</span>
-      <span class="verdict" id="verdict">Back in front &#183; month 20</span>
-    </footer>
-
-  </section>
-</main>
-
-<script>
-(function () {
   /* ============================================================
      Illustrative model, not measured data. You build visibility from
      nothing over BUILD months. While you are not producing it decays and
@@ -167,14 +73,14 @@
   var prog = 0;
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  var canvas = document.getElementById('c');
+  var canvas = $id('c');
   var ctx = canvas.getContext('2d');
-  var picks = document.getElementById('picks');
-  var sEarn = document.getElementById('sEarn');
-  var sStop = document.getElementById('sStop');
-  var sBack = document.getElementById('sBack');
-  var sRatio = document.getElementById('sRatio');
-  var verdictEl = document.getElementById('verdict');
+  var picks = $id('picks');
+  var sEarn = $id('sEarn');
+  var sStop = $id('sStop');
+  var sBack = $id('sBack');
+  var sRatio = $id('sRatio');
+  var verdictEl = $id('verdict');
 
   PAUSES.forEach(function (P) {
     var b = document.createElement('button');
@@ -189,7 +95,7 @@
 
   function armResume() {
     if (resumeTimer) clearTimeout(resumeTimer);
-    resumeTimer = setTimeout(function () { pinned = false; }, 12000);
+    resumeTimer = $st(function () { pinned = false; }, 12000);
   }
   function select(P) {
     cur = P; cycleIdx = PAUSES.indexOf(P); prog = 0;
@@ -353,15 +259,42 @@
       select(PAUSES[cycleIdx]);
     }
     draw();
-    requestAnimationFrame(frame);
+    $raf(frame);
   }
   function boot() {
     resize(); select(cur);
-    if (reduce) { prog = 1; draw(); } else requestAnimationFrame(frame);
+    if (reduce) { prog = 1; draw(); } else $raf(frame);
   }
-  window.addEventListener('resize', function () { resize(); if (reduce) draw(); });
+  $onResize(function () { resize(); if (reduce) draw(); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot); else boot();
-})();
-</script>
-</body>
-</html>
+
+  return function dispose() { $dead = true; if ($ro) $ro.disconnect(); if (resumeTimer) clearTimeout(resumeTimer); };
+}
+
+/**
+ * @framerSupportedLayoutWidth any-prefer-fixed
+ * @framerSupportedLayoutHeight any-prefer-fixed
+ * @framerIntrinsicWidth 900
+ * @framerIntrinsicHeight 340
+ */
+export default function StoppingCost() {
+    const ref = useRef(null)
+    useEffect(() => {
+        const root = ref.current
+        if (!root) return
+        const dispose = init(root)
+        return () => {
+            if (typeof dispose === "function") dispose()
+        }
+    }, [])
+    return (
+        <div
+            ref={ref}
+            className="fx-stopping-cost"
+            role="figure"
+            aria-label={LABEL}
+            style={{ width: "100%", height: "100%" }}
+            dangerouslySetInnerHTML={{ __html: HTML }}
+        />
+    )
+}
