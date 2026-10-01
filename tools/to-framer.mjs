@@ -36,6 +36,11 @@
 //     script runs — before any timer, so in its pre-animation state — and that
 //     markup is baked into the HTML. init() empties the container first, so the
 //     script rebuilds and animates it exactly as before.
+//     prerenderMotion: 'reduce' snapshots under prefers-reduced-motion instead,
+//     for charts whose first pass resets to zero synchronously — their
+//     reduced-motion branch renders the finished state, which is what should
+//     be in the HTML. On mount the chart resets and counts up, as its own loop
+//     does every cycle.
 //   - Scripts need not be an IIFE: a plain top-level script becomes init()'s body,
 //     its top-level declarations becoming locals.
 //   - window 'load' listeners run immediately: by the time a component mounts the
@@ -65,6 +70,34 @@ const CONFIG = {
     height: 560,
     // runs inside init(); must stop every loop and timer the script started
     dispose: 'gen++; paused = true; if (idleTimer) clearTimeout(idleTimer);',
+  },
+  'ai-picked-list': {
+    component: 'AiPickedList',
+    label: 'Example category leaderboard: the brands ChatGPT, Claude, Gemini and Perplexity name for a buyer ' +
+      'prompt, ranked by share of answers and the engines that named them, with your brand\'s position unknown.',
+    width: 900, height: 550, guardLoops: true, dispose: 'gen++;',
+    prerender: ['qtext', 'chips', 'rows', 'youEng'],
+  },
+  'clean-state': {
+    component: 'CleanState',
+    label: 'ChatGPT, Claude, Gemini and Perplexity tested from a clean state, with no history, memory, web access ' +
+      'or sign-in, compared with a logged-in account, where every engine names the brand first.',
+    width: 900, height: 380, guardLoops: true, dispose: 'gen++; if (resumeTimer) clearTimeout(resumeTimer);',
+    prerender: ['grid'],
+  },
+  'competitor-set': {
+    component: 'CompetitorSet',
+    label: 'Competitor set: five competitors typed from memory, judged one by one, against the three we test ' +
+      'against, including one never listed that wins most buying queries.',
+    width: 900, height: 380, guardLoops: true, dispose: 'gen++;',
+    prerender: ['lrows', 'rrows'],
+  },
+  'collection-reading': {
+    component: 'CollectionReading',
+    label: 'Automated collection, human reading: twenty minutes of collection across 412 prompts and 4 engines, ' +
+      'then each finding triaged by a senior architect as costs you money, noise, or do first.',
+    width: 900, height: 380, guardLoops: true, dispose: 'gen++;',
+    prerender: ['mets', 'fbody'], prerenderMotion: 'reduce',
   },
   'robots-txt-light': {
     component: 'RobotsTxt',
@@ -324,7 +357,9 @@ function prerender(ids) {
   const page = src.slice(0, end + 9) + snap + src.slice(end + 9)
   const tmp = path.join(os.tmpdir(), 'to-framer-' + slug + '.html')
   fs.writeFileSync(tmp, page)
-  const dom = execFileSync(chrome, ['--headless=new', '--disable-gpu', '--no-first-run', '--dump-dom', 'file://' + tmp],
+  const flags = ['--headless=new', '--disable-gpu', '--no-first-run']
+  if (cfg.prerenderMotion === 'reduce') flags.push('--force-prefers-reduced-motion')
+  const dom = execFileSync(chrome, flags.concat(['--dump-dom', 'file://' + tmp]),
     { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 60000 })
   fs.unlinkSync(tmp)
   const m = dom.match(/data-prerender="([^"]*)"/)
