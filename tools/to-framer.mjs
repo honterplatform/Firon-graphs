@@ -30,11 +30,30 @@
 //   - fallback (canvas charts): canvas output is pixels, not text. The chart's
 //     data is placed inside <canvas> as a table — canvas fallback content, the
 //     standard accessible description of a canvas, and real text in the HTML.
+//   - prerender (charts that build their content with JS): the container would
+//     ship empty in Framer's server render. The original page is run in headless
+//     Chrome, each listed container is snapshotted synchronously right after the
+//     script runs — before any timer, so in its pre-animation state — and that
+//     markup is baked into the HTML. init() empties the container first, so the
+//     script rebuilds and animates it exactly as before.
+//   - Scripts need not be an IIFE: a plain top-level script becomes init()'s body,
+//     its top-level declarations becoming locals.
+//   - window 'load' listeners run immediately: by the time a component mounts the
+//     page has usually loaded already, so the handler would never fire.
+//   - If the script creates elements with ids at runtime, those ids are not
+//     prefixed, so id lookups fall back to the bare id — still scoped to root.
+//   - html/body rules normally land on the root. But if one uses viewport units,
+//     it cannot: container units on the container itself resolve against the
+//     browser window, not the box. Those rules move to an inner -body wrapper
+//     inside the container, so the units measure the chart's box as they did in
+//     the iframe.
 //
 // Usage: node tools/to-framer.mjs <slug>   (config for each slug lives below)
 
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
+import { execFileSync } from 'node:child_process'
 
 const CONFIG = {
   'hero-scan': {
@@ -46,6 +65,32 @@ const CONFIG = {
     height: 560,
     // runs inside init(); must stop every loop and timer the script started
     dispose: 'gen++; paused = true; if (idleTimer) clearTimeout(idleTimer);',
+  },
+  'robots-txt-light': {
+    component: 'RobotsTxt',
+    label: 'Example Shopify robots.txt: crawl rules for adsbot-google disallowing checkout, cart, order, ' +
+      'preview and private-access paths.',
+    width: 600, height: 420, guardLoops: true, dispose: '',
+    prerender: ['terminal'],
+  },
+  'citations-sources-light': {
+    component: 'CitationsSources',
+    label: 'Citation sources: the domains AI answers cite most, with citation count and share over the last 90 days.',
+    width: 600, height: 460, guardLoops: true, dispose: '',
+    prerender: ['tbody'],
+  },
+  'share-of-voice-light': {
+    component: 'ShareOfVoice',
+    label: 'AI share of voice leaderboard for the query "luxury candle brands": citation share by brand across ' +
+      'ChatGPT, Perplexity, Claude and Gemini, with 30-day change.',
+    width: 900, height: 480, guardLoops: true, dispose: '',
+    prerender: ['tableBody'],
+  },
+  'pdp-before-after': {
+    component: 'PdpBeforeAfter',
+    label: 'Product page before and after: an auto-pulled description with a missing H1 and empty alt text, then ' +
+      'the same page with an H1, alt text and five declared facts: material, origin, style, dimensions and care.',
+    width: 900, height: 450, guardLoops: true, dispose: 'gen++;',
   },
   'asking-google': {
     component: 'AskingGoogle',
@@ -181,15 +226,23 @@ function scopeSelector(sel) {
   const parts = sel.split(',').map((s) => s.trim()).filter(Boolean)
   const out = []
   for (const s of parts) {
-    if (s === 'html' || s === 'body' || s === ':root') out.push('.' + R)
+    if (s === 'html' || s === 'body' || s === ':root') out.push(BODY || '.' + R)
     else if (s === '*') out.push('.' + R, '.' + R + ' *')
-    else if (/^(html|body)(?=[\s.:#[>]|$)/.test(s)) out.push(s.replace(/^(html|body)/, '.' + R))
+    else if (/^(html|body)(?=[\s.:#[>]|$)/.test(s)) out.push(s.replace(/^(html|body)/, BODY || '.' + R))
     else out.push('.' + R + ' ' + s)
   }
   return [...new Set(out)].join(', ')
 }
 
 let usesContainerHeight = false
+const VIEWPORT_UNIT = /\d(vh|vw|vmin|vmax)\b/
+const isPageLevel = (s) => /^(html|body|:root)$|^(html|body)(?=[\s.:#[>])/.test(s.trim())
+function needsBodyWrap(nodes) {
+  return nodes.some((n) =>
+    (n.type === 'rule' && n.selector.split(',').some(isPageLevel) && VIEWPORT_UNIT.test(n.body)) ||
+    (n.type === 'group' && needsBodyWrap(n.children)))
+}
+let BODY = null // selector page-level rules map to; null means the root itself
 function fixDecls(body, keyframes) {
   return body
     .split(';')
@@ -245,6 +298,8 @@ function emitCss(nodes, keyframes) {
 
 const rawCss = between(src, '<style>', '</style>')
 const nodes = parseCss(rawCss)
+const bodyWrap = needsBodyWrap(nodes)
+if (bodyWrap) BODY = '.' + R + ' .' + R + '-body'
 const keyframes = collectKeyframes(nodes)
 const scoped = emitCss(nodes, keyframes)
 const fontHref = (src.match(/href="(https:\/\/fonts\.googleapis\.com\/css2[^"]+)"/) || [])[1]
@@ -259,8 +314,35 @@ const css =
 
 // ------------------------------------------------------------- markup ----
 
-const markup = between(src, '<body>', '<script>')
-  .trim()
+function prerender(ids) {
+  const chrome = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+  // runs synchronously straight after the widget script, so no timer has fired yet
+  const snap = '<script>(function(){var o={};' + JSON.stringify(ids) +
+    '.forEach(function(id){var e=document.getElementById(id);o[id]=e?e.innerHTML:null;});' +
+    'document.documentElement.setAttribute("data-prerender",encodeURIComponent(JSON.stringify(o)));})();</script>'
+  const end = src.indexOf('</script>', src.indexOf('<script>'))
+  const page = src.slice(0, end + 9) + snap + src.slice(end + 9)
+  const tmp = path.join(os.tmpdir(), 'to-framer-' + slug + '.html')
+  fs.writeFileSync(tmp, page)
+  const dom = execFileSync(chrome, ['--headless=new', '--disable-gpu', '--no-first-run', '--dump-dom', 'file://' + tmp],
+    { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 60000 })
+  fs.unlinkSync(tmp)
+  const m = dom.match(/data-prerender="([^"]*)"/)
+  if (!m) throw new Error('prerender: no snapshot captured')
+  const got = JSON.parse(decodeURIComponent(m[1]))
+  for (const id of ids) if (!got[id] || !got[id].trim()) throw new Error('prerender: #' + id + ' was empty after the script ran')
+  return got
+}
+
+let rawMarkup = between(src, '<body>', '<script>').trim()
+const prerendered = cfg.prerender ? prerender(cfg.prerender) : {}
+for (const id of Object.keys(prerendered)) {
+  const re = new RegExp('(<([a-z0-9]+)\\b[^>]*\\sid="' + id + '"[^>]*>)\\s*(</\\2>)')
+  if (!re.test(rawMarkup)) throw new Error('prerender: #' + id + ' is not an empty element in the markup')
+  rawMarkup = rawMarkup.replace(re, (_, open, tag, close) => open + prerendered[id] + close)
+}
+
+const markup = (bodyWrap ? '<div class="' + R + '-body">' + rawMarkup + '</div>' : rawMarkup)
   .replace(/<main\b/g, '<div')
   .replace(/<\/main>/g, '</div>')
   .replace(/\sid="([^"]+)"/g, ' id="' + R + '-$1"')
@@ -278,10 +360,12 @@ const ids = [...markup.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1].slice(R.leng
 // ------------------------------------------------------------- script ----
 
 let script = between(src, '<script>', '</script>').trim()
-if (!/^\(function\s*\(\)\s*\{/.test(script) || !/\}\)\(\);?$/.test(script)) {
-  throw new Error('expected the script to be a single IIFE')
+// an IIFE is unwrapped; a plain top-level script is used as the body directly
+if (/^\(function\s*\(\)\s*\{/.test(script) && /\}\)\(\);?$/.test(script)) {
+  script = script.replace(/^\(function\s*\(\)\s*\{/, '').replace(/\}\)\(\);?$/, '')
 }
-script = script.replace(/^\(function\s*\(\)\s*\{/, '').replace(/\}\)\(\);?$/, '')
+// ids written into markup by the script itself never pass through prefixing
+const createsIds = /\sid=\\?["']/.test(script)
 
 const lookups = [...script.matchAll(/document\.getElementById\('([^']+)'\)/g)].map((m) => m[1])
 const missing = lookups.filter((id) => !ids.includes(id))
@@ -293,18 +377,24 @@ script = script
   .replace(/document\.querySelector\(/g, '$q(')
 if (/document\.(getElementById|querySelector)/.test(script)) throw new Error('unscoped lookup left')
 
+// a component mounts after the page has loaded, so a load listener would never fire
+script = script.replace(/window\.addEventListener\(\s*'load',\s*/g, '$onLoad(')
+const usesOnLoad = script.includes('$onLoad(')
+
 if (cfg.guardLoops) {
   script = script
     .replace(/window\.addEventListener\('resize',\s*/g, '$onResize(')
     .replace(/\brequestAnimationFrame\(/g, '$raf(')
     .replace(/\bsetTimeout\(/g, '$st(')
-  if (/window\.addEventListener\(/.test(script)) throw new Error('unguarded window listener left')
 }
+if (/window\.addEventListener\(/.test(script)) throw new Error('unhandled window listener left')
 
 const scopeHelpers = [
   "  var $P = '" + R + "-';",
   '  function $sel(s) { return s.replace(/#([A-Za-z][\\w-]*)/g, "#" + $P + "$1"); }',
-  '  function $id(x) { return root.querySelector("#" + $P + x); }',
+  createsIds
+    ? '  function $id(x) { return root.querySelector("#" + $P + x) || root.querySelector("#" + x); }'
+    : '  function $id(x) { return root.querySelector("#" + $P + x); }',
   '  function $q(s) { return root.querySelector($sel(s)); }',
   '  function $qa(s) { return root.querySelectorAll($sel(s)); }',
 ].concat(cfg.guardLoops ? [
@@ -316,7 +406,14 @@ const scopeHelpers = [
   '    $ro = new ResizeObserver(function () { if (!$dead) f(); });',
   '    $ro.observe(root);',
   '  }',
-] : []).join('\n')
+] : []).concat(usesOnLoad ? [
+  '  function $onLoad(f) {',
+  '    if (document.readyState === "complete") { ' + (cfg.guardLoops ? '$st' : 'setTimeout') + '(f, 0); return; }',
+  '    window.addEventListener("load", f, { once: true });',
+  '  }',
+] : []).concat(Object.keys(prerendered).map((id) =>
+  "  $id('" + id + "').innerHTML = '';   // server-rendered copy; the script rebuilds it"
+)).join('\n')
 
 const initSource =
   'function init(root) {\n' + scopeHelpers + '\n' + script.replace(/\s+$/, '') +
@@ -385,4 +482,5 @@ console.log('  root class       ' + R)
 console.log('  ids prefixed     ' + ids.length)
 console.log('  keyframes        ' + [...keyframes].join(', '))
 console.log('  container-type   ' + (usesContainerHeight ? 'size' : 'inline-size'))
+if (bodyWrap) console.log('  page rules       moved inside the container (viewport units)')
 console.log('  media→container  ' + (scoped.match(/@container /g) || []).length)

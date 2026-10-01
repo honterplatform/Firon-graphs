@@ -193,8 +193,8 @@ rows.forEach(r => {
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td><div class="domain-cell"><div class="domain-icon" style="background:${r.color}">${r.letter}</div><span class="domain-name">${r.domain}</span></div></td>
-    <td class="count-cell" data-target="${r.count}" data-label="${r.countLabel}">0</td>
-    <td class="share-cell" data-target="${r.share}">0%</td>
+    <td class="count-cell" data-target="${r.count}" data-label="${r.countLabel}">${r.countLabel}</td>
+    <td class="share-cell" data-target="${r.share}">${r.share}%</td>
   `;
   tbody.appendChild(tr);
 });
