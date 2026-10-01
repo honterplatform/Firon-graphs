@@ -90,6 +90,9 @@
     .picks { margin-left: 0; }
     .pick { padding: 5px 9px; font-size: 11px; }
     .stat.earn, .stat.ratio { display: none; }
+    /* on the narrowest phones the verdict chip no longer fits beside the stats;
+       let it drop to its own line rather than run off the edge */
+    .foot { flex-wrap: wrap; row-gap: 5px; }
   }
 </style>
 </head>
